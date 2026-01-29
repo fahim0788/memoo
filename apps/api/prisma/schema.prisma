@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * MVP schema (single-user)
+ * - Decks & Cards seeded via API or directly in DB later
+ * - Reviews are stored for analytics and syncing
+ */
+model User {
+  id        String   @id @default(cuid())
+  email     String 
+  firstName String
+  lastName  String
+  password  String
+  isActive  Boolean
+  createdAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
+}
+
+model Deck {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cards     Card[]
+}
+
+model Card {
+  id        String   @id @default(cuid())
+  deckId    String
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  reviews   Review[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  cardId    String
+  ok        Boolean
+  userAnswer String
+  reviewedAt DateTime @default(now())
+
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
