@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
+// Force dynamic rendering (pas de pre-rendering au build)
+export const dynamic = "force-dynamic";
+
 /* ============================================================================
-   Prisma (Prisma 7 – runtime config obligatoire)
+   Prisma (Prisma 7 – lazy initialization)
 ============================================================================ */
 
-const prisma =
-  (globalThis as any).prisma ??
-  new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  });
+let prisma: PrismaClient | null = null;
 
-if (process.env.NODE_ENV !== "production") {
-  (globalThis as any).prisma = prisma;
+function getPrisma(): PrismaClient {
+  if (!prisma) {
+    prisma = (globalThis as any).prisma ?? new PrismaClient();
+    if (process.env.NODE_ENV !== "production") {
+      (globalThis as any).prisma = prisma;
+    }
+  }
+  return prisma;
 }
 
 /* ============================================================================
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
     const auth = requireAuth(req);
     if (auth) return auth;
 
-    const decks = await prisma.deck.findMany({
+    const decks = await getPrisma().deck.findMany({
       include: { cards: true },
     });
 
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const name = body?.name ?? "Nouveau deck";
 
-    const deck = await prisma.deck.create({
+    const deck = await getPrisma().deck.create({
       data: { name },
     });
 
@@ -134,7 +135,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const card = await prisma.card.create({
+    const card = await getPrisma().card.create({
       data: {
         deckId,
         question,
@@ -160,7 +161,7 @@ export async function POST(req: NextRequest) {
     for (const r of reviews) {
       if (!r.cardId) continue;
 
-      await prisma.review.create({
+      await getPrisma().review.create({
         data: {
           cardId: String(r.cardId),
           ok: Boolean(r.ok),

@@ -3,6 +3,10 @@
 # =============================================================================
 FROM node:20-alpine AS deps
 WORKDIR /app
+
+# Contournement certificat SSL (proxy entreprise)
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
 COPY package.json package-lock.json* ./
 RUN npm ci --no-audit --no-fund
 
@@ -11,6 +15,12 @@ RUN npm ci --no-audit --no-fund
 # =============================================================================
 FROM node:20-alpine AS build
 WORKDIR /app
+
+# Contournement certificat SSL (proxy entreprise)
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+# URL factice pour prisma generate (pas de connexion réelle au build)
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -27,6 +37,7 @@ FROM node:20-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3001
 
 # Copier standalone server
 COPY --from=build /app/.next/standalone ./
@@ -38,6 +49,4 @@ COPY --from=build /app/prisma ./prisma
 
 EXPOSE 3001
 
-# Migrations au démarrage (optionnel, décommenter si besoin)
-# CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
 CMD ["node", "server.js"]
