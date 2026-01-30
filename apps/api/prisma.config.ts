@@ -1,3 +1,4 @@
+// Charger .env avant tout
 import "dotenv/config";
 
 import { defineConfig, env } from "prisma/config";

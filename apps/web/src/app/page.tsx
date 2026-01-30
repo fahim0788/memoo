@@ -5,6 +5,7 @@ import { DECK } from "../lib/deck";
 import { idbGet, idbSet } from "../lib/idb";
 import { defaultCardState, gradeCard, type CardState } from "../lib/sr-engine";
 import { isCorrect } from "../lib/text";
+import { queueReview } from "../lib/sync";
 
 
 type AppState = {
@@ -84,6 +85,13 @@ console.log("RENDER HomePage", app);
     setResult({ ok, expected: current.expectedAnswers[0] ?? "" });
     setShowResult(true);
     await idbSet(STORAGE_KEY, next);
+
+    // Sync: envoyer la review au serveur (non-bloquant)
+    queueReview({
+      cardId: current.id,
+      ok,
+      userAnswer: answer,
+    });
   }
 
   async function goNext() {

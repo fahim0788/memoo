@@ -1,20 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 // Force dynamic rendering (pas de pre-rendering au build)
 export const dynamic = "force-dynamic";
 
 /* ============================================================================
-   Prisma (Prisma 7 – lazy initialization)
+   Prisma 7 – avec adaptateur PostgreSQL
 ============================================================================ */
 
 let prisma: PrismaClient | null = null;
 
 function getPrisma(): PrismaClient {
   if (!prisma) {
-    prisma = (globalThis as any).prisma ?? new PrismaClient();
-    if (process.env.NODE_ENV !== "production") {
-      (globalThis as any).prisma = prisma;
+    if ((globalThis as any).prisma) {
+      prisma = (globalThis as any).prisma;
+    } else {
+      // Prisma 7 nécessite un adaptateur pour la connexion directe
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const adapter = new PrismaPg(pool);
+      prisma = new PrismaClient({ adapter });
+
+      if (process.env.NODE_ENV !== "production") {
+        (globalThis as any).prisma = prisma;
+      }
     }
   }
   return prisma;

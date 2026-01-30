@@ -22,6 +22,7 @@ services:
       args:
         NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-/api}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-MemoList}
+        NEXT_PUBLIC_AUTH_TOKEN: ${AUTH_TOKEN:-}
     expose:
       - "3000"
     depends_on:
@@ -50,6 +51,8 @@ services:
   # ===========================================================================
   db:
     image: postgres:16-alpine
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-memolist}
       - POSTGRES_USER=${POSTGRES_USER:-memolist}

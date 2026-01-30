@@ -43,11 +43,12 @@ model Card {
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  cardId    String
-  ok        Boolean
+  id         String   @id @default(cuid())
+  cardId     String   // ID de la carte (peut ne pas exister en base pour le MVP)
+  ok         Boolean
   userAnswer String
   reviewedAt DateTime @default(now())
 
-  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  // Relation optionnelle pour le MVP (les cards sont hardcodées dans le frontend)
+  card       Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
 }
