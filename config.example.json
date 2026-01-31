@@ -1,0 +1,23 @@
+{
+  "project": {
+    "name": "memoo",
+    "domain": "memoo.fr"
+  },
+  "pi": {
+    "host": "192.168.1.187",
+    "user": "fahim",
+    "path": "/home/fahim/memoo"
+  },
+  "database": {
+    "name": "memolist",
+    "user": "memolist",
+    "password": "CHANGE_ME_SECURE_PASSWORD"
+  },
+  "security": {
+    "jwt_secret": "CHANGE_ME_RANDOM_SECRET_KEY_MIN_32_CHARS"
+  },
+  "ssl": {
+    "enabled": true,
+    "email": "your-email@example.com"
+  }
+}

@@ -1,69 +1,85 @@
 services:
   # ===========================================================================
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy avec SSL
   # ===========================================================================
   nginx:
     image: nginx:1.25-alpine
+    container_name: memoo-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
     depends_on:
       - web
       - api
     restart: unless-stopped
+    networks:
+      - memoo-network
 
   # ===========================================================================
   # Frontend Web (Next.js PWA)
   # ===========================================================================
   web:
-    build:
-      context: ./apps/web
-      args:
-        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-/api}
-        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-MemoList}
+    image: memoo-web:latest
+    container_name: memoo-web
     expose:
       - "3000"
-    depends_on:
-      - api
+    environment:
+      - NODE_ENV=production
     restart: unless-stopped
+    networks:
+      - memoo-network
 
   # ===========================================================================
   # Backend API (Next.js + Prisma)
   # ===========================================================================
   api:
-    build:
-      context: ./apps/api
+    image: memoo-api:latest
+    container_name: memoo-api
     expose:
-      - "3001"
+      - "3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=https://${DOMAIN}
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - memoo-network
 
   # ===========================================================================
   # PostgreSQL Database
   # ===========================================================================
   db:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
+    container_name: memoo-db
+    expose:
+      - "5432"
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-memolist}
-      - POSTGRES_USER=${POSTGRES_USER:-memolist}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-memolist}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memolist}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - memoo-network
+
+networks:
+  memoo-network:
+    driver: bridge
 
 volumes:
   pgdata:
+    driver: local

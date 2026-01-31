@@ -1,24 +1,26 @@
-# MemoList MVP
+# Memoo MVP
 
-Application PWA de révision par répétition espacée, conçue pour l'apprentissage offline-first.
+Application PWA de revision par repetition espacee, concue pour l'apprentissage offline-first.
 
-## Aperçu du projet
+## Apercu du projet
 
-**MemoList** est une plateforme d'étude utilisant la technique scientifiquement prouvée de la répétition espacée. L'application est actuellement en phase MVP avec un contenu de 100 questions sur l'éducation civique française.
+**Memoo** est une plateforme d'etude utilisant la technique scientifiquement prouvee de la repetition espacee. L'application est actuellement en phase MVP avec un contenu de 100 questions sur l'education civique francaise.
 
-### Caractéristiques principales
+### Caracteristiques principales
 
-- **Offline-first** : Fonctionne sans connexion grâce à IndexedDB + Service Worker
+- **Offline-first** : Fonctionne sans connexion grace a IndexedDB + Service Worker
 - **PWA installable** : S'installe sur mobile (iOS/Android) comme une app native
-- **Répétition espacée** : Algorithme SM-2 adapté pour optimiser la mémorisation
-- **Suivi quotidien** : Compteur de cartes étudiées par jour
+- **Repetition espacee** : Algorithme SM-2 adapte pour optimiser la memorisation
+- **Suivi quotidien** : Compteur de cartes etudiees par jour
+- **Authentification** : Login/Register avec email et mot de passe (JWT)
+- **Synchronisation** : Queue offline des reviews, sync automatique
 
 ---
 
 ## Stack technique
 
 ### Frontend (`apps/web/`)
-| Technologie | Version | Rôle |
+| Technologie | Version | Role |
 |-------------|---------|------|
 | Next.js | 14.2.5 | Framework React avec App Router |
 | React | 18.3.1 | Interface utilisateur |
@@ -27,57 +29,69 @@ Application PWA de révision par répétition espacée, conçue pour l'apprentis
 | Service Worker | Native | Cache et fonctionnement offline |
 
 ### Backend (`apps/api/`)
-| Technologie | Version | Rôle |
+| Technologie | Version | Role |
 |-------------|---------|------|
 | Next.js | 14.1.0 | API Routes |
-| Prisma | 7.3.0 | ORM avec PostgreSQL |
-| PostgreSQL | 16 | Base de données |
+| Prisma | 7.3.0 | ORM avec adaptateur PostgreSQL |
+| PostgreSQL | 16 | Base de donnees |
 | Node.js | 20 | Runtime |
+| bcryptjs | - | Hash des mots de passe |
+| jsonwebtoken | - | Tokens JWT |
 
 ### Infrastructure
-| Technologie | Rôle |
+| Technologie | Role |
 |-------------|------|
 | Docker Compose | Orchestration des services |
-| Nginx | Reverse proxy (optionnel) |
+| Nginx | Reverse proxy |
 
 ---
 
 ## Structure du projet
 
 ```
-memolist-mvp/
+Memoo-mvp/
 ├── apps/
 │   ├── web/                    # Frontend PWA
 │   │   ├── src/
 │   │   │   ├── app/
-│   │   │   │   ├── layout.tsx  # Layout racine avec PWA
-│   │   │   │   ├── page.tsx    # Interface d'étude principale
-│   │   │   │   └── globals.css # Styles globaux (thème sombre)
+│   │   │   │   ├── layout.tsx  # Layout racine avec PWA + AuthProvider
+│   │   │   │   ├── page.tsx    # Interface d'etude principale (protegee)
+│   │   │   │   ├── login/
+│   │   │   │   │   └── page.tsx # Page de connexion/inscription
+│   │   │   │   └── globals.css # Styles globaux (theme sombre)
+│   │   │   ├── contexts/
+│   │   │   │   └── AuthContext.tsx # Contexte React pour l'auth
 │   │   │   └── lib/
 │   │   │       ├── idb.ts      # Abstraction IndexedDB
-│   │   │       ├── sr-engine.ts # Algorithme répétition espacée
+│   │   │       ├── sr-engine.ts # Algorithme repetition espacee
 │   │   │       ├── deck.ts     # Dataset des 100 questions
-│   │   │       ├── api.ts      # Client API
-│   │   │       ├── text.ts     # Validation des réponses
+│   │   │       ├── api.ts      # Client API (Bearer token)
+│   │   │       ├── auth.ts     # Fonctions login/register/logout
+│   │   │       ├── sync.ts     # Queue offline et synchronisation
+│   │   │       ├── text.ts     # Validation des reponses
 │   │   │       └── pwa-boot.tsx # Initialisation Service Worker
 │   │   ├── public/
 │   │   │   ├── manifest.webmanifest
 │   │   │   ├── sw.js           # Service Worker
-│   │   │   └── icons/          # Icônes de l'app
-│   │   └── Dockerfile
+│   │   │   └── icons/          # Icones de l'app
+│   │   ├── Dockerfile
+│   │   └── .dockerignore
 │   │
 │   └── api/                    # Backend API
 │       ├── app/api/
-│       │   ├── route.ts        # Router principal
-│       │   └── health/route.ts # Health check
+│       │   └── [...path]/
+│       │       └── route.ts    # Catch-all router (auth + CRUD)
 │       ├── prisma/
-│       │   ├── schema.prisma   # Schéma BDD
+│       │   ├── schema.prisma   # Schema BDD
+│       │   ├── prisma.config.ts # Config Prisma 7
 │       │   └── migrations/     # Migrations
-│       └── Dockerfile
+│       ├── Dockerfile
+│       └── .dockerignore
 │
 ├── infra/nginx/                # Configuration Nginx
-├── scripts/dev.sh              # Script de développement
-├── docker-compose.yml          # Orchestration Docker
+├── scripts/dev.sh              # Script de developpement
+├── docker-compose.yml          # Orchestration Docker (production)
+├── docker-compose.dev.yml      # DB uniquement (dev local)
 └── .env                        # Variables d'environnement
 ```
 
@@ -91,7 +105,7 @@ memolist-mvp/
 └─────────────────────┬───────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────┐
-│              Nginx (Port 80) - Optionnel                │
+│              Nginx (Port 80)                            │
 │         /  → Web    |    /api → API                     │
 └─────────────────────┬───────────────────────────────────┘
                       │
@@ -101,10 +115,11 @@ memolist-mvp/
 │   Web (3000)  │           │   API (3001)  │
 │   Next.js PWA │           │   Next.js     │
 │               │           │               │
-│ • React UI    │           │ • Route.ts    │
-│ • IndexedDB   │           │ • Prisma ORM  │
-│ • SW Cache    │           │ • Auth Token  │
-│ • SR Engine   │           │               │
+│ • React UI    │◄──────────│ • JWT Auth    │
+│ • IndexedDB   │  Bearer   │ • Prisma 7    │
+│ • SW Cache    │  Token    │ • bcrypt      │
+│ • SR Engine   │           │ • Adapter PG  │
+│ • Sync Queue  │           │               │
 └───────────────┘           └───────┬───────┘
                                     │
                             ┌───────▼───────┐
@@ -121,93 +136,145 @@ memolist-mvp/
 
 1. L'utilisateur ouvre l'application
 2. Le Service Worker s'enregistre et met en cache les assets
-3. IndexedDB charge la progression sauvegardée
-4. L'algorithme SR sélectionne la prochaine carte due
-5. La question s'affiche
-6. L'utilisateur tape sa réponse et valide
-7. La réponse est normalisée et comparée
-8. La carte est notée (facteur de difficulté ajusté)
-9. Le résultat s'affiche (Correct ✅ ou Incorrect ❌)
-10. IndexedDB persiste l'état
-11. Boucle vers l'étape 4
+3. Verification du token JWT dans localStorage
+4. Si non connecte → redirect vers `/login`
+5. Si connecte → IndexedDB charge la progression
+6. L'algorithme SR selectionne la prochaine carte due
+7. L'utilisateur repond et valide
+8. La reponse est normalisee et comparee
+9. IndexedDB persiste l'etat local
+10. La review est ajoutee a la queue de sync
+11. Sync automatique vers l'API (non-bloquant)
+12. Boucle vers l'etape 6
 
-### Algorithme de répétition espacée
+### Algorithme de repetition espacee
 
-L'état de chaque carte contient :
+L'etat de chaque carte contient :
 ```typescript
 {
-  reps: number;           // Répétitions réussies
-  intervalDays: number;   // Jours avant prochaine révision
-  ease: number;           // Multiplicateur de difficulté (1.3–2.5)
-  nextReviewAt: number;   // Timestamp prochaine révision
-  successCount: number;   // Total réussites
-  failureCount: number;   // Total échecs
+  reps: number;           // Repetitions reussies
+  intervalDays: number;   // Jours avant prochaine revision
+  ease: number;           // Multiplicateur de difficulte (1.3-2.5)
+  nextReviewAt: number;   // Timestamp prochaine revision
+  successCount: number;   // Total reussites
+  failureCount: number;   // Total echecs
 }
 ```
 
-**Réponse correcte** : ease +0.10, intervalle augmenté
-**Réponse incorrecte** : ease -0.20, retour à 1 jour
+**Reponse correcte** : ease +0.10, intervalle augmente
+**Reponse incorrecte** : ease -0.20, retour a 1 jour
 
-### Validation des réponses
+### Validation des reponses
 
 La normalisation inclut :
 - Suppression des espaces superflus
 - Conversion en minuscules
-- Suppression des accents (é → e, ç → c)
-- Suppression des caractères spéciaux
+- Suppression des accents (e → e, c → c)
+- Suppression des caracteres speciaux
 
-Correspondance partielle supportée : "Liberté Égalité" valide pour "Liberté, Égalité, Fraternité".
+Correspondance partielle supportee : "Liberte Egalite" valide pour "Liberte, Egalite, Fraternite".
+
+### Synchronisation offline-first
+
+```typescript
+// Queue stockee dans IndexedDB
+{
+  reviews: [
+    { cardId, ok, userAnswer, reviewedAt }
+  ]
+}
+
+// Flux de sync
+1. Utilisateur repond → queueReview()
+2. Review ajoutee a la queue locale
+3. flushQueue() tente l'envoi immediat
+4. Si offline → reste en queue
+5. Si online → POST /api/sync/push
+6. Succes → queue videe
+```
 
 ---
 
 ## Endpoints API
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/api/health` | Status du serveur |
-| GET | `/api/sync/pull` | Récupérer l'état serveur |
-| POST | `/api/sync/push` | Envoyer l'historique |
-| GET | `/api/decks` | Lister les decks |
-| POST | `/api/decks` | Créer un deck |
-| POST | `/api/decks/:id/cards` | Créer une carte |
+### Authentification
 
-**Authentification** : Header `X-Auth-Token: <AUTH_TOKEN>`
+| Methode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| POST | `/api/auth/register` | Creer un compte | Non |
+| POST | `/api/auth/login` | Connexion | Non |
+| GET | `/api/auth/me` | Infos utilisateur | Bearer |
 
----
+### Donnees
 
-## Schéma de base de données
+| Methode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| GET | `/api/health` | Status du serveur | Non |
+| GET | `/api/sync/pull` | Recuperer l'etat serveur | Bearer |
+| POST | `/api/sync/push` | Envoyer les reviews | Bearer |
+| GET | `/api/decks` | Lister les decks | Bearer |
+| POST | `/api/decks` | Creer un deck | Bearer |
+| POST | `/api/decks/:id/cards` | Creer une carte | Bearer |
 
-```
-User (placeholder MVP)
-├── id, email, firstName, lastName
-├── password, isActive
-└── timestamps
-
-Deck
-├── id, name
-├── cards[]
-└── timestamps
-
-Card
-├── id, deckId (FK)
-├── question, answer
-├── reviews[]
-└── timestamps
-
-Review
-├── id, cardId (FK)
-├── ok (Boolean)
-├── userAnswer
-└── reviewedAt
-```
+**Authentification** : Header `Authorization: Bearer <JWT_TOKEN>`
 
 ---
 
-## Installation et démarrage
+## Schema de base de donnees
 
-### Prérequis
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String   // Hash bcrypt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reviews   Review[]
+}
+
+model Deck {
+  id        String   @id @default(cuid())
+  name      String
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Card {
+  id        String   @id @default(cuid())
+  deckId    String
+  question  String
+  answer    String
+  deck      Deck     @relation(...)
+  reviews   Review[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  cardId     String
+  ok         Boolean
+  userAnswer String
+  reviewedAt DateTime @default(now())
+  userId     String?
+  user       User?    @relation(...)
+  card       Card?    @relation(...)
+}
+```
+
+**Note** : La relation `card` est optionnelle car les cards du MVP sont hardcodees dans le frontend (pas en base).
+
+---
+
+## Installation et demarrage
+
+### Prerequis
 - Docker & Docker Compose
-- Node.js 20+ (pour le développement local)
+- Node.js 20+ (pour le developpement local)
 
 ### Configuration initiale
 
@@ -215,20 +282,19 @@ Review
 # Copier le template des variables d'environnement
 cp .env.example .env
 
-# Pour le dev local (sans Docker complet), créer aussi :
-cp .env.example .env.local
-# Puis modifier DATABASE_URL : @db:5432 → @localhost:5432
+# Pour le dev local (API en npm run dev)
+cp apps/api/.env.example apps/api/.env
 ```
 
-### Workflow de développement
+### Workflow de developpement
 
-#### Option 1 : Dev local (recommandé)
+#### Option 1 : Dev local (recommande)
 
 ```bash
-# Démarre PostgreSQL + apps en mode watch
-./scripts/dev.sh local
+# Demarre PostgreSQL + apps en mode watch
+./scripts/dev.sh dev
 
-# Accès :
+# Acces :
 # - Web : http://localhost:3000
 # - API : http://localhost:3001
 ```
@@ -236,61 +302,120 @@ cp .env.example .env.local
 #### Option 2 : Tout en Docker
 
 ```bash
-# Démarre tous les services (nginx, web, api, db)
+# Demarre tous les services (nginx, web, api, db)
 ./scripts/dev.sh docker
 
-# Accès : http://localhost (via Nginx)
+# Acces : http://localhost (via Nginx)
 ```
 
-#### Commandes utiles
+#### Commandes du script dev.sh
 
-```bash
-./scripts/dev.sh db      # PostgreSQL uniquement
-./scripts/dev.sh stop    # Arrêter les conteneurs
-./scripts/dev.sh logs    # Voir les logs
-./scripts/dev.sh clean   # Supprimer volumes et conteneurs
-```
+| Commande | Description |
+|----------|-------------|
+| `./scripts/dev.sh dev` | DB Docker + apps en local (npm run dev) |
+| `./scripts/dev.sh db` | PostgreSQL uniquement |
+| `./scripts/dev.sh docker` | Tout en Docker (production-like) |
+| `./scripts/dev.sh setup` | Installe deps + genere Prisma |
+| `./scripts/dev.sh stop` | Arrete les conteneurs |
+| `./scripts/dev.sh logs` | Affiche les logs |
+| `./scripts/dev.sh clean` | Supprime volumes et conteneurs |
 
-### Déploiement VPS / Production
+### Deploiement VPS / Production
 
 ```bash
 # 1. Cloner le repo sur le VPS
-git clone <repo-url> && cd memolist-mvp
+git clone <repo-url> && cd Memoo-mvp
 
 # 2. Configurer les variables de production
 cp .env.example .env
-# IMPORTANT: Modifier AUTH_TOKEN et POSTGRES_PASSWORD
+# IMPORTANT: Modifier JWT_SECRET et POSTGRES_PASSWORD
+# Generer avec: openssl rand -hex 32
 
 # 3. Lancer en production
 docker compose up --build -d
 
-# 4. Vérifier le status
+# 4. Appliquer les migrations
+docker compose exec api npx prisma migrate deploy
+
+# 5. Verifier le status
 docker compose ps
 ```
 
 ### Structure des fichiers d'environnement
 
-| Fichier | Usage | Committé |
+| Fichier | Usage | Committe |
 |---------|-------|----------|
-| `.env.example` | Template documenté | Oui |
+| `.env.example` | Template documente | Oui |
 | `.env` | Docker Compose (db@db:5432) | Non |
-| `.env.local` | Dev local (db@localhost:5432) | Non |
+| `apps/api/.env` | Dev local API (db@localhost:5432) | Non |
+| `apps/api/.env.example` | Template API | Oui |
 
 ### Variables d'environnement
 
 ```env
-# Frontend (injectées au BUILD, pas au runtime)
+# Frontend (injectees au BUILD, pas au runtime)
 NEXT_PUBLIC_API_BASE=/api
-NEXT_PUBLIC_APP_NAME=MemoList
+NEXT_PUBLIC_APP_NAME=Memoo
 
 # Backend
 DATABASE_URL=postgresql://user:pass@host:5432/db
-AUTH_TOKEN=<générer: openssl rand -hex 32>
+JWT_SECRET=<generer: openssl rand -hex 32>
 
 # PostgreSQL
-POSTGRES_DB=memolist
-POSTGRES_USER=memolist
-POSTGRES_PASSWORD=<mot-de-passe-sécurisé>
+POSTGRES_DB=Memoo
+POSTGRES_USER=Memoo
+POSTGRES_PASSWORD=<mot-de-passe-securise>
+```
+
+---
+
+## Notes techniques
+
+### Prisma 7 avec adaptateur PostgreSQL
+
+Prisma 7 utilise un pattern d'adaptateur pour les connexions :
+
+```typescript
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+```
+
+### Catch-all route Next.js
+
+L'API utilise une route catch-all `[...path]/route.ts` pour gerer tous les endpoints dans un seul fichier :
+
+```typescript
+// apps/api/app/api/[...path]/route.ts
+export async function GET(req: NextRequest) {
+  const { pathname } = new URL(req.url);
+
+  if (pathname === "/api/health") { ... }
+  if (pathname === "/api/auth/me") { ... }
+  // etc.
+}
+```
+
+### Authentification JWT
+
+```typescript
+// Backend: Signer un token
+const token = jwt.sign(
+  { userId: user.id, email: user.email },
+  JWT_SECRET,
+  { expiresIn: "7d" }
+);
+
+// Backend: Verifier un token
+const payload = jwt.verify(token, JWT_SECRET);
+
+// Frontend: Stocker/Recuperer
+localStorage.setItem("auth_token", token);
+headers["Authorization"] = `Bearer ${token}`;
 ```
 
 ---
@@ -299,31 +424,31 @@ POSTGRES_PASSWORD=<mot-de-passe-sécurisé>
 
 | Limitation | Description |
 |------------|-------------|
-| Mono-utilisateur | Token d'auth statique, pas de multi-tenancy |
-| Deck hardcodé | 100 questions dans `deck.ts` côté frontend |
-| Sync minimal | Endpoints présents mais non utilisés |
+| Deck hardcode | 100 questions dans `deck.ts` cote frontend |
 | Pas de notifications | Pas de worker pour les rappels |
-| Pas d'observabilité | Pas de logging/tracing |
-| Auth basique | OAuth/email commenté |
+| Pas d'observabilite | Pas de logging/tracing |
+| Pas de reset password | Fonctionnalite a ajouter |
 
 ---
 
-## Évolutions prévues
+## Evolutions prevues
 
-- [ ] Authentification complète (email/OAuth)
-- [ ] Support multi-utilisateurs
-- [ ] Système de jobs en background
-- [ ] Observabilité (OpenTelemetry)
+- [x] Authentification complete (email/password JWT)
+- [x] Synchronisation offline-first des reviews
+- [ ] Support multi-decks dynamiques
+- [ ] Systeme de jobs en background
+- [ ] Observabilite (OpenTelemetry)
 - [ ] Interface d'administration des decks
-- [ ] Optimisation mobile
+- [ ] Reset password par email
+- [ ] OAuth (Google, GitHub)
 
 ---
 
 ## Contenu actuel
 
-**100 questions** couvrant l'éducation civique française :
+**100 questions** couvrant l'education civique francaise :
 - Structure constitutionnelle
-- Droits et libertés
-- Système électoral
-- Principes démocratiques
+- Droits et libertes
+- Systeme electoral
+- Principes democratiques
 - Relations internationales

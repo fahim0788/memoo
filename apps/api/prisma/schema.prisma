@@ -7,19 +7,19 @@ datasource db {
 }
 
 /**
- * MVP schema (single-user)
- * - Decks & Cards seeded via API or directly in DB later
- * - Reviews are stored for analytics and syncing
+ * Schema avec authentification email/password
  */
 model User {
   id        String   @id @default(cuid())
-  email     String 
+  email     String   @unique
   firstName String
   lastName  String
   password  String
-  isActive  Boolean
-  createdAt DateTime @updatedAt
-  updatedAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews   Review[]
 }
 
 model Deck {
@@ -44,11 +44,12 @@ model Card {
 
 model Review {
   id         String   @id @default(cuid())
-  cardId     String   // ID de la carte (peut ne pas exister en base pour le MVP)
+  cardId     String
   ok         Boolean
   userAnswer String
   reviewedAt DateTime @default(now())
 
-  // Relation optionnelle pour le MVP (les cards sont hardcodées dans le frontend)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   card       Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
 }

@@ -3,7 +3,16 @@
     "allow": [
       "Bash(docker compose:*)",
       "Bash(curl:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run dev:*)",
+      "Bash(ping:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(curl.exe:*)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''http://localhost:3004/api/health'' -TimeoutSec 5 | Select-Object -ExpandProperty Content\")",
+      "Bash(powershell -Command:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }

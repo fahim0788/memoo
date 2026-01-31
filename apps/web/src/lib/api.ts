@@ -1,10 +1,12 @@
+import { getToken } from "./auth";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "/api";
-const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || "";
 
 function authHeaders(): HeadersInit {
   const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (AUTH_TOKEN) {
-    headers["x-auth-token"] = AUTH_TOKEN;
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
   return headers;
 }

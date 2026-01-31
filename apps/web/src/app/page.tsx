@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { DECK } from "../lib/deck";
 import { idbGet, idbSet } from "../lib/idb";
 import { defaultCardState, gradeCard, type CardState } from "../lib/sr-engine";
 import { isCorrect } from "../lib/text";
 import { queueReview } from "../lib/sync";
+import { useAuth } from "../contexts/AuthContext";
 
 
 type AppState = {
@@ -43,14 +45,24 @@ function pickNextDue(state: AppState) {
 
 
 export default function HomePage() {
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
   const [app, setApp] = useState<AppState | null>(null);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<{ ok: boolean; expected: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
-console.log("RENDER HomePage", app);
+
   useEffect(() => {
-    idbGet<AppState>(STORAGE_KEY).then(s => setApp(s ?? buildInitialState()));
-  }, []);
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (user) {
+      idbGet<AppState>(STORAGE_KEY).then(s => setApp(s ?? buildInitialState()));
+    }
+  }, [user]);
 
   const current = useMemo(() => (app ? pickNextDue(app) : null), [app]);
 
@@ -99,11 +111,11 @@ console.log("RENDER HomePage", app);
     setApp(await idbGet<AppState>(STORAGE_KEY));
   }
 
-  if (!app) {
+  if (loading || !user || !app) {
     return (
       <div className="app">
         <div className="container">
-          <div className="card">Chargement…</div>
+          <div className="card">Chargement...</div>
         </div>
       </div>
     );
@@ -113,8 +125,16 @@ console.log("RENDER HomePage", app);
     <div className="app">
       <div className="container">
         <div className="header">
-          <h2>Memoo</h2>
-          <span className="small">Aujourd’hui : <b>{app.doneToday}</b></span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2>Memoo</h2>
+            <button
+              onClick={() => { logout(); router.push("/login"); }}
+              style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+            >
+              Deconnexion
+            </button>
+          </div>
+          <span className="small">Aujourd'hui : <b>{app.doneToday}</b></span>
         </div>
 
         <div className="card">

@@ -1,5 +1,6 @@
 import "./globals.css";
 import { PwaBoot } from "../lib/pwa-boot";
+import { AuthProvider } from "../contexts/AuthContext";
 
 export const metadata = {
   title: process.env.NEXT_PUBLIC_APP_NAME || "MemoList",
@@ -17,8 +18,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="MemoList" />
       </head>
       <body>
-        <PwaBoot />
-        {children}
+        <AuthProvider>
+          <PwaBoot />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
