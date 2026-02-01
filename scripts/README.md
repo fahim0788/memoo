@@ -1,94 +1,90 @@
 # Scripts de déploiement
 
-Ce répertoire contient les scripts pour déployer l'application Memoo sur un Raspberry Pi.
+Ce répertoire contient les scripts pour déployer l'application Memoo sur un Raspberry Pi via Git.
 
 ## 📁 Fichiers
 
-### `build-and-push.sh`
-**Où l'exécuter :** Sur votre machine locale (Windows avec WSL/Git Bash)
+### `push-to-git.sh`
+**Où l'exécuter :** Sur votre PC (via Git Bash ou WSL)
 
 **Ce qu'il fait :**
-1. Génère le fichier `.env` depuis `config.json`
-2. Build les images Docker pour ARM64 (Raspberry Pi)
-3. Sauvegarde les images en fichiers .tar
-4. Transfère TOUT vers le Pi :
-   - Images Docker
-   - `.env` (généré automatiquement)
-   - `docker-compose.prod.yml`
-   - Scripts de déploiement
-   - Configuration Nginx
-5. Charge les images sur le Pi
-6. Rend les scripts exécutables
+1. `git add .` — stage tous les fichiers modifiés
+2. `git commit` avec le message fourni en argument
+3. `git push` vers le remote
 
 **Usage :**
 ```bash
-./scripts/build-and-push.sh [config.json]
+bash scripts/push-to-git.sh "message de commit"
 ```
 
-**Prérequis :**
-- Docker avec buildx
-- jq installé (`apt install jq` sur WSL)
-- Accès SSH au Raspberry Pi
-- Fichier `config.json` configuré
-
-**Note :** Depuis la v2, ce script génère automatiquement le `.env` - vous n'avez plus besoin de l'éditer manuellement sur le Pi !
+Si aucun message n'est fourni, utilise `"Update code"` par défaut.
 
 ---
 
 ### `initial-setup.sh`
-**Où l'exécuter :** Sur le Raspberry Pi (via SSH)
+**Où l'exécuter :** Sur le Raspberry Pi (via SSH) — **UNE SEULE FOIS**
 
 **Ce qu'il fait :**
-1. Vérifie les prérequis (`.env`, `docker-compose.prod.yml`)
-2. Sauvegarde la configuration Nginx actuelle
-3. Arrête les anciens conteneurs
-4. Arrête et désactive Nginx global
-5. Démarre la base de données
-6. Exécute les migrations Prisma
-7. Démarre tous les services Docker
+1. Vérifie les prérequis (Docker, docker-compose, Git)
+2. Clone le repository Git (si une URL est fournie en argument)
+3. Vérifie que `.env` existe, sinon copie `.env.production.example` et demande de l'éditer
+4. Sauvegarde la configuration Nginx actuelle
+5. Arrête les anciens conteneurs memoo
+6. Arrête et désactive Nginx global
+7. Build les images Docker localement (WEB + API)
+8. Démarre PostgreSQL et exécute les migrations Prisma
+9. Démarre tous les services Docker
 
 **Usage :**
 ```bash
-./scripts/initial-setup.sh
+# Si le repo est déjà cloné (vous êtes dans le répertoire)
+bash ./scripts/initial-setup.sh
+
+# Pour cloner depuis une URL Git
+bash ./scripts/initial-setup.sh https://github.com/user/memolist-mvp.git
 ```
 
-**⚠️ À exécuter UNE SEULE FOIS lors de la migration initiale**
+**⚠️ Ne pas utiliser `sudo`** — le script gère les commandes nécessitant sudo en interne.
 
 **Prérequis :**
-- `build-and-push.sh` déjà exécuté
-- Fichier `.env` transféré (automatique)
-- Images Docker chargées (automatique)
+- Docker, docker-compose et Git installés
+- User dans le groupe `docker`
+- Fichier `.env` configuré (voir `.env.production.example`)
 
 ---
 
 ### `deploy.sh`
-**Où l'exécuter :** Sur le Raspberry Pi (via SSH)
+**Où l'exécuter :** Sur le Raspberry Pi (via SSH) — à chaque mise à jour
 
 **Ce qu'il fait :**
 1. Backup automatique de la base de données
-2. Charge les nouvelles images Docker (si présentes)
-3. Exécute les migrations Prisma
-4. Redémarre les services
-5. Vérifie la santé de l'API
+2. `git pull` des dernières modifications
+3. Rebuild des images Docker (WEB + API)
+4. Exécution des migrations Prisma
+5. Redémarrage des conteneurs (`--force-recreate`)
+6. Health check de l'API
 
 **Usage :**
 ```bash
-# Déploiement complet (backup + migrations)
-./scripts/deploy.sh
+# Déploiement complet (défaut)
+bash ./scripts/deploy.sh
 
 # Sans backup
-./scripts/deploy.sh --skip-backup
+bash ./scripts/deploy.sh --skip-backup
+
+# Sans rebuild (plus rapide si pas de changement de code)
+bash ./scripts/deploy.sh --skip-build
 
 # Sans migrations
-./scripts/deploy.sh --skip-migrations
+bash ./scripts/deploy.sh --skip-migrations
 
-# Sans backup ni migrations (déploiement rapide)
-./scripts/deploy.sh --skip-backup --skip-migrations
+# Déploiement minimal (juste git pull + restart)
+bash ./scripts/deploy.sh --skip-backup --skip-migrations --skip-build
 ```
 
 **Prérequis :**
-- Setup initial complété
-- Nouvelles images transférées via `build-and-push.sh`
+- Setup initial complété (`initial-setup.sh` déjà exécuté)
+- Code pushé vers Git depuis le PC
 
 ---
 
@@ -96,15 +92,15 @@ Ce répertoire contient les scripts pour déployer l'application Memoo sur un Ra
 **Où l'exécuter :** Sur votre machine locale
 
 **Ce qu'il fait :**
-- Génère des secrets aléatoires sécurisés (32-48 caractères)
-- Affiche le format pour `config.json` et `.env`
+- Génère des secrets aléatoires sécurisés (mot de passe PostgreSQL 32 chars, JWT secret 48 chars)
+- Affiche les valeurs à copier dans votre fichier `.env`
 
 **Usage :**
 ```bash
-./scripts/generate-secrets.sh
+bash scripts/generate-secrets.sh
 ```
 
-Copiez les secrets générés dans votre `config.json`.
+Copiez les secrets générés dans le fichier `.env` sur le Raspberry Pi.
 
 ---
 
@@ -112,29 +108,26 @@ Copiez les secrets générés dans votre `config.json`.
 
 ### Déploiement initial (première fois)
 
-**1. Sur votre PC Windows :**
+**1. Sur votre PC :**
 ```bash
 # Générer des secrets sécurisés
 bash scripts/generate-secrets.sh
 
-# Créer et remplir la configuration
-cp config.example.json config.json
-nano config.json  # Coller les secrets générés
-
-# Build et transférer TOUT
-bash scripts/build-and-push.sh
+# Pousser le code vers Git
+bash scripts/push-to-git.sh "Initial commit"
 ```
 
 **2. Sur le Raspberry Pi :**
 ```bash
-# Se connecter
 ssh fahim@192.168.1.187
+cd ~
 
-# Aller dans le répertoire (créé automatiquement)
-cd ~/memoo
-
-# Migration complète
-./scripts/initial-setup.sh
+# Cloner le repo et lancer la migration
+git clone https://github.com/votre-username/memolist-mvp.git memoo
+cd memoo
+cp .env.production.example .env
+nano .env  # Coller les secrets générés
+bash ./scripts/initial-setup.sh
 ```
 
 ### Mises à jour quotidiennes
@@ -142,130 +135,72 @@ cd ~/memoo
 **1. Sur votre PC :**
 ```bash
 # Modifier le code, puis
-git add .
-git commit -m "Updates"
-git push  # Optionnel
-
-# Build et transférer
-bash scripts/build-and-push.sh
+bash scripts/push-to-git.sh "Description des changements"
 ```
 
 **2. Sur le Pi :**
 ```bash
 ssh fahim@192.168.1.187
 cd ~/memoo
-./scripts/deploy.sh
+bash ./scripts/deploy.sh
 ```
 
 ---
 
 ## 📝 Configuration
 
-### config.json (PC local - REQUIS)
-```json
-{
-  "project": {
-    "name": "memoo",
-    "domain": "memoo.fr"
-  },
-  "pi": {
-    "host": "192.168.1.187",
-    "user": "fahim",
-    "path": "/home/fahim/memoo"
-  },
-  "database": {
-    "name": "memolist",
-    "user": "memolist",
-    "password": "votre_mot_de_passe_securise"
-  },
-  "security": {
-    "jwt_secret": "votre_secret_jwt_32_chars_minimum"
-  },
-  "ssl": {
-    "enabled": true,
-    "email": "votre-email@example.com"
-  }
-}
-```
+### .env (Raspberry Pi — à éditer manuellement)
 
-### .env (Raspberry Pi - AUTO-GÉNÉRÉ)
-**Note :** Depuis la v2, ce fichier est généré automatiquement par `build-and-push.sh` depuis `config.json`. Vous n'avez plus besoin de l'éditer manuellement !
+Créé depuis `.env.production.example` :
 
-Format généré :
 ```bash
-# Auto-généré depuis config.json
 DOMAIN=memoo.fr
 POSTGRES_DB=memolist
 POSTGRES_USER=memolist
-POSTGRES_PASSWORD=<depuis config.json>
-DATABASE_URL=postgresql://memolist:<password>@db:5432/memolist
-JWT_SECRET=<depuis config.json>
+POSTGRES_PASSWORD=votre_mot_de_passe_securise
+DATABASE_URL=postgresql://memolist:votre_mot_de_passe_securise@db:5432/memolist
+JWT_SECRET=votre_secret_jwt_32_chars_minimum
 CORS_ORIGIN=https://memoo.fr
 NODE_ENV=production
 ```
 
----
-
-## 🎯 Différences clés v2 (sans Git sur Pi)
-
-| Aspect | Ancienne méthode | Nouvelle méthode v2 |
-|--------|------------------|---------------------|
-| **Git sur Pi** | ✅ Requis | ❌ Non requis |
-| **Édition .env** | ✅ Manuelle | ❌ Auto-généré |
-| **Build** | Sur le Pi (lent) | Sur PC (rapide) |
-| **Transfert** | Images seulement | Images + config + scripts |
-| **Complexité** | Moyenne | Simple |
-
-**Avantages v2 :**
-- ✅ Pi = Simple runner Docker
-- ✅ Pas d'édition manuelle de .env
-- ✅ Configuration centralisée dans config.json
-- ✅ Build rapide sur PC (pas sur le Pi ARM lent)
-- ✅ Moins d'étapes, moins d'erreurs
+**⚠️ Important :** `DATABASE_URL` doit contenir les valeurs littérales — docker-compose ne résout pas les variables `${}` entre elles dans un fichier `.env`.
 
 ---
 
 ## 🛠️ Dépannage
 
-### Erreur "buildx not found"
+### "command not found" sur les scripts
 ```bash
-docker buildx install
-docker buildx create --name multiarch --use
+# Toujours utiliser bash explicitement
+bash ./scripts/initial-setup.sh
+bash ./scripts/deploy.sh
 ```
 
-### Erreur "jq not found"
+### "Permission denied" avec Docker
 ```bash
-# Sur WSL/Linux
-sudo apt install jq
-
-# Sur macOS
-brew install jq
-```
-
-### Erreur SSH / Permission denied
-```bash
-# Tester la connexion
+sudo usermod -aG docker fahim
+# Déconnecter et reconnecter via SSH
+exit
 ssh fahim@192.168.1.187
-
-# Configurer les clés SSH (recommandé)
-ssh-keygen -t ed25519
-ssh-copy-id fahim@192.168.1.187
 ```
 
-### Le .env n'est pas généré
-Vérifiez que `config.json` est bien formaté :
+### docker-compose n'est pas installé
 ```bash
-# Valider le JSON
-cat config.json | jq .
+sudo apt update
+sudo apt install -y docker-compose
 ```
 
-### Les images ne se transfèrent pas
+### Erreur DATABASE_URL lors des migrations Prisma
+Vérifie que `.env` ne contient pas de variables `${}` dans `DATABASE_URL` :
 ```bash
-# Vérifier l'espace disque sur le Pi
-ssh fahim@192.168.1.187 "df -h"
-
-# Les images font ~500MB-1GB chacune
+cat .env | grep DATABASE_URL
+# Correct :   postgresql://memolist:motdepasse@db:5432/memolist
+# Incorrect : postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 ```
+
+### npx demande d'installer Prisma pendant les migrations
+C'est normal. Le conteneur API n'a pas Prisma en cache la première fois. Confirmez avec `y` et attendez la fin de l'installation.
 
 ---
 

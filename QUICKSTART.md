@@ -11,9 +11,35 @@ Guide rapide pour déployer sur votre Raspberry Pi avec Git et build local.
 
 **Sur le Raspberry Pi :**
 - Debian/Raspbian
-- Docker + docker-compose
+- Docker + docker-compose installés
 - Git installé
+- Votre user dans le groupe `docker`
 - Certificats SSL Let's Encrypt (optionnel)
+
+---
+
+## ⚙️ Préparation du Raspberry Pi (avant tout)
+
+À faire **une seule fois** avant le premier déploiement :
+
+```bash
+ssh fahim@192.168.1.187
+
+# 1. Installer les prérequis
+sudo apt update
+sudo apt install -y docker docker-compose git
+
+# 2. Ajouter votre user au groupe docker
+sudo usermod -aG docker fahim
+
+# 3. Vérifier
+docker --version
+docker-compose --version
+groups
+# Doit afficher "docker" dans la liste
+```
+
+**Si "docker" n'apparaît pas dans `groups` :** déconnectez-vous et reconnectez-vous via SSH.
 
 ---
 
@@ -54,9 +80,11 @@ cd memoo
 cp .env.production.example .env
 nano .env  # Remplir avec vos valeurs
 
-# Lancer la migration
-./scripts/initial-setup.sh
+# Lancer la migration (sans sudo !)
+bash ./scripts/initial-setup.sh
 ```
+
+⚠️ **Important : Ne jamais utiliser `sudo` pour lancer les scripts.** Le script gère lui-même les commandes qui nécessitent sudo (comme nginx). Utiliser sudo peut causer des problèmes de permissions avec Docker.
 
 **⏱️ Durée : 20-40 minutes (build Docker sur Pi)**
 
@@ -90,7 +118,7 @@ git push
 ```bash
 ssh fahim@192.168.1.187
 cd ~/memoo
-./scripts/deploy.sh
+bash ./scripts/deploy.sh
 ```
 
 **C'est tout ! Le script fait automatiquement :**
@@ -153,14 +181,42 @@ docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U memolist memolis
 
 ## 🆘 Problème ?
 
+### "command not found" sur le script
 ```bash
-# Voir les logs
-docker-compose -f docker-compose.prod.yml logs
+# Ne pas utiliser sudo, et utiliser bash
+bash ./scripts/initial-setup.sh
+bash ./scripts/deploy.sh
+```
 
-# Redémarrer un service
+### "docker-compose n'est pas installé"
+```bash
+sudo apt update
+sudo apt install -y docker-compose
+```
+
+### "Permission denied" avec Docker
+```bash
+# Ajouter votre user au groupe docker
+sudo usermod -aG docker fahim
+
+# Déconnecter et reconnecter via SSH
+exit
+ssh fahim@192.168.1.187
+```
+
+### Voir les logs
+```bash
+docker-compose -f docker-compose.prod.yml logs -f
+docker-compose -f docker-compose.prod.yml logs -f api
+```
+
+### Redémarrer un service
+```bash
 docker-compose -f docker-compose.prod.yml restart api
+```
 
-# Restaurer Nginx global (rollback)
+### Restaurer Nginx global (rollback)
+```bash
 sudo systemctl start nginx
 sudo systemctl enable nginx
 ```
@@ -186,13 +242,19 @@ Modifier code  →  git push  →  Repository  →  git pull  →  Build local A
 
 ## 🎯 Résumé ultra-rapide
 
+**Préparation Pi (une fois) :**
+```bash
+sudo apt install -y docker docker-compose git
+sudo usermod -aG docker fahim
+```
+
 **Migration initiale :**
 1. PC : `git push`
-2. Pi : `git clone` → `nano .env` → `./scripts/initial-setup.sh`
+2. Pi : `git clone` → `nano .env` → `bash ./scripts/initial-setup.sh`
 
 **Mises à jour :**
 1. PC : `git push`
-2. Pi : `./scripts/deploy.sh`
+2. Pi : `bash ./scripts/deploy.sh`
 
 ---
 
