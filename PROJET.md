@@ -13,6 +13,7 @@ Application PWA de revision par repetition espacee, concue pour l'apprentissage 
 - **Repetition espacee** : Algorithme SM-2 adapte pour optimiser la memorisation
 - **Suivi quotidien** : Compteur de cartes etudiees par jour
 - **Authentification** : Login/Register avec email et mot de passe (JWT)
+- **Listes dynamiques** : Les cartes sont chargees depuis la base de donnees. Chaque utilisateur choisit ses listes et ses resultats sont independants.
 - **Synchronisation** : Queue offline des reviews, sync automatique
 
 ---
@@ -55,7 +56,7 @@ Memoo-mvp/
 │   │   ├── src/
 │   │   │   ├── app/
 │   │   │   │   ├── layout.tsx  # Layout racine avec PWA + AuthProvider
-│   │   │   │   ├── page.tsx    # Interface d'etude principale (protegee)
+│   │   │   │   ├── page.tsx    # Menu listes + etude (menu / available / studying)
 │   │   │   │   ├── login/
 │   │   │   │   │   └── page.tsx # Page de connexion/inscription
 │   │   │   │   └── globals.css # Styles globaux (theme sombre)
@@ -64,8 +65,7 @@ Memoo-mvp/
 │   │   │   └── lib/
 │   │   │       ├── idb.ts      # Abstraction IndexedDB
 │   │   │       ├── sr-engine.ts # Algorithme repetition espacee
-│   │   │       ├── deck.ts     # Dataset des 100 questions
-│   │   │       ├── api.ts      # Client API (Bearer token)
+│   │   │       ├── api.ts      # Client API (listes, cartes, sync)
 │   │   │       ├── auth.ts     # Fonctions login/register/logout
 │   │   │       ├── sync.ts     # Queue offline et synchronisation
 │   │   │       ├── text.ts     # Validation des reponses
@@ -82,9 +82,10 @@ Memoo-mvp/
 │       │   └── [...path]/
 │       │       └── route.ts    # Catch-all router (auth + CRUD)
 │       ├── prisma/
-│       │   ├── schema.prisma   # Schema BDD
-│       │   ├── prisma.config.ts # Config Prisma 7
+│       │   ├── schema.prisma   # Schema BDD (User, Deck, Card, Review, UserDeck)
+│       │   ├── seed.ts         # Seed des 100 questions (Naturalisation francaise)
 │       │   └── migrations/     # Migrations
+│       ├── prisma.config.ts    # Config Prisma 7 (datasource + seed)
 │       ├── Dockerfile
 │       └── .dockerignore
 │
@@ -138,14 +139,17 @@ Memoo-mvp/
 2. Le Service Worker s'enregistre et met en cache les assets
 3. Verification du token JWT dans localStorage
 4. Si non connecte → redirect vers `/login`
-5. Si connecte → IndexedDB charge la progression
-6. L'algorithme SR selectionne la prochaine carte due
-7. L'utilisateur repond et valide
-8. La reponse est normalisee et comparee
-9. IndexedDB persiste l'etat local
-10. La review est ajoutee a la queue de sync
-11. Sync automatique vers l'API (non-bloquant)
-12. Boucle vers l'etape 6
+5. Si connecte → `GET /api/my-lists` + `GET /api/lists` chargent les listes
+6. **Menu** : l'utilisateur voit ses listes (`Mes listes`) et peut en explorer d'autres
+7. **Explorer** : `GET /api/lists` montre les listes disponibles, bouton "Ajouter" → `POST /api/my-lists`
+8. **Etude** : l'utilisateur ouvre une liste → `GET /api/lists/:id/cards` recupere les cartes
+9. IndexedDB charge l'etat SR de la liste (`state:<deckId>`)
+10. L'algorithme SR selectionne la prochaine carte due
+11. L'utilisateur repond et valide
+12. La reponse est normalisee et comparee
+13. IndexedDB persiste l'etat local, la review est ajoutee a la queue de sync
+14. Sync automatique vers l'API (non-bloquant)
+15. Boucle vers l'etape 10
 
 ### Algorithme de repetition espacee
 
@@ -205,16 +209,23 @@ Correspondance partielle supportee : "Liberte Egalite" valide pour "Liberte, Ega
 | POST | `/api/auth/login` | Connexion | Non |
 | GET | `/api/auth/me` | Infos utilisateur | Bearer |
 
-### Donnees
+### Listes et cartes
+
+| Methode | Endpoint | Description | Auth |
+|---------|----------|-------------|------|
+| GET | `/api/lists` | Toutes les listes disponibles (avec nombre de cartes) | Bearer |
+| GET | `/api/my-lists` | Listes associees a l'utilisateur connecte | Bearer |
+| POST | `/api/my-lists` | Associer une liste (`{ deckId }`) | Bearer |
+| DELETE | `/api/my-lists/:deckId` | Dissocier une liste | Bearer |
+| GET | `/api/lists/:deckId/cards` | Cartes d'une liste donnee | Bearer |
+
+### Sync et divers
 
 | Methode | Endpoint | Description | Auth |
 |---------|----------|-------------|------|
 | GET | `/api/health` | Status du serveur | Non |
 | GET | `/api/sync/pull` | Recuperer l'etat serveur | Bearer |
 | POST | `/api/sync/push` | Envoyer les reviews | Bearer |
-| GET | `/api/decks` | Lister les decks | Bearer |
-| POST | `/api/decks` | Creer un deck | Bearer |
-| POST | `/api/decks/:id/cards` | Creer une carte | Bearer |
 
 **Authentification** : Header `Authorization: Bearer <JWT_TOKEN>`
 
@@ -224,30 +235,32 @@ Correspondance partielle supportee : "Liberte Egalite" valide pour "Liberte, Ega
 
 ```prisma
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   firstName String
   lastName  String
-  password  String   // Hash bcrypt
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  password  String     // Hash bcrypt
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   reviews   Review[]
+  userDecks UserDeck[] // Listes choisies par l'utilisateur
 }
 
 model Deck {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
   cards     Card[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userDecks UserDeck[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Card {
   id        String   @id @default(cuid())
   deckId    String
   question  String
-  answer    String
+  answers   Json     @default("[]") // Tableau de reponses acceptees
   deck      Deck     @relation(...)
   reviews   Review[]
   createdAt DateTime @default(now())
@@ -260,13 +273,24 @@ model Review {
   ok         Boolean
   userAnswer String
   reviewedAt DateTime @default(now())
-  userId     String?
+  userId    String?
   user       User?    @relation(...)
   card       Card?    @relation(...)
 }
+
+// Table de jonction : association utilisateur ↔ liste
+model UserDeck {
+  id        String   @id @default(cuid())
+  userId   String
+  deckId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(...)
+  deck      Deck     @relation(...)
+  @@unique([userId, deckId])
+}
 ```
 
-**Note** : La relation `card` est optionnelle car les cards du MVP sont hardcodees dans le frontend (pas en base).
+**Seed** : Le script `prisma/seed.ts` peuple automatiquement une liste "Naturalisation francaise" avec 100 cartes. Il se lance via `npx prisma db seed`.
 
 ---
 
@@ -424,7 +448,6 @@ headers["Authorization"] = `Bearer ${token}`;
 
 | Limitation | Description |
 |------------|-------------|
-| Deck hardcode | 100 questions dans `deck.ts` cote frontend |
 | Pas de notifications | Pas de worker pour les rappels |
 | Pas d'observabilite | Pas de logging/tracing |
 | Pas de reset password | Fonctionnalite a ajouter |
@@ -435,7 +458,7 @@ headers["Authorization"] = `Bearer ${token}`;
 
 - [x] Authentification complete (email/password JWT)
 - [x] Synchronisation offline-first des reviews
-- [ ] Support multi-decks dynamiques
+- [x] Support multi-decks dynamiques
 - [ ] Systeme de jobs en background
 - [ ] Observabilite (OpenTelemetry)
 - [ ] Interface d'administration des decks

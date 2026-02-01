@@ -48,7 +48,7 @@ function withCors(res: NextResponse, origin?: string | null) {
     res.headers.set("Access-Control-Allow-Origin", origin);
   }
 
-  res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.headers.set("Access-Control-Allow-Credentials", "true");
 
@@ -133,12 +133,60 @@ export async function GET(req: NextRequest) {
     return json({ user }, req);
   }
 
-  if (pathname === "/api/decks") {
+  // GET /api/lists/:deckId/cards  (before /api/lists to avoid conflict)
+  const cardsMatch = pathname.match(/^\/api\/lists\/([^/]+)\/cards$/);
+  if (cardsMatch) {
     const auth = requireAuth(req);
     if ("error" in auth) return auth.error;
 
-    const decks = await getPrisma().deck.findMany({ include: { cards: true } });
-    return json({ decks }, req);
+    const cards = await getPrisma().card.findMany({
+      where: { deckId: cardsMatch[1] },
+      select: { id: true, question: true, answers: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return json({ cards: cards.map(c => ({ ...c, answers: c.answers as string[] })) }, req);
+  }
+
+  if (pathname === "/api/lists") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const decks = await getPrisma().deck.findMany({
+      include: { cards: { select: { id: true } } },
+      orderBy: { name: "asc" },
+    });
+
+    return json({
+      decks: decks.map(d => ({ id: d.id, name: d.name, cardCount: d.cards.length })),
+    }, req);
+  }
+
+  if (pathname === "/api/my-lists") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const userDecks = await getPrisma().userDeck.findMany({
+      where: { userId: auth.user.userId },
+      include: {
+        deck: { include: { cards: { select: { id: true } } } },
+      },
+    });
+
+    return json({
+      decks: userDecks.map(ud => ({
+        id: ud.deck.id,
+        name: ud.deck.name,
+        cardCount: ud.deck.cards.length,
+      })),
+    }, req);
+  }
+
+  if (pathname === "/api/sync/pull") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    return json({ serverTime: Date.now() }, req);
   }
 
   return json({ error: "not found" }, req, 404);
@@ -208,14 +256,70 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (pathname === "/api/decks") {
+  if (pathname === "/api/my-lists") {
     const auth = requireAuth(req);
     if ("error" in auth) return auth.error;
 
-    const { name } = await req.json();
-    const deck = await getPrisma().deck.create({ data: { name: name ?? "Nouveau deck" } });
+    const { deckId } = await req.json();
+    if (!deckId) {
+      return json({ error: "deckId required" }, req, 400);
+    }
 
-    return json({ deck }, req);
+    const deck = await getPrisma().deck.findUnique({ where: { id: deckId } });
+    if (!deck) {
+      return json({ error: "list not found" }, req, 404);
+    }
+
+    await getPrisma().userDeck.createMany({
+      data: [{ userId: auth.user.userId, deckId }],
+      skipDuplicates: true,
+    });
+
+    return json({ ok: true }, req);
+  }
+
+  if (pathname === "/api/sync/push") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const { reviews } = await req.json();
+    if (!Array.isArray(reviews)) {
+      return json({ error: "reviews array required" }, req, 400);
+    }
+
+    const result = await getPrisma().review.createMany({
+      data: reviews.map((r: any) => ({
+        cardId: r.cardId,
+        ok: r.ok,
+        userAnswer: r.userAnswer ?? "",
+        userId: auth.user.userId,
+        ...(r.reviewedAt && { reviewedAt: new Date(r.reviewedAt) }),
+      })),
+    });
+
+    return json({ ok: true, created: result.count, serverTime: Date.now() }, req);
+  }
+
+  return json({ error: "not found" }, req, 404);
+}
+
+/* ============================================================================
+   DELETE
+============================================================================ */
+
+export async function DELETE(req: NextRequest) {
+  const { pathname } = new URL(req.url);
+
+  const myListMatch = pathname.match(/^\/api\/my-lists\/([^/]+)$/);
+  if (myListMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    await getPrisma().userDeck.deleteMany({
+      where: { userId: auth.user.userId, deckId: myListMatch[1] },
+    });
+
+    return json({ ok: true }, req);
   }
 
   return json({ error: "not found" }, req, 404);

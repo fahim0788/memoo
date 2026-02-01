@@ -20,6 +20,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   reviews   Review[]
+  userDecks UserDeck[]
 }
 
 model Deck {
@@ -28,13 +29,14 @@ model Deck {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cards     Card[]
+  userDecks UserDeck[]
 }
 
 model Card {
   id        String   @id @default(cuid())
   deckId    String
   question  String
-  answer    String
+  answers   Json     @default("[]")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -52,4 +54,16 @@ model Review {
   userId     String?
   user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   card       Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+model UserDeck {
+  id        String   @id @default(cuid())
+  userId   String
+  deckId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deckId])
 }
