@@ -178,6 +178,11 @@ sleep 30
 log_info "Exécution des migrations Prisma..."
 docker-compose -f docker-compose.prod.yml run --rm api npx prisma migrate deploy
 
+log_info "Exécution du seed (100 questions)..."
+docker-compose -f docker-compose.prod.yml run --rm api npx prisma db seed || {
+    log_warn "Seed ignoré (la base est peut-être déjà seeded)"
+}
+
 log_info "✓ Base de données initialisée avec succès"
 
 # =============================================================================

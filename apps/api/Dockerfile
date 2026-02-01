@@ -54,6 +54,14 @@ COPY --from=build /app/node_modules/esbuild ./node_modules/esbuild
 COPY --from=build /app/node_modules/@esbuild ./node_modules/@esbuild
 COPY --from=build /app/node_modules/dotenv ./node_modules/dotenv
 
+# Copier pg et ses dépendances (nécessaires pour prisma db seed)
+COPY --from=build /app/node_modules/pg ./node_modules/pg
+COPY --from=build /app/node_modules/pg-pool ./node_modules/pg-pool
+COPY --from=build /app/node_modules/pg-protocol ./node_modules/pg-protocol
+COPY --from=build /app/node_modules/pg-types ./node_modules/pg-types
+COPY --from=build /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
+COPY --from=build /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
+
 EXPOSE 3001
 
 CMD ["node", "server.js"]

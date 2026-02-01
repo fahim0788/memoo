@@ -141,7 +141,12 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
     log_info "Exécution des migrations Prisma..."
     docker-compose -f docker-compose.prod.yml run --rm api npx prisma migrate deploy
 
-    log_info "✓ Migrations appliquées"
+    log_info "Exécution du seed..."
+    docker-compose -f docker-compose.prod.yml run --rm api npx prisma db seed || {
+        log_warn "Seed ignoré (la base est peut-être déjà seeded)"
+    }
+
+    log_info "✓ Migrations et seed appliqués"
 else
     log_warn "⚠️  Migrations de base de données ignorées (--skip-migrations)"
 fi

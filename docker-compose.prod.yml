@@ -40,7 +40,7 @@ services:
     image: memoo-api:latest
     container_name: memoo-api
     expose:
-      - "3000"
+      - "3001"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
