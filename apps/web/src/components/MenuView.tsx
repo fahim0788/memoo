@@ -4,6 +4,7 @@ type MenuViewProps = {
   myLists: DeckFromApi[];
   onStudy: (deck: DeckFromApi) => void;
   onExplore: () => void;
+  onCreateDeck: () => void;
   onRemove: (deckId: string) => void;
   onLogout: () => void;
 };
@@ -12,6 +13,7 @@ export function MenuView({
   myLists,
   onStudy,
   onExplore,
+  onCreateDeck,
   onRemove,
   onLogout,
 }: MenuViewProps) {
@@ -32,7 +34,10 @@ export function MenuView({
           {myLists.map(deck => (
             <div key={deck.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <button className="primary" style={{ flex: 1 }} onClick={() => onStudy(deck)}>
-                {deck.name}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>{deck.isOwned ? "👤" : "📂"}</span>
+                  <span style={{ flex: 1, textAlign: "left" }}>{deck.name}</span>
+                </div>
                 <span className="small" style={{ display: "block", fontWeight: 400, marginTop: "2px" }}>
                   {deck.cardCount} cartes
                 </span>
@@ -57,6 +62,12 @@ export function MenuView({
       <div className="card">
         <button onClick={onExplore} style={{ margin: 0 }}>
           Explorer les listes disponibles
+        </button>
+      </div>
+
+      <div className="card">
+        <button onClick={onCreateDeck} className="primary" style={{ margin: 0 }}>
+          ➕ Ajouter une liste personnalisée
         </button>
       </div>
     </>

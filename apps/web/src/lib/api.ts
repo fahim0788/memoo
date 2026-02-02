@@ -22,6 +22,7 @@ export type DeckFromApi = {
   id: string;
   name: string;
   cardCount: number;
+  isOwned?: boolean;
 };
 
 // Types – Sync
@@ -89,6 +90,12 @@ export async function fetchMyLists(): Promise<DeckFromApi[]> {
   return r.json().then((d: any) => d.decks);
 }
 
+export async function fetchAvailablePersonalDecks(): Promise<DeckFromApi[]> {
+  const r = await fetch(`${API_BASE}/my-decks/available`, { headers: authHeaders(), cache: "no-store" });
+  if (!r.ok) throw new Error("Failed to fetch available personal decks");
+  return r.json().then((d: any) => d.decks);
+}
+
 export async function addList(deckId: string): Promise<void> {
   const r = await fetch(`${API_BASE}/my-lists`, {
     method: "POST",
@@ -106,6 +113,15 @@ export async function removeList(deckId: string): Promise<void> {
     cache: "no-store",
   });
   if (!r.ok) throw new Error("Failed to remove list");
+}
+
+export async function deleteDeck(deckId: string): Promise<void> {
+  const r = await fetch(`${API_BASE}/my-decks/${deckId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  if (!r.ok) throw new Error("Failed to delete deck");
 }
 
 export async function fetchCards(deckId: string): Promise<CardFromApi[]> {

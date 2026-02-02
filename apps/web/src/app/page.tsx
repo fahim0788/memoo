@@ -7,15 +7,16 @@ import { useLists } from "../hooks/useLists";
 import { MenuView } from "../components/MenuView";
 import { AvailableView } from "../components/AvailableView";
 import { StudyView } from "../components/StudyView";
+import { CreateDeckView } from "../components/CreateDeckView";
 import { SyncStatus } from "../components/SyncStatus";
 import type { DeckFromApi, CardFromApi } from "../lib/api";
 
-type View = "menu" | "available" | "studying";
+type View = "menu" | "available" | "studying" | "create";
 
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
-  const { myLists, allLists, loading, error, addList, removeList, getCards } = useLists();
+  const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, getCards, reload } = useLists();
 
   const [view, setView] = useState<View>("menu");
   const [studyDeck, setStudyDeck] = useState<DeckFromApi | null>(null);
@@ -79,6 +80,21 @@ export default function HomePage() {
     }
   }
 
+  async function handleDelete(deckId: string) {
+    if (actionLoading) return;
+    // TODO: Add confirmation dialog
+    try {
+      setActionLoading(true);
+      const { deleteDeck } = await import("../lib/api-cache");
+      await deleteDeck(deckId);
+      await reload();
+    } catch (err) {
+      console.error("Failed to delete deck:", err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleStudy(deck: DeckFromApi) {
     if (actionLoading) return;
     try {
@@ -99,6 +115,12 @@ export default function HomePage() {
     router.push("/login");
   }
 
+  async function handleDeckCreated() {
+    // Refresh lists after creating a deck, then show it in available view
+    await reload();
+    setView("available");
+  }
+
   return (
     <>
       <div className="app">
@@ -108,6 +130,7 @@ export default function HomePage() {
               myLists={myLists}
               onStudy={handleStudy}
               onExplore={() => setView("available")}
+              onCreateDeck={() => setView("create")}
               onRemove={handleRemove}
               onLogout={handleLogout}
             />
@@ -115,9 +138,10 @@ export default function HomePage() {
 
           {view === "available" && (
             <AvailableView
-              allLists={allLists}
-              myListIds={new Set(myLists.map(d => d.id))}
+              publicLists={allLists}
+              personalLists={availablePersonalLists}
               onAdd={handleAdd}
+              onDelete={handleDelete}
               onBack={() => setView("menu")}
             />
           )}
@@ -127,6 +151,13 @@ export default function HomePage() {
               deck={studyDeck}
               cards={studyCards}
               onBack={() => setView("menu")}
+            />
+          )}
+
+          {view === "create" && (
+            <CreateDeckView
+              onBack={() => setView("menu")}
+              onCreated={handleDeckCreated}
             />
           )}
 

@@ -1,20 +1,23 @@
+import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 type AvailableViewProps = {
-  allLists: DeckFromApi[];
-  myListIds: Set<string>;
+  publicLists: DeckFromApi[];
+  personalLists: DeckFromApi[];
   onAdd: (deckId: string) => void;
+  onDelete: (deckId: string) => void;
   onBack: () => void;
 };
 
 export function AvailableView({
-  allLists,
-  myListIds,
+  publicLists,
+  personalLists,
   onAdd,
+  onDelete,
   onBack,
 }: AvailableViewProps) {
-  const available = allLists.filter(d => !myListIds.has(d.id));
-
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   return (
     <>
       <div className="header">
@@ -26,18 +29,35 @@ export function AvailableView({
         </div>
       </div>
 
-      {available.length === 0 && (
-        <div className="card">
-          <p className="small">Toutes les listes sont déjà dans vos listes.</p>
+      {/* Public Lists Section */}
+      <div className="card">
+        <div className="small" style={{ fontWeight: 700, marginBottom: "0.5rem" }}>
+          📂 Listes publiques ({publicLists.length})
         </div>
-      )}
 
-      {available.map(deck => (
-        <div className="card" key={deck.id}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+        {publicLists.length === 0 && (
+          <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
+            Toutes les listes publiques sont déjà activées.
+          </p>
+        )}
+
+        {publicLists.map(deck => (
+          <div
+            key={deck.id}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "8px",
+              padding: "0.75rem 0",
+              borderTop: "1px solid #eee",
+            }}
+          >
             <div>
-              <div style={{ fontWeight: 700 }}>{deck.name}</div>
-              <div className="small">{deck.cardCount} cartes</div>
+              <div style={{ fontWeight: 600 }}>{deck.name}</div>
+              <div className="small" style={{ color: "#666" }}>
+                {deck.cardCount} cartes
+              </div>
             </div>
             <button
               className="primary"
@@ -47,8 +67,82 @@ export function AvailableView({
               Ajouter
             </button>
           </div>
+        ))}
+      </div>
+
+      {/* Personal Lists Section */}
+      <div className="card">
+        <div className="small" style={{ fontWeight: 700, marginBottom: "0.5rem" }}>
+          👤 Mes listes personnalisées ({personalLists.length})
         </div>
-      ))}
+
+        {personalLists.length === 0 && (
+          <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
+            Aucune liste personnalisée disponible.
+            <br />
+            Créez-en une depuis le menu principal.
+          </p>
+        )}
+
+        {personalLists.map(deck => (
+          <div
+            key={deck.id}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "8px",
+              padding: "0.75rem 0",
+              borderTop: "1px solid #eee",
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600 }}>{deck.name}</div>
+              <div className="small" style={{ color: "#666" }}>
+                {deck.cardCount} cartes
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                className="primary"
+                onClick={() => onAdd(deck.id)}
+                style={{ flex: "none", minWidth: 0, padding: "8px 16px" }}
+              >
+                Ajouter
+              </button>
+              <button
+                onClick={() => setDeleteTarget({ id: deck.id, name: deck.name })}
+                style={{
+                  flex: "none",
+                  minWidth: 0,
+                  padding: "8px 12px",
+                  background: "#fee",
+                  color: "#c00",
+                  border: "1px solid #fcc",
+                }}
+                title="Supprimer définitivement"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Supprimer la liste ?"
+        message={`Êtes-vous sûr de vouloir supprimer définitivement la liste "${deleteTarget?.name}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        onConfirm={() => {
+          if (deleteTarget) {
+            onDelete(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 }

@@ -3,23 +3,31 @@ import type { DeckFromApi, CardFromApi } from "../lib/api";
 import {
   fetchLists,
   fetchMyLists,
+  fetchAvailablePersonalDecks,
   fetchCards,
   addList as apiAddList,
   removeList as apiRemoveList,
+  deleteDeck as apiDeleteDeck,
 } from "../lib/api-cache";
 
 export function useLists() {
   const [myLists, setMyLists] = useState<DeckFromApi[]>([]);
   const [allLists, setAllLists] = useState<DeckFromApi[]>([]);
+  const [availablePersonalLists, setAvailablePersonalLists] = useState<DeckFromApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadLists = useCallback(async () => {
     try {
       setError(null);
-      const [my, all] = await Promise.all([fetchMyLists(), fetchLists()]);
+      const [my, all, availablePersonal] = await Promise.all([
+        fetchMyLists(),
+        fetchLists(),
+        fetchAvailablePersonalDecks(),
+      ]);
       setMyLists(my);
       setAllLists(all);
+      setAvailablePersonalLists(availablePersonal);
     } catch (err) {
       console.error("[useLists] Failed to load lists:", err);
       setError(err instanceof Error ? err.message : "Failed to load lists");
@@ -47,14 +55,22 @@ export function useLists() {
   const removeList = useCallback(async (deckId: string) => {
     try {
       setError(null);
-      await apiRemoveList(deckId);
+      // Check if this deck is owned by the user
+      const deck = myLists.find(d => d.id === deckId);
+      if (deck?.isOwned) {
+        // Delete the deck entirely (user owns it)
+        await apiDeleteDeck(deckId);
+      } else {
+        // Just unsubscribe from the deck
+        await apiRemoveList(deckId);
+      }
       await loadLists();
     } catch (err) {
       console.error("[useLists] Failed to remove list:", err);
       setError(err instanceof Error ? err.message : "Failed to remove list");
       throw err;
     }
-  }, [loadLists]);
+  }, [loadLists, myLists]);
 
   const getCards = useCallback(async (deckId: string): Promise<CardFromApi[]> => {
     try {
@@ -70,6 +86,7 @@ export function useLists() {
   return {
     myLists,
     allLists,
+    availablePersonalLists,
     loading,
     error,
     addList,

@@ -152,13 +152,18 @@ export async function GET(req: NextRequest) {
     const auth = requireAuth(req);
     if ("error" in auth) return auth.error;
 
+    // Get only public decks (ownerId = null) that user hasn't activated yet
     const decks = await getPrisma().deck.findMany({
+      where: {
+        ownerId: null,
+        userDecks: { none: { userId: auth.user.userId } }
+      },
       include: { cards: { select: { id: true } } },
       orderBy: { name: "asc" },
     });
 
     return json({
-      decks: decks.map(d => ({ id: d.id, name: d.name, cardCount: d.cards.length })),
+      decks: decks.map(d => ({ id: d.id, name: d.name, cardCount: d.cards.length, isOwned: false })),
     }, req);
   }
 
@@ -173,11 +178,36 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    const decks = userDecks.map(ud => ({
+      id: ud.deck.id,
+      name: ud.deck.name,
+      cardCount: ud.deck.cards.length,
+      isOwned: ud.deck.ownerId === auth.user.userId,
+    }));
+
+    return json({ decks }, req);
+  }
+
+  if (pathname === "/api/my-decks/available") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    // Get user's personal decks that are NOT yet activated (no UserDeck entry)
+    const personalDecks = await getPrisma().deck.findMany({
+      where: {
+        ownerId: auth.user.userId,
+        userDecks: { none: { userId: auth.user.userId } }
+      },
+      include: { cards: { select: { id: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+
     return json({
-      decks: userDecks.map(ud => ({
-        id: ud.deck.id,
-        name: ud.deck.name,
-        cardCount: ud.deck.cards.length,
+      decks: personalDecks.map(d => ({
+        id: d.id,
+        name: d.name,
+        cardCount: d.cards.length,
+        isOwned: true,
       })),
     }, req);
   }
@@ -256,6 +286,40 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (pathname === "/api/my-decks") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const { name, cards } = await req.json();
+    if (!name || !Array.isArray(cards)) {
+      return json({ error: "name and cards array required" }, req, 400);
+    }
+
+    // Validate cards format
+    for (const card of cards) {
+      if (!card.question || !Array.isArray(card.answers) || card.answers.length === 0) {
+        return json({ error: "each card must have a question and at least one answer" }, req, 400);
+      }
+    }
+
+    // Create deck with cards (stays in "available" state until user adds it)
+    const deck = await getPrisma().deck.create({
+      data: {
+        name,
+        ownerId: auth.user.userId,
+        cards: {
+          create: cards.map((c: any) => ({
+            question: c.question,
+            answers: c.answers,
+          })),
+        },
+      },
+      include: { cards: { select: { id: true } } },
+    });
+
+    return json({ ok: true, deck: { id: deck.id, name: deck.name, cardCount: deck.cards.length } }, req);
+  }
+
   if (pathname === "/api/my-lists") {
     const auth = requireAuth(req);
     if ("error" in auth) return auth.error;
@@ -309,6 +373,31 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const { pathname } = new URL(req.url);
+
+  const myDeckMatch = pathname.match(/^\/api\/my-decks\/([^/]+)$/);
+  if (myDeckMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const deckId = myDeckMatch[1];
+    const deck = await getPrisma().deck.findUnique({
+      where: { id: deckId },
+      select: { ownerId: true },
+    });
+
+    if (!deck) {
+      return json({ error: "deck not found" }, req, 404);
+    }
+
+    if (deck.ownerId !== auth.user.userId) {
+      return json({ error: "unauthorized: you can only delete your own decks" }, req, 403);
+    }
+
+    // Delete deck (cascades to cards and userDecks due to schema)
+    await getPrisma().deck.delete({ where: { id: deckId } });
+
+    return json({ ok: true }, req);
+  }
 
   const myListMatch = pathname.match(/^\/api\/my-lists\/([^/]+)$/);
   if (myListMatch) {
