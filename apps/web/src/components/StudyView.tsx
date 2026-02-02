@@ -48,6 +48,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<{ ok: boolean; expected: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [pendingStudy, setPendingStudy] = useState<StudyState | null>(null);
 
   useEffect(() => {
     idbGet<StudyState>(stateKey(deck.id)).then(s => setStudy(s ?? buildStudyState(cards)));
@@ -83,13 +84,17 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
 
     setResult({ ok, expected: current.answers[0] ?? "" });
     setShowResult(true);
-    setStudy(next);
+    setPendingStudy(next);
     await idbSet(stateKey(deck.id), next);
 
     queueReview({ cardId: current.id, ok, userAnswer: answer });
   }
 
   function goNext() {
+    if (pendingStudy) {
+      setStudy(pendingStudy);
+      setPendingStudy(null);
+    }
     setShowResult(false);
   }
 
