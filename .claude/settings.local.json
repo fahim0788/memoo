@@ -19,7 +19,10 @@
       "Bash(npx --yes kill-port:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWw0OWFmaG0wMDAwNGNlbzJsYXcxN3c1IiwiZW1haWwiOiJ0M0B0LmNvbSIsImlhdCI6MTc2OTk4MTUwNywiZXhwIjoxNzcwNTg2MzA3fQ.dPKVWw9CGtBa2xqkj5D3GbthyLnxxI8Hce6WR0fE5nw\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWw0OWFmaG0wMDAwNGNlbzJsYXcxN3c1IiwiZW1haWwiOiJ0M0B0LmNvbSIsImlhdCI6MTc2OTk4MTUwNywiZXhwIjoxNzcwNTg2MzA3fQ.dPKVWw9CGtBa2xqkj5D3GbthyLnxxI8Hce6WR0fE5nw\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWw1MXh1NXAwMDAwMGtlb29lbDk2aHI3IiwiZW1haWwiOiJ0ZXN0QG1lbW9saXN0LmNvbSIsImlhdCI6MTc3MDAyOTYyOCwiZXhwIjoxNzcwNjM0NDI4fQ.Rca5o1xNUgw-1r_IePvOzzdKU699jc3C7AhpI0AJOJE\")",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)"
     ]
   }
 }
