@@ -49,6 +49,7 @@ COPY --from=build /app/prisma ./prisma
 
 # Copier prisma.config.ts + tsx (nécessaire pour charger le .ts config)
 COPY --from=build /app/prisma.config.ts ./
+COPY --from=build /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build /app/node_modules/tsx ./node_modules/tsx
 COPY --from=build /app/node_modules/esbuild ./node_modules/esbuild
 COPY --from=build /app/node_modules/@esbuild ./node_modules/@esbuild
