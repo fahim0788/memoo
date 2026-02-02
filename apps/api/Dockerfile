@@ -42,27 +42,12 @@ ENV PORT=3001
 # Copier standalone server
 COPY --from=build /app/.next/standalone ./
 
-# Copier Prisma (schema + generated client)
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+# Copier TOUT node_modules (nécessaire pour prisma CLI + seed)
+COPY --from=build /app/node_modules ./node_modules
+
+# Copier Prisma schema et config
 COPY --from=build /app/prisma ./prisma
-
-# Copier prisma.config.ts + tsx (nécessaire pour charger le .ts config)
 COPY --from=build /app/prisma.config.ts ./
-COPY --from=build /app/node_modules/.bin ./node_modules/.bin
-COPY --from=build /app/node_modules/prisma ./node_modules/prisma
-COPY --from=build /app/node_modules/tsx ./node_modules/tsx
-COPY --from=build /app/node_modules/esbuild ./node_modules/esbuild
-COPY --from=build /app/node_modules/@esbuild ./node_modules/@esbuild
-COPY --from=build /app/node_modules/dotenv ./node_modules/dotenv
-
-# Copier pg et ses dépendances (nécessaires pour prisma db seed)
-COPY --from=build /app/node_modules/pg ./node_modules/pg
-COPY --from=build /app/node_modules/pg-pool ./node_modules/pg-pool
-COPY --from=build /app/node_modules/pg-protocol ./node_modules/pg-protocol
-COPY --from=build /app/node_modules/pg-types ./node_modules/pg-types
-COPY --from=build /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
-COPY --from=build /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
 
 EXPOSE 3001
 
