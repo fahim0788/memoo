@@ -219,6 +219,34 @@ export async function GET(req: NextRequest) {
     return json({ serverTime: Date.now() }, req);
   }
 
+  // GET /api/tts/status/:jobId
+  const ttsStatusMatch = pathname.match(/^\/api\/tts\/status\/([^/]+)$/);
+  if (ttsStatusMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const jobId = ttsStatusMatch[1];
+    const job = await getPrisma().ttsJob.findUnique({
+      where: { id: jobId },
+      select: {
+        id: true,
+        status: true,
+        totalPhrases: true,
+        processedCount: true,
+        errorMessage: true,
+        resultUrls: true,
+        createdAt: true,
+        completedAt: true,
+      },
+    });
+
+    if (!job) {
+      return json({ error: "job not found" }, req, 404);
+    }
+
+    return json({ job }, req);
+  }
+
   return json({ error: "not found" }, req, 404);
 }
 
@@ -362,6 +390,57 @@ export async function POST(req: NextRequest) {
     });
 
     return json({ ok: true, created: result.count, serverTime: Date.now() }, req);
+  }
+
+  // POST /api/tts/generate
+  if (pathname === "/api/tts/generate") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const { deckId, phrases } = await req.json();
+
+    // Validate input
+    if (!deckId || !Array.isArray(phrases)) {
+      return json({ error: "deckId and phrases array required" }, req, 400);
+    }
+
+    if (phrases.length === 0 || phrases.length > 200) {
+      return json({ error: "phrases must be between 1 and 200 items" }, req, 400);
+    }
+
+    // Validate phrases format: [{textEn: string, textFr: string, cardId?: string}]
+    for (const phrase of phrases) {
+      if (!phrase.textEn || !phrase.textFr) {
+        return json({ error: "each phrase must have textEn and textFr" }, req, 400);
+      }
+    }
+
+    // Verify deck exists and user owns it
+    const deck = await getPrisma().deck.findUnique({
+      where: { id: deckId },
+      select: { ownerId: true },
+    });
+
+    if (!deck) {
+      return json({ error: "deck not found" }, req, 404);
+    }
+
+    if (deck.ownerId !== auth.user.userId) {
+      return json({ error: "unauthorized: you can only generate TTS for your own decks" }, req, 403);
+    }
+
+    // Create TTS job
+    const job = await getPrisma().ttsJob.create({
+      data: {
+        userId: auth.user.userId,
+        deckId,
+        status: "pending",
+        totalPhrases: phrases.length,
+        phrases: phrases,
+      },
+    });
+
+    return json({ ok: true, jobId: job.id }, req, 202); // 202 Accepted
   }
 
   return json({ error: "not found" }, req, 404);

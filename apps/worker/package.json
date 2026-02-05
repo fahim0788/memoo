@@ -1,0 +1,23 @@
+{
+  "name": "worker",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "dotenv": "^16.6.1",
+    "openai": "^4.78.0",
+    "pg": "^8.17.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "prisma": "^7.3.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -16,7 +16,7 @@ type View = "menu" | "available" | "studying" | "create";
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
-  const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, getCards, reload } = useLists();
+  const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, getCards, reload, forceRefresh } = useLists();
 
   const [view, setView] = useState<View>("menu");
   const [studyDeck, setStudyDeck] = useState<DeckFromApi | null>(null);
@@ -116,8 +116,8 @@ export default function HomePage() {
   }
 
   async function handleDeckCreated() {
-    // Refresh lists after creating a deck, then show it in available view
-    await reload();
+    // Force refresh from API after creating a deck (bypasses cache)
+    await forceRefresh();
     setView("available");
   }
 

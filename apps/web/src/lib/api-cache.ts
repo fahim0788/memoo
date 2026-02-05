@@ -1,6 +1,6 @@
 /**
  * API cache layer - wraps API calls with IndexedDB caching
- * Provides offline-first data access for lists and cards
+ * Provides true offline-first data access with operation queue
  */
 
 import { idbGet, idbSet } from "./idb";
@@ -9,12 +9,11 @@ import {
   fetchMyLists as apiFetchMyLists,
   fetchAvailablePersonalDecks as apiFetchAvailablePersonalDecks,
   fetchCards as apiFetchCards,
-  addList as apiAddList,
-  removeList as apiRemoveList,
-  deleteDeck as apiDeleteDeck,
   type DeckFromApi,
   type CardFromApi,
 } from "./api";
+import { enqueue } from "./offline-queue";
+import { processQueue, isOnline } from "./sync-manager";
 
 const CACHE_KEYS = {
   ALL_LISTS: "cache:all-lists",
@@ -41,138 +40,243 @@ function isCacheValid<T>(cached: CachedData<T> | null): boolean {
 
 /**
  * Fetch all available lists (with cache)
+ * Strategy: Cache-first with stale fallback
  */
 export async function fetchLists(): Promise<DeckFromApi[]> {
   const cached = await idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.ALL_LISTS);
 
-  if (isCacheValid(cached)) {
-    console.log("[Cache] Using cached all lists");
-    return cached!.data;
+  // If online and cache expired, try to fetch fresh data
+  if (isOnline() && !isCacheValid(cached)) {
+    try {
+      const data = await apiFetchLists();
+      await idbSet(CACHE_KEYS.ALL_LISTS, { data, timestamp: Date.now() });
+      console.log("[Cache] Updated all lists cache from API");
+      return data;
+    } catch (err) {
+      console.warn("[Cache] Failed to fetch lists from API, using cache", err);
+    }
   }
 
-  try {
-    const data = await apiFetchLists();
-    await idbSet(CACHE_KEYS.ALL_LISTS, { data, timestamp: Date.now() });
-    console.log("[Cache] Updated all lists cache");
-    return data;
-  } catch (err) {
-    console.warn("[Cache] Failed to fetch lists, using stale cache", err);
-    if (cached) return cached.data;
-    throw err;
+  // Return cached data (fresh or stale)
+  if (cached) {
+    console.log("[Cache] Using cached all lists", isCacheValid(cached) ? "(fresh)" : "(stale)");
+    return cached.data;
   }
+
+  // No cache at all - throw error
+  throw new Error("No cached data and unable to fetch from API");
 }
 
 /**
  * Fetch user's subscribed lists (with cache)
+ * Strategy: Cache-first with stale fallback
  */
 export async function fetchMyLists(): Promise<DeckFromApi[]> {
   const cached = await idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.MY_LISTS);
 
-  if (isCacheValid(cached)) {
-    console.log("[Cache] Using cached my lists");
-    return cached!.data;
+  if (isOnline() && !isCacheValid(cached)) {
+    try {
+      const data = await apiFetchMyLists();
+      await idbSet(CACHE_KEYS.MY_LISTS, { data, timestamp: Date.now() });
+      console.log("[Cache] Updated my lists cache from API");
+      return data;
+    } catch (err) {
+      console.warn("[Cache] Failed to fetch my lists from API, using cache", err);
+    }
   }
 
-  try {
-    const data = await apiFetchMyLists();
-    await idbSet(CACHE_KEYS.MY_LISTS, { data, timestamp: Date.now() });
-    console.log("[Cache] Updated my lists cache");
-    return data;
-  } catch (err) {
-    console.warn("[Cache] Failed to fetch my lists, using stale cache", err);
-    if (cached) return cached.data;
-    throw err;
+  if (cached) {
+    console.log("[Cache] Using cached my lists", isCacheValid(cached) ? "(fresh)" : "(stale)");
+    return cached.data;
   }
+
+  throw new Error("No cached data and unable to fetch from API");
 }
 
 /**
  * Fetch user's personal decks that are not yet activated (with cache)
+ * Strategy: Cache-first with stale fallback
  */
 export async function fetchAvailablePersonalDecks(): Promise<DeckFromApi[]> {
   const cached = await idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.AVAILABLE_PERSONAL);
 
-  if (isCacheValid(cached)) {
-    console.log("[Cache] Using cached available personal decks");
-    return cached!.data;
+  if (isOnline() && !isCacheValid(cached)) {
+    try {
+      const data = await apiFetchAvailablePersonalDecks();
+      await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data, timestamp: Date.now() });
+      console.log("[Cache] Updated available personal decks cache from API");
+      return data;
+    } catch (err) {
+      console.warn("[Cache] Failed to fetch available personal decks from API, using cache", err);
+    }
   }
 
-  try {
-    const data = await apiFetchAvailablePersonalDecks();
-    await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data, timestamp: Date.now() });
-    console.log("[Cache] Updated available personal decks cache");
-    return data;
-  } catch (err) {
-    console.warn("[Cache] Failed to fetch available personal decks, using stale cache", err);
-    if (cached) return cached.data;
-    throw err;
+  if (cached) {
+    console.log("[Cache] Using cached available personal decks", isCacheValid(cached) ? "(fresh)" : "(stale)");
+    return cached.data;
   }
+
+  throw new Error("No cached data and unable to fetch from API");
 }
 
 /**
  * Fetch cards for a deck (with cache)
+ * Strategy: Cache-first with stale fallback
  */
 export async function fetchCards(deckId: string): Promise<CardFromApi[]> {
   const cacheKey = CACHE_KEYS.CARDS(deckId);
   const cached = await idbGet<CachedData<CardFromApi[]>>(cacheKey);
 
-  if (isCacheValid(cached)) {
-    console.log(`[Cache] Using cached cards for deck ${deckId}`);
-    return cached!.data;
+  if (isOnline() && !isCacheValid(cached)) {
+    try {
+      const data = await apiFetchCards(deckId);
+      await idbSet(cacheKey, { data, timestamp: Date.now() });
+      console.log(`[Cache] Updated cards cache for deck ${deckId} from API`);
+      return data;
+    } catch (err) {
+      console.warn(`[Cache] Failed to fetch cards for deck ${deckId} from API, using cache`, err);
+    }
   }
 
-  try {
-    const data = await apiFetchCards(deckId);
-    await idbSet(cacheKey, { data, timestamp: Date.now() });
-    console.log(`[Cache] Updated cards cache for deck ${deckId}`);
-    return data;
-  } catch (err) {
-    console.warn(`[Cache] Failed to fetch cards for deck ${deckId}, using stale cache`, err);
-    if (cached) return cached.data;
-    throw err;
+  if (cached) {
+    console.log(`[Cache] Using cached cards for deck ${deckId}`, isCacheValid(cached) ? "(fresh)" : "(stale)");
+    return cached.data;
   }
+
+  throw new Error("No cached data and unable to fetch from API");
 }
 
 /**
- * Add a list to user's subscriptions (invalidates cache)
+ * Add a list to user's subscriptions
+ * TRUE OFFLINE-FIRST: Updates cache immediately, queues API call
  */
 export async function addList(deckId: string): Promise<void> {
-  await apiAddList(deckId);
-  // Invalidate caches
-  await Promise.all([
-    idbSet(CACHE_KEYS.MY_LISTS, null),
-    idbSet(CACHE_KEYS.ALL_LISTS, null),
-    idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, null),
+  // 1. Read current caches for snapshot (rollback data)
+  const [myListsCache, allListsCache, availableCache] = await Promise.all([
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.MY_LISTS),
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.ALL_LISTS),
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.AVAILABLE_PERSONAL),
   ]);
-  console.log("[Cache] Invalidated lists cache after add");
+
+  // 2. Create snapshot for potential rollback
+  const snapshot = {
+    myLists: myListsCache?.data,
+    allLists: allListsCache?.data,
+    availablePersonal: availableCache?.data,
+  };
+
+  // 3. Find the deck to add
+  const deckFromAll = allListsCache?.data?.find(d => d.id === deckId);
+  const deckFromPersonal = availableCache?.data?.find(d => d.id === deckId);
+  const deckToAdd = deckFromAll || deckFromPersonal;
+
+  // 4. Optimistic update - modify caches locally
+  if (deckToAdd) {
+    const newMyLists = [...(myListsCache?.data || []), deckToAdd];
+    await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
+  }
+  if (allListsCache?.data) {
+    const newAllLists = allListsCache.data.filter(d => d.id !== deckId);
+    await idbSet(CACHE_KEYS.ALL_LISTS, { data: newAllLists, timestamp: Date.now() });
+  }
+  if (availableCache?.data) {
+    const newAvailable = availableCache.data.filter(d => d.id !== deckId);
+    await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
+  }
+
+  console.log("[Cache] Optimistic update done for addList");
+
+  // 5. Queue the operation for API sync
+  await enqueue("ADD_LIST", { deckId, snapshot });
+
+  // 6. Try to process queue immediately if online
+  processQueue();
 }
 
 /**
- * Remove a list from user's subscriptions (invalidates cache)
+ * Remove a list from user's subscriptions
+ * TRUE OFFLINE-FIRST: Updates cache immediately, queues API call
  */
 export async function removeList(deckId: string): Promise<void> {
-  await apiRemoveList(deckId);
-  // Invalidate caches
-  await Promise.all([
-    idbSet(CACHE_KEYS.MY_LISTS, null),
-    idbSet(CACHE_KEYS.ALL_LISTS, null),
-    idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, null),
+  // 1. Read current caches for snapshot
+  const [myListsCache, allListsCache, availableCache] = await Promise.all([
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.MY_LISTS),
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.ALL_LISTS),
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.AVAILABLE_PERSONAL),
   ]);
-  console.log("[Cache] Invalidated lists cache after remove");
+
+  // 2. Create snapshot for potential rollback
+  const snapshot = {
+    myLists: myListsCache?.data,
+    allLists: allListsCache?.data,
+    availablePersonal: availableCache?.data,
+  };
+
+  // 3. Find the deck being removed
+  const deckToRemove = myListsCache?.data?.find(d => d.id === deckId);
+
+  // 4. Optimistic update - modify caches locally
+  if (myListsCache?.data) {
+    const newMyLists = myListsCache.data.filter(d => d.id !== deckId);
+    await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
+  }
+  if (deckToRemove) {
+    if (deckToRemove.isOwned) {
+      // Personal deck goes back to available personal
+      const newAvailable = [...(availableCache?.data || []), deckToRemove];
+      await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
+    } else {
+      // Public deck goes back to all lists
+      const newAllLists = [...(allListsCache?.data || []), deckToRemove];
+      await idbSet(CACHE_KEYS.ALL_LISTS, { data: newAllLists, timestamp: Date.now() });
+    }
+  }
+
+  console.log("[Cache] Optimistic update done for removeList");
+
+  // 5. Queue the operation for API sync
+  await enqueue("REMOVE_LIST", { deckId, snapshot });
+
+  // 6. Try to process queue immediately if online
+  processQueue();
 }
 
 /**
- * Delete a user-owned deck (invalidates cache)
+ * Delete a user-owned deck
+ * TRUE OFFLINE-FIRST: Updates cache immediately, queues API call
  */
 export async function deleteDeck(deckId: string): Promise<void> {
-  await apiDeleteDeck(deckId);
-  // Invalidate caches and remove cards cache
-  await Promise.all([
-    idbSet(CACHE_KEYS.MY_LISTS, null),
-    idbSet(CACHE_KEYS.ALL_LISTS, null),
-    idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, null),
-    idbSet(CACHE_KEYS.CARDS(deckId), null),
+  // 1. Read current caches for snapshot
+  const [myListsCache, availableCache] = await Promise.all([
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.MY_LISTS),
+    idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.AVAILABLE_PERSONAL),
   ]);
-  console.log("[Cache] Invalidated caches after deck deletion");
+
+  // 2. Create snapshot for potential rollback
+  const snapshot = {
+    myLists: myListsCache?.data,
+    availablePersonal: availableCache?.data,
+  };
+
+  // 3. Optimistic update - remove from all caches
+  if (myListsCache?.data) {
+    const newMyLists = myListsCache.data.filter(d => d.id !== deckId);
+    await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
+  }
+  if (availableCache?.data) {
+    const newAvailable = availableCache.data.filter(d => d.id !== deckId);
+    await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
+  }
+  // Also clear cards cache for this deck
+  await idbSet(CACHE_KEYS.CARDS(deckId), null);
+
+  console.log("[Cache] Optimistic update done for deleteDeck");
+
+  // 4. Queue the operation for API sync
+  await enqueue("DELETE_DECK", { deckId, snapshot });
+
+  // 5. Try to process queue immediately if online
+  processQueue();
 }
 
 /**
@@ -190,9 +294,14 @@ export async function clearCache(): Promise<void> {
 }
 
 /**
- * Force refresh cache (fetch from API even if cache is valid)
+ * Force refresh cache from API (requires network)
  */
 export async function refreshCache(): Promise<void> {
+  if (!isOnline()) {
+    console.warn("[Cache] Cannot refresh cache while offline");
+    return;
+  }
+
   try {
     const [allLists, myLists, availablePersonal] = await Promise.all([
       apiFetchLists(),
@@ -206,7 +315,7 @@ export async function refreshCache(): Promise<void> {
       idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: availablePersonal, timestamp: Date.now() }),
     ]);
 
-    console.log("[Cache] Force refreshed cache");
+    console.log("[Cache] Force refreshed cache from API");
   } catch (err) {
     console.warn("[Cache] Failed to refresh cache", err);
   }

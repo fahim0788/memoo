@@ -1,14 +1,30 @@
 import { useState, useEffect } from "react";
-import { getPendingCount } from "../lib/sync";
+import { getPendingCount as getReviewsPendingCount } from "../lib/sync";
+import {
+  subscribeSyncStatus,
+  initSyncManager,
+  isOnline as checkIsOnline,
+} from "../lib/sync-manager";
+import { getPendingCount as getListOpsPendingCount } from "../lib/offline-queue";
+
+type SyncState = "idle" | "syncing" | "offline" | "error";
 
 export function useSyncStatus() {
   const [isOnline, setIsOnline] = useState(true);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [reviewsPendingCount, setReviewsPendingCount] = useState(0);
+  const [listOpsPendingCount, setListOpsPendingCount] = useState(0);
+  const [listOpsSyncState, setListOpsSyncState] = useState<SyncState>("idle");
   const [lastSyncCount, setLastSyncCount] = useState<number | null>(null);
+
+  // Initialize sync manager for list operations
+  useEffect(() => {
+    const cleanup = initSyncManager();
+    return cleanup;
+  }, []);
 
   // Update online status
   useEffect(() => {
-    setIsOnline(navigator.onLine);
+    setIsOnline(checkIsOnline());
 
     function handleOnline() {
       console.log("[useSyncStatus] Online");
@@ -29,28 +45,37 @@ export function useSyncStatus() {
     };
   }, []);
 
-  // Update pending count
+  // Subscribe to list operations sync status
   useEffect(() => {
-    async function updatePendingCount() {
-      const count = await getPendingCount();
-      setPendingCount(count);
+    const unsubscribe = subscribeSyncStatus((status, count) => {
+      setListOpsSyncState(status);
+      setListOpsPendingCount(count);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Update reviews pending count
+  useEffect(() => {
+    async function updateReviewsPendingCount() {
+      const count = await getReviewsPendingCount();
+      setReviewsPendingCount(count);
     }
 
-    updatePendingCount();
+    updateReviewsPendingCount();
 
     // Update pending count periodically
-    const interval = setInterval(updatePendingCount, 5000);
+    const interval = setInterval(updateReviewsPendingCount, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Listen for sync completion
+  // Listen for review sync completion
   useEffect(() => {
     function handleSyncComplete(event: Event) {
       const customEvent = event as CustomEvent<{ count: number }>;
       console.log(`[useSyncStatus] Sync complete: ${customEvent.detail.count} reviews`);
       setLastSyncCount(customEvent.detail.count);
-      setPendingCount(0);
+      setReviewsPendingCount(0);
 
       // Clear notification after 3 seconds
       setTimeout(() => setLastSyncCount(null), 3000);
@@ -63,9 +88,21 @@ export function useSyncStatus() {
     };
   }, []);
 
+  // Combined pending count
+  const pendingCount = reviewsPendingCount + listOpsPendingCount;
+
+  // Combined sync state
+  const isSyncing = listOpsSyncState === "syncing";
+  const hasError = listOpsSyncState === "error";
+
   return {
     isOnline,
     pendingCount,
+    reviewsPendingCount,
+    listOpsPendingCount,
+    listOpsSyncState,
+    isSyncing,
+    hasError,
     lastSyncCount,
   };
 }

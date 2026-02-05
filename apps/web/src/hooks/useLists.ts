@@ -8,6 +8,7 @@ import {
   addList as apiAddList,
   removeList as apiRemoveList,
   deleteDeck as apiDeleteDeck,
+  refreshCache,
 } from "../lib/api-cache";
 
 export function useLists() {
@@ -25,9 +26,11 @@ export function useLists() {
         fetchLists(),
         fetchAvailablePersonalDecks(),
       ]);
-      setMyLists(my);
-      setAllLists(all);
-      setAvailablePersonalLists(availablePersonal);
+      console.log("[useLists] Loaded lists:", { my: my.length, all: all.length, availablePersonal: availablePersonal.length });
+      // Force new array references to ensure React detects changes
+      setMyLists([...my]);
+      setAllLists([...all]);
+      setAvailablePersonalLists([...availablePersonal]);
     } catch (err) {
       console.error("[useLists] Failed to load lists:", err);
       setError(err instanceof Error ? err.message : "Failed to load lists");
@@ -43,34 +46,41 @@ export function useLists() {
   const addList = useCallback(async (deckId: string) => {
     try {
       setError(null);
+      // Optimistic update happens in api-cache, operation is queued
       await apiAddList(deckId);
+      // Reload from cache to get updated state
       await loadLists();
     } catch (err) {
-      console.error("[useLists] Failed to add list:", err);
+      // This shouldn't throw in normal operation since errors are queued
+      console.error("[useLists] Unexpected error in addList:", err);
       setError(err instanceof Error ? err.message : "Failed to add list");
-      throw err;
     }
   }, [loadLists]);
 
   const removeList = useCallback(async (deckId: string) => {
     try {
       setError(null);
-      // Check if this deck is owned by the user
-      const deck = myLists.find(d => d.id === deckId);
-      if (deck?.isOwned) {
-        // Delete the deck entirely (user owns it)
-        await apiDeleteDeck(deckId);
-      } else {
-        // Just unsubscribe from the deck
-        await apiRemoveList(deckId);
-      }
+      // Always unsubscribe (never delete) - deletion is handled separately
+      await apiRemoveList(deckId);
+      // Reload from cache to get updated state
       await loadLists();
     } catch (err) {
-      console.error("[useLists] Failed to remove list:", err);
+      console.error("[useLists] Unexpected error in removeList:", err);
       setError(err instanceof Error ? err.message : "Failed to remove list");
-      throw err;
     }
-  }, [loadLists, myLists]);
+  }, [loadLists]);
+
+  const deleteDeck = useCallback(async (deckId: string) => {
+    try {
+      setError(null);
+      await apiDeleteDeck(deckId);
+      // Reload from cache to get updated state
+      await loadLists();
+    } catch (err) {
+      console.error("[useLists] Unexpected error in deleteDeck:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete deck");
+    }
+  }, [loadLists]);
 
   const getCards = useCallback(async (deckId: string): Promise<CardFromApi[]> => {
     try {
@@ -83,6 +93,21 @@ export function useLists() {
     }
   }, []);
 
+  // Force refresh from API (bypasses cache TTL)
+  const forceRefresh = useCallback(async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await refreshCache();
+      await loadLists();
+    } catch (err) {
+      console.error("[useLists] Failed to force refresh:", err);
+      setError(err instanceof Error ? err.message : "Failed to refresh");
+    } finally {
+      setLoading(false);
+    }
+  }, [loadLists]);
+
   return {
     myLists,
     allLists,
@@ -91,7 +116,9 @@ export function useLists() {
     error,
     addList,
     removeList,
+    deleteDeck,
     getCards,
     reload: loadLists,
+    forceRefresh,
   };
 }

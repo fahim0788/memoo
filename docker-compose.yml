@@ -8,6 +8,7 @@ services:
       - "80:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - tts-storage:/app/storage/tts:ro
     depends_on:
       - web
       - api
@@ -40,6 +41,29 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - tts-storage:/app/storage/tts
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TTS Worker (Background job processor)
+  # ===========================================================================
+  worker:
+    build:
+      context: ./apps/worker
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/app/storage/tts
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:3001/storage/tts}
+      - POLL_INTERVAL_MS=5000
+    volumes:
+      - tts-storage:/app/storage/tts
     depends_on:
       db:
         condition: service_healthy
@@ -67,3 +91,4 @@ services:
 
 volumes:
   pgdata:
+  tts-storage:
