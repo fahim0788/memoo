@@ -46,6 +46,16 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=https://${DOMAIN}
+      - STORAGE_TYPE=${STORAGE_TYPE:-minio}
+      - TTS_STORAGE_PATH=/app/storage/tts
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
+      - MINIO_PORT=${MINIO_PORT:-9000}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
+    volumes:
+      - tts-storage:/app/storage/tts
     depends_on:
       db:
         condition: service_healthy
@@ -76,10 +86,67 @@ services:
     networks:
       - memoo-network
 
+  # ===========================================================================
+  # TTS Worker (Background job processor)
+  # ===========================================================================
+  worker:
+    image: memoo-worker:latest
+    container_name: memoo-worker
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - STORAGE_TYPE=${STORAGE_TYPE:-minio}
+      - LOCAL_STORAGE_PATH=/app/storage/tts
+      - PUBLIC_BASE_URL=https://${DOMAIN}/storage/tts
+      - POLL_INTERVAL_MS=5000
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
+      - MINIO_PORT=${MINIO_PORT:-9000}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
+    volumes:
+      - tts-storage:/app/storage/tts
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - memoo-network
+
+  # ===========================================================================
+  # MinIO Object Storage (production)
+  # ===========================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: memoo-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Console web
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - memoo-network
+
 networks:
   memoo-network:
     driver: bridge
 
 volumes:
   pgdata:
+    driver: local
+  tts-storage:
+    driver: local
+  minio-data:
     driver: local

@@ -37,7 +37,7 @@ function getPrisma(): PrismaClient {
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
 const JWT_EXPIRES_IN = "7d";
-const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3001";
+const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3000";
 
 /* ============================================================================
    CORS helpers (App Router compatible)
@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
 
     const cards = await getPrisma().card.findMany({
       where: { deckId: cardsMatch[1] },
-      select: { id: true, question: true, answers: true },
+      select: { id: true, question: true, answers: true, audioUrlEn: true, audioUrlFr: true },
       orderBy: { createdAt: "asc" },
     });
 

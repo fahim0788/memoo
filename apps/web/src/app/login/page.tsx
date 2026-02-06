@@ -40,6 +40,7 @@ export default function LoginPage() {
       <div className="container" style={{ justifyContent: "center", minHeight: "100dvh" }}>
         {/* Logo / App Name */}
         <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <img src="/logo-memoo.png" alt="Memoo Logo" style={{ width: "100px", height: "100px" }} />
           <h1 style={{ fontSize: "2.5rem", margin: 0, fontWeight: 800 }}>
             Memoo
           </h1>
@@ -178,7 +179,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="small" style={{ textAlign: "center", marginTop: "1rem" }}>
-          100 questions pour la naturalisation francaise
+            Leçons populaires ou créez les votre avec vos propres cartes mémoire !
         </p>
       </div>
     </div>

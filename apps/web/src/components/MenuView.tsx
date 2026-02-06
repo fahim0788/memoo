@@ -2,6 +2,7 @@ import type { DeckFromApi } from "../lib/api";
 
 type MenuViewProps = {
   myLists: DeckFromApi[];
+  userName: string;
   onStudy: (deck: DeckFromApi) => void;
   onExplore: () => void;
   onCreateDeck: () => void;
@@ -11,6 +12,7 @@ type MenuViewProps = {
 
 export function MenuView({
   myLists,
+  userName,
   onStudy,
   onExplore,
   onCreateDeck,
@@ -20,11 +22,15 @@ export function MenuView({
   return (
     <>
       <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <h2>Memoo</h2>
-          <button onClick={onLogout} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
-            Déconnexion
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontSize: "1.25rem" }}>👤</span>
+            <span style={{ fontSize: "0.875rem" }}>{userName}</span>
+            <button onClick={onLogout} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
+              Déconnexion
+            </button>
+          </div>
         </div>
       </div>
 

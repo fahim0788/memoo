@@ -2,6 +2,19 @@ import { getToken } from "./auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "/api";
 
+// Base URL for storage (audio files, etc.)
+// In dev: http://localhost:3001 (removes /api suffix)
+// In prod: empty string (same origin, nginx serves both)
+function getStorageBase(): string {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE || "";
+  if (apiBase.includes("://")) {
+    return apiBase.replace(/\/api$/, "");
+  }
+  return "";
+}
+
+export const STORAGE_BASE = getStorageBase();
+
 function authHeaders(): HeadersInit {
   const headers: HeadersInit = { "Content-Type": "application/json" };
   const token = getToken();
@@ -16,6 +29,8 @@ export type CardFromApi = {
   id: string;
   question: string;
   answers: string[];
+  audioUrlEn?: string | null;
+  audioUrlFr?: string | null;
 };
 
 export type DeckFromApi = {

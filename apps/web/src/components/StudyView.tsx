@@ -1,11 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { idbGet, idbSet } from "../lib/idb";
 import { defaultCardState, gradeCard, type CardState } from "../lib/sr-engine";
 import { isCorrect } from "../lib/text";
 import { queueReview } from "../lib/sync";
-import type { DeckFromApi, CardFromApi } from "../lib/api";
+import { STORAGE_BASE, type DeckFromApi, type CardFromApi } from "../lib/api";
+
+function AudioButton({ url, label }: { url?: string | null; label: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  // Reset audio when URL changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlaying(false);
+  }, [url]);
+
+  if (!url) return null;
+
+  const handlePlay = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(url);
+      audioRef.current.onended = () => setPlaying(false);
+    }
+    audioRef.current.currentTime = 0;
+    audioRef.current.play();
+    setPlaying(true);
+  };
+
+  return (
+    <button
+      onClick={handlePlay}
+      style={{
+        padding: "0.25rem 0.5rem",
+        fontSize: "0.85rem",
+        marginLeft: "0.5rem",
+        opacity: playing ? 0.6 : 1,
+      }}
+      disabled={playing}
+    >
+      {playing ? "🔊" : "▶"} {label}
+    </button>
+  );
+}
 
 type StudyState = {
   cards: Record<string, CardState>;
@@ -107,13 +148,24 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
   return (
     <>
       <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <h2>{deck.name}</h2>
-          <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
-            ← Retour
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span style={{
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              padding: "0.25rem 0.5rem",
+              borderRadius: "8px",
+              fontSize: "0.75rem",
+              color: "#e5e7eb"
+            }}>
+              Aujourd'hui : <b>{study.doneToday}</b>
+            </span>
+            <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
+              ← Retour
+            </button>
+          </div>
         </div>
-        <span className="small">Aujourd'hui : <b>{study.doneToday}</b></span>
       </div>
 
       <div className="card">
@@ -124,7 +176,10 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
           </>
         ) : (
           <>
-            <div className="small">Question</div>
+            <div className="small" style={{ display: "flex", alignItems: "center" }}>
+              Question
+              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="EN" />
+            </div>
             <h3>{current.question}</h3>
 
             {!showResult && (
@@ -156,8 +211,9 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
                 <span className={`badge ${result.ok ? "ok" : "bad"}`}>
                   {result.ok ? "✅ Correct" : "❌ Incorrect"}
                 </span>
-                <div className="small">
+                <div className="small" style={{ display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
                   Référence : <b>{result.expected}</b>
+                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label="FR" />
                 </div>
                 <button className="primary" onClick={goNext}>Suivant</button>
               </>

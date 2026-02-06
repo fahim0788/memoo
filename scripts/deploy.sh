@@ -126,6 +126,9 @@ if [ "$SKIP_BUILD" = false ]; then
     log_info "Build de l'image API..."
     docker build -t memoo-api:latest -f apps/api/Dockerfile apps/api
 
+    log_info "Build de l'image WORKER..."
+    docker build -t memoo-worker:latest -f apps/worker/Dockerfile apps/worker
+
     log_info "✓ Images rebuildées"
 else
     log_warn "⚠️  Rebuild des images ignoré (--skip-build)"

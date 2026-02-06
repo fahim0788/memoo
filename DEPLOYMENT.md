@@ -39,14 +39,16 @@ Guide complet pour déployer l'application Memoo sur un Raspberry Pi avec Git et
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Les 4 conteneurs Docker
+### Les 6 conteneurs Docker
 
 1. **nginx** - Reverse proxy avec SSL/HTTPS (ports 80, 443)
 2. **web** - Frontend Next.js (port 3000 interne)
-3. **api** - Backend Next.js + Prisma (port 3000 interne)
-4. **db** - PostgreSQL 16 (port 5432 interne)
+3. **api** - Backend Next.js + Prisma (port 3001 interne)
+4. **worker** - Worker TTS pour génération audio (background)
+5. **db** - PostgreSQL 16 (port 5432 interne)
+6. **minio** - Stockage objet S3 (ports 9000 API, 9001 Console)
 
-Tous les conteneurs sont sur le réseau Docker `memoo-network`. Seul nginx expose des ports vers l'extérieur.
+Tous les conteneurs sont sur le réseau Docker `memoo-network`. Seuls nginx et minio exposent des ports vers l'extérieur.
 
 ---
 
@@ -131,6 +133,7 @@ nano .env
 Remplissez les valeurs avec les secrets générés à l'étape 1.2 :
 
 ```bash
+# Domaine et base de données
 DOMAIN=memoo.fr
 POSTGRES_DB=memolist
 POSTGRES_USER=memolist
@@ -139,10 +142,24 @@ DATABASE_URL=postgresql://memolist:VOTRE_MOT_DE_PASSE_SECURISE@db:5432/memolist
 JWT_SECRET=VOTRE_SECRET_JWT_MIN_32_CHARS
 CORS_ORIGIN=https://memoo.fr
 NODE_ENV=production
+
+# OpenAI (pour la génération audio TTS)
+OPENAI_API_KEY=sk-...
+
+# Storage TTS (MinIO)
+STORAGE_TYPE=minio
+MINIO_ENDPOINT=minio
+MINIO_PORT=9000
+MINIO_USE_SSL=false
+MINIO_ACCESS_KEY=VOTRE_ACCESS_KEY_SECURISE
+MINIO_SECRET_KEY=VOTRE_SECRET_KEY_SECURISE
+MINIO_BUCKET=memolist-tts
 ```
 
 **⚠️ IMPORTANT :**
 - `DATABASE_URL` doit contenir les **mêmes valeurs** que `POSTGRES_USER` et `POSTGRES_PASSWORD` — pas de variables `${}` !
+- `OPENAI_API_KEY` est nécessaire pour la génération audio (worker TTS)
+- `MINIO_ACCESS_KEY` et `MINIO_SECRET_KEY` doivent être sécurisés (min. 16 caractères)
 - Ne jamais commiter le fichier `.env`
 
 **2.4. Lancer la migration**

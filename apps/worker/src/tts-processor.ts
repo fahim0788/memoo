@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
+import { Client as MinioClient } from "minio";
 
 /* ============================================================================
    Config
@@ -17,9 +18,33 @@ const VOICE_EN = "alloy"; // Clear, neutral voice for English
 const VOICE_FR = "shimmer"; // Voice française
 
 // Storage config
-const STORAGE_TYPE = process.env.STORAGE_TYPE || "local"; // local | s3
+const STORAGE_TYPE = process.env.STORAGE_TYPE || "local"; // local | minio
 const LOCAL_STORAGE_PATH = process.env.LOCAL_STORAGE_PATH || "./storage/tts";
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "http://localhost:3000/storage/tts";
+
+// MinIO config
+const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || "localhost";
+const MINIO_PORT = parseInt(process.env.MINIO_PORT || "9000", 10);
+const MINIO_USE_SSL = process.env.MINIO_USE_SSL === "true";
+const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || "minioadmin";
+const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || "minioadmin";
+const MINIO_BUCKET = process.env.MINIO_BUCKET || "memolist-tts";
+
+// MinIO client (lazy init)
+let minioClient: MinioClient | null = null;
+
+function getMinioClient(): MinioClient {
+  if (!minioClient) {
+    minioClient = new MinioClient({
+      endPoint: MINIO_ENDPOINT,
+      port: MINIO_PORT,
+      useSSL: MINIO_USE_SSL,
+      accessKey: MINIO_ACCESS_KEY,
+      secretKey: MINIO_SECRET_KEY,
+    });
+  }
+  return minioClient;
+}
 
 // Rate limiting
 const DELAY_BETWEEN_REQUESTS_MS = 500; // Avoid hitting rate limits
@@ -34,6 +59,13 @@ async function ensureStorageDir() {
       await mkdir(LOCAL_STORAGE_PATH, { recursive: true });
       console.log(`[TTS] Created storage directory: ${LOCAL_STORAGE_PATH}`);
     }
+  } else if (STORAGE_TYPE === "minio") {
+    const client = getMinioClient();
+    const bucketExists = await client.bucketExists(MINIO_BUCKET);
+    if (!bucketExists) {
+      await client.makeBucket(MINIO_BUCKET);
+      console.log(`[TTS] Created MinIO bucket: ${MINIO_BUCKET}`);
+    }
   }
 }
 
@@ -41,9 +73,16 @@ async function saveAudioFile(
   audioBuffer: ArrayBuffer,
   filename: string
 ): Promise<string> {
-  if (STORAGE_TYPE === "s3") {
-    // TODO: Implement S3 upload
-    throw new Error("S3 storage not yet implemented");
+  if (STORAGE_TYPE === "minio") {
+    const client = getMinioClient();
+    const buffer = Buffer.from(audioBuffer);
+
+    await client.putObject(MINIO_BUCKET, filename, buffer, buffer.length, {
+      "Content-Type": "audio/mpeg",
+    });
+
+    console.log(`[TTS] Uploaded to MinIO: ${filename}`);
+    return `${PUBLIC_BASE_URL}/${filename}`;
   }
 
   // Local filesystem storage
@@ -118,6 +157,7 @@ export async function processTtsJob(
     textEn: string;
     textFr: string;
     cardId?: string;
+    fileId?: string;
   }>;
 
   const results: Array<{

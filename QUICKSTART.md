@@ -78,10 +78,25 @@ cd memoo
 
 # Créer le fichier .env
 cp .env.production.example .env
-nano .env  # Remplir avec vos valeurs
+nano .env  # Remplir avec vos valeurs (voir section Variables ci-dessous)
 
 # Lancer la migration (sans sudo !)
 bash ./scripts/initial-setup.sh
+```
+
+**Variables importantes dans .env :**
+
+```env
+DOMAIN=memoo.fr
+POSTGRES_PASSWORD=mot_de_passe_securise
+JWT_SECRET=secret_jwt_min_32_chars
+OPENAI_API_KEY=sk-...
+
+# Storage TTS (MinIO pour les fichiers audio)
+STORAGE_TYPE=minio
+MINIO_ACCESS_KEY=access_key_securise
+MINIO_SECRET_KEY=secret_key_securise
+MINIO_BUCKET=memolist-tts
 ```
 
 ⚠️ **Important : Ne jamais utiliser `sudo` pour lancer les scripts.** Le script gère lui-même les commandes qui nécessitent sudo (comme nginx). Utiliser sudo peut causer des problèmes de permissions avec Docker.
@@ -237,6 +252,14 @@ Modifier code  →  git push  →  Repository  →  git pull  →  Build local A
 - ✅ Build natif ARM (pas besoin de buildx)
 - ✅ Docker compose pour orchestrer
 - ❌ Pas de transfert d'images (tout se build sur place)
+
+**Services Docker déployés :**
+- **nginx** - Reverse proxy HTTPS
+- **web** - Frontend Next.js PWA
+- **api** - Backend Next.js + Prisma
+- **worker** - Worker TTS (génération audio OpenAI)
+- **db** - PostgreSQL 16
+- **minio** - Stockage objet S3-compatible (fichiers audio)
 
 ---
 

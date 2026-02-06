@@ -128,6 +128,7 @@ export default function HomePage() {
           {view === "menu" && (
             <MenuView
               myLists={myLists}
+              userName={user.firstName || user.email}
               onStudy={handleStudy}
               onExplore={() => setView("available")}
               onCreateDeck={() => setView("create")}
