@@ -7,15 +7,9 @@
  */
 
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { prisma } from "@memolist/db";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 
 const CSV_PATH = resolve(
   process.cwd(),

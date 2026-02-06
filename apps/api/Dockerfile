@@ -7,8 +7,14 @@ WORKDIR /app
 # Contournement certificat SSL (proxy entreprise)
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
+# Copy workspace root
 COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+COPY packages ./packages
+COPY apps/api ./apps/api
+
+# Install all workspace dependencies from root
+RUN npm ci --workspace=apps/api --workspace=packages/db --no-audit --no-fund || \
+    npm install --workspace=apps/api --workspace=packages/db --no-audit --no-fund
 
 # =============================================================================
 # Stage 2: Build
@@ -19,15 +25,18 @@ WORKDIR /app
 # Contournement certificat SSL (proxy entreprise)
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# URL factice pour prisma generate (pas de connexion réelle au build)
+# URL factice pour prisma generate
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Copy everything from deps
+COPY --from=deps /app ./
 
-# Générer Prisma Client au build
-RUN npx prisma generate
+# Generate Prisma Client and build packages/db
+WORKDIR /app/packages/db
+RUN npx prisma generate && npm run build
 
+# Build API
+WORKDIR /app/apps/api
 RUN npm run build
 
 # =============================================================================
@@ -39,15 +48,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Copier standalone server
-COPY --from=build /app/.next/standalone ./
-
-# Copier TOUT node_modules (nécessaire pour prisma CLI + seed)
-COPY --from=build /app/node_modules ./node_modules
-
-# Copier Prisma schema et config
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/prisma.config.ts ./
+# Copy built files and dependencies
+COPY --from=build /app/packages/db ./packages/db
+COPY --from=build /app/apps/api/.next/standalone ./
+COPY --from=build /app/apps/api/node_modules ./node_modules
 
 EXPOSE 3001
 

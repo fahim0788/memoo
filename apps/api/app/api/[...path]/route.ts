@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { prisma } from "@memolist/db";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 
@@ -9,25 +7,10 @@ import * as jwt from "jsonwebtoken";
 export const dynamic = "force-dynamic";
 
 /* ============================================================================
-   Prisma
+   Prisma - Utilise le package @memolist/db partagé
 ============================================================================ */
 
-let prisma: PrismaClient | null = null;
-
-function getPrisma(): PrismaClient {
-  if (!prisma) {
-    if ((globalThis as any).prisma) {
-      prisma = (globalThis as any).prisma;
-    } else {
-      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-      const adapter = new PrismaPg(pool);
-      prisma = new PrismaClient({ adapter });
-
-      if (process.env.NODE_ENV !== "production") {
-        (globalThis as any).prisma = prisma;
-      }
-    }
-  }
+function getPrisma() {
   return prisma;
 }
 

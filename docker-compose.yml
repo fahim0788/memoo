@@ -34,7 +34,8 @@ services:
   # ===========================================================================
   api:
     build:
-      context: ./apps/api
+      context: .
+      dockerfile: ./apps/api/Dockerfile
     expose:
       - "3001"
     environment:
@@ -61,7 +62,8 @@ services:
   # ===========================================================================
   worker:
     build:
-      context: ./apps/worker
+      context: .
+      dockerfile: ./apps/worker/Dockerfile
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}

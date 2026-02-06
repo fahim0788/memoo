@@ -7,8 +7,14 @@ WORKDIR /app
 # Contournement certificat SSL (proxy entreprise)
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
+# Copy workspace root
 COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+COPY packages ./packages
+COPY apps/worker ./apps/worker
+
+# Install all workspace dependencies from root
+RUN npm ci --workspace=apps/worker --workspace=packages/db --no-audit --no-fund || \
+    npm install --workspace=apps/worker --workspace=packages/db --no-audit --no-fund
 
 # =============================================================================
 # Stage 2: Build
@@ -19,16 +25,18 @@ WORKDIR /app
 # Contournement certificat SSL (proxy entreprise)
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# URL factice pour prisma generate (pas de connexion réelle au build)
+# URL factice pour prisma generate
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Copy everything from deps
+COPY --from=deps /app ./
 
-# Générer Prisma Client
-RUN npx prisma generate
+# Generate Prisma Client and build packages/db
+WORKDIR /app/packages/db
+RUN npx prisma generate && npm run build
 
-# Compiler TypeScript
+# Build worker
+WORKDIR /app/apps/worker
 RUN npm run build
 
 # =============================================================================
@@ -39,10 +47,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copier node_modules et binaires compilés
+# Copy monorepo structure to maintain module resolution
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/apps/worker ./apps/worker
+
+# Set working directory to worker
+WORKDIR /app/apps/worker
 
 # Créer le dossier de stockage
 RUN mkdir -p /app/storage/tts

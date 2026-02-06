@@ -14,9 +14,9 @@
 
   "dependencies": {
 
-    "@prisma/adapter-pg": "^7.3.0",
+    "@memolist/db": "file:../../packages/db",
 
-    "@prisma/client": "^7.3.0",
+    "@prisma/adapter-pg": "^7.3.0",
 
     "bcryptjs": "^3.0.3",
 
@@ -34,9 +34,9 @@
 
   },
 
-  "prisma": {
+  "scripts:db": {
 
-    "seed": "tsx prisma/seed.ts"
+    "comment": "Migrations maintenant dans packages/db - utiliser: cd ../../packages/db && npm run db:migrate:dev"
 
   },
 
@@ -47,8 +47,6 @@
     "@types/jsonwebtoken": "^9.0.10",
 
     "@types/node": "25.0.10",
-
-    "prisma": "^7.3.0",
 
     "tsx": "^4.7.0",
 

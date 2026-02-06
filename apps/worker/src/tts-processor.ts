@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma, PrismaClient } from "@memolist/db";
 import OpenAI from "openai";
 import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
