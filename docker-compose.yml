@@ -80,6 +80,7 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
     volumes:
       - tts-storage:/app/storage/tts
+      - ./apps/worker/storage/input:/app/storage/input:ro
     depends_on:
       db:
         condition: service_healthy
