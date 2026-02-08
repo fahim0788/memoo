@@ -40,7 +40,7 @@ export default function LoginPage() {
       <div className="container" style={{ justifyContent: "center", minHeight: "100dvh" }}>
         {/* Logo / App Name */}
         <div style={{ textAlign: "center", marginBottom: "1rem" }}>
-          <img src="/logo-memoo.png" alt="Memoo Logo" style={{ width: "100px", height: "100px" }} />
+          <img src="/logo-memoo.png" alt="Memoo Logo" style={{ width: "100px", height: "100px", margin: "0 auto" }} />
           <h1 style={{ fontSize: "2.5rem", margin: 0, fontWeight: 800 }}>
             Memoo
           </h1>

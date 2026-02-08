@@ -1,4 +1,5 @@
 import type { DeckFromApi } from "../lib/api";
+import { SettingsButton } from "./SettingsButton";
 
 type MenuViewProps = {
   myLists: DeckFromApi[];
@@ -23,11 +24,14 @@ export function MenuView({
     <>
       <div className="header">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          <h2>Memoo</h2>
+          <h2 style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <img src="/logo-memoo.png" alt="" style={{ width: "28px", height: "28px" }} />
+            Memoo
+          </h2>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1.25rem" }}>👤</span>
-            <span style={{ fontSize: "0.875rem" }}>{userName}</span>
-            <button onClick={onLogout} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
+            <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>{userName}</span>
+            <SettingsButton />
+            <button onClick={onLogout} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", minWidth: "auto" }}>
               Déconnexion
             </button>
           </div>
