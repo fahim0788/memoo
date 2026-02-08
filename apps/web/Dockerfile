@@ -39,11 +39,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy standalone build (following API pattern)
+# Copy standalone build (preserves monorepo structure: apps/web/)
 COPY --from=build /app/apps/web/.next/standalone ./
 COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build /app/apps/web/public ./apps/web/public
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# server.js is located at apps/web/server.js in the standalone output
+CMD ["node", "apps/web/server.js"]
