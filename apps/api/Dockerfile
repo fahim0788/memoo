@@ -55,4 +55,5 @@ COPY --from=build /app/apps/api/node_modules ./node_modules
 
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+# server.js is located at apps/api/server.js in the standalone output
+CMD ["node", "apps/api/server.js"]
