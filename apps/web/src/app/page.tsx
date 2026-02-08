@@ -10,6 +10,7 @@ import { StudyView } from "../components/StudyView";
 import { CreateDeckView } from "../components/CreateDeckView";
 import { EditDeckView } from "../components/EditDeckView";
 import { SyncStatus } from "../components/SyncStatus";
+import { useStats } from "../hooks/useStats";
 import type { DeckFromApi, CardFromApi } from "../lib/api";
 
 type View = "menu" | "available" | "studying" | "create" | "editing";
@@ -18,6 +19,7 @@ export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
   const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, getCards, reload, forceRefresh } = useLists();
+  const { stats, refreshStats } = useStats(myLists);
 
   const [view, setView] = useState<View>("menu");
   const [studyDeck, setStudyDeck] = useState<DeckFromApi | null>(null);
@@ -153,6 +155,7 @@ export default function HomePage() {
               onCreateDeck={() => setView("create")}
               onRemove={handleRemove}
               onLogout={handleLogout}
+              stats={stats}
             />
           )}
 
@@ -170,7 +173,10 @@ export default function HomePage() {
             <StudyView
               deck={studyDeck}
               cards={studyCards}
-              onBack={() => setView("menu")}
+              onBack={() => {
+                refreshStats();
+                setView("menu");
+              }}
             />
           )}
 

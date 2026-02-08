@@ -6,35 +6,42 @@ import { defaultCardState, gradeCard, type CardState } from "../lib/sr-engine";
 import { isCorrect } from "../lib/text";
 import { queueReview } from "../lib/sync";
 import { STORAGE_BASE, type DeckFromApi, type CardFromApi } from "../lib/api";
+import { updateStreak } from "../lib/streak";
 
-function AudioButton({ url, label }: { url?: string | null; label: string }) {
+function AudioButton({ url, label, autoPlay }: { url?: string | null; label: string; autoPlay?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
-  // Reset audio when URL changes
+  const play = () => {
+    if (!url) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(url);
+      audioRef.current.onended = () => setPlaying(false);
+    }
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(() => setPlaying(false));
+    setPlaying(true);
+  };
+
+  // Reset audio when URL changes + autoplay if requested
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
     setPlaying(false);
-  }, [url]);
+    if (autoPlay && url) {
+      // Small delay to let the new Audio object be created in play()
+      const t = setTimeout(play, 100);
+      return () => clearTimeout(t);
+    }
+  }, [url, autoPlay]);
 
   if (!url) return null;
 
-  const handlePlay = () => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio(url);
-      audioRef.current.onended = () => setPlaying(false);
-    }
-    audioRef.current.currentTime = 0;
-    audioRef.current.play();
-    setPlaying(true);
-  };
-
   return (
     <button
-      onClick={handlePlay}
+      onClick={play}
       style={{
         padding: "0.25rem 0.5rem",
         fontSize: "0.85rem",
@@ -127,6 +134,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
     setShowResult(true);
     setPendingStudy(next);
     await idbSet(stateKey(deck.id), next);
+    updateStreak();
 
     queueReview({ cardId: current.id, ok, userAnswer: answer });
   }
@@ -178,7 +186,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
           <>
             <div className="small" style={{ display: "flex", alignItems: "center" }}>
               Question
-              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="EN" />
+              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="EN" autoPlay />
             </div>
             <h3>{current.question}</h3>
 
@@ -213,7 +221,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
                 </span>
                 <div className="small" style={{ display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
                   Référence : <b>{result.expected}</b>
-                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label="FR" />
+                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label="FR" autoPlay />
                 </div>
                 <button className="primary" onClick={goNext}>Suivant</button>
               </>

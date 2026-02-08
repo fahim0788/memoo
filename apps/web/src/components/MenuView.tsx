@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
 import { SettingsButton } from "./SettingsButton";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { StatsCard } from "./StatsCard";
+import type { Stats } from "../hooks/useStats";
 
 type MenuViewProps = {
   myLists: DeckFromApi[];
@@ -12,6 +14,7 @@ type MenuViewProps = {
   onCreateDeck: () => void;
   onRemove: (deckId: string) => void;
   onLogout: () => void;
+  stats: Stats | null;
 };
 
 export function MenuView({
@@ -23,6 +26,7 @@ export function MenuView({
   onCreateDeck,
   onRemove,
   onLogout,
+  stats,
 }: MenuViewProps) {
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -44,6 +48,8 @@ export function MenuView({
           </div>
         </div>
       </div>
+
+      {stats && <StatsCard stats={stats} />}
 
       {myLists.length > 0 && (
         <div className="card">
