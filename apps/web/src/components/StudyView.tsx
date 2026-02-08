@@ -188,6 +188,16 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
               Question
               <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="EN" autoPlay />
             </div>
+            {current.imageUrl && (
+              <div style={{ marginBottom: "1rem", textAlign: "center" }}>
+                <img
+                  src={current.imageUrl}
+                  alt="Question illustration"
+                  style={{ maxWidth: "100%", maxHeight: "16rem", margin: "0 auto", display: "block" }}
+                  loading="lazy"
+                />
+              </div>
+            )}
             <h3>{current.question}</h3>
 
             {!showResult && (

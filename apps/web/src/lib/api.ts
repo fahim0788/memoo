@@ -31,6 +31,7 @@ export type CardFromApi = {
   answers: string[];
   audioUrlEn?: string | null;
   audioUrlFr?: string | null;
+  imageUrl?: string | null;
 };
 
 export type DeckFromApi = {
@@ -167,21 +168,21 @@ export async function updateDeck(deckId: string, name: string): Promise<void> {
   }, "renommer la liste");
 }
 
-export async function addCard(deckId: string, question: string, answers: string[]): Promise<CardFromApi> {
+export async function addCard(deckId: string, question: string, answers: string[], imageUrl?: string | null): Promise<CardFromApi> {
   const r = await safeFetch(`${API_BASE}/my-decks/${deckId}/cards`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ question, answers }),
+    body: JSON.stringify({ question, answers, imageUrl }),
     cache: "no-store",
   }, "ajouter la carte");
   return r.json().then((d: any) => d.card);
 }
 
-export async function updateCard(deckId: string, cardId: string, question: string, answers: string[]): Promise<void> {
+export async function updateCard(deckId: string, cardId: string, question: string, answers: string[], imageUrl?: string | null): Promise<void> {
   await safeFetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
     method: "PUT",
     headers: authHeaders(),
-    body: JSON.stringify({ question, answers }),
+    body: JSON.stringify({ question, answers, imageUrl }),
     cache: "no-store",
   }, "modifier la carte");
 }

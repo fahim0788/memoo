@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
 
     const cards = await getPrisma().card.findMany({
       where: { deckId: cardsMatch[1] },
-      select: { id: true, question: true, answers: true, audioUrlEn: true, audioUrlFr: true },
+      select: { id: true, question: true, answers: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true },
       orderBy: { createdAt: "asc" },
     });
 
@@ -322,6 +322,7 @@ export async function POST(req: NextRequest) {
           create: cards.map((c: any) => ({
             question: c.question,
             answers: c.answers,
+            imageUrl: c.imageUrl || null,
           })),
         },
       },
@@ -386,14 +387,14 @@ export async function POST(req: NextRequest) {
     if (!deck) return json({ error: "deck not found" }, req, 404);
     if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
 
-    const { question, answers } = await req.json();
+    const { question, answers, imageUrl } = await req.json();
     if (!question || !Array.isArray(answers) || answers.length === 0) {
       return json({ error: "question and answers array required" }, req, 400);
     }
 
     const card = await getPrisma().card.create({
-      data: { deckId, question, answers },
-      select: { id: true, question: true, answers: true },
+      data: { deckId, question, answers, imageUrl: imageUrl || null },
+      select: { id: true, question: true, answers: true, imageUrl: true },
     });
 
     return json({ ok: true, card: { ...card, answers: card.answers as string[] } }, req);
@@ -471,15 +472,19 @@ export async function PUT(req: NextRequest) {
     if (!deck) return json({ error: "deck not found" }, req, 404);
     if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
 
-    const { question, answers } = await req.json();
+    const { question, answers, imageUrl } = await req.json();
     if (!question || !Array.isArray(answers) || answers.length === 0) {
       return json({ error: "question and answers array required" }, req, 400);
     }
 
     const card = await getPrisma().card.update({
       where: { id: cardId },
-      data: { question, answers },
-      select: { id: true, question: true, answers: true },
+      data: {
+        question,
+        answers,
+        ...(imageUrl !== undefined && { imageUrl: imageUrl || null })
+      },
+      select: { id: true, question: true, answers: true, imageUrl: true },
     });
 
     return json({ ok: true, card: { ...card, answers: card.answers as string[] } }, req);

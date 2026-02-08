@@ -18,8 +18,10 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [editQuestion, setEditQuestion] = useState("");
   const [editAnswers, setEditAnswers] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswers, setNewAnswers] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; question: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -45,20 +47,22 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
     setEditingCardId(card.id);
     setEditQuestion(card.question);
     setEditAnswers(card.answers.join(", "));
+    setEditImageUrl(card.imageUrl || "");
     setError("");
   }
 
   async function handleUpdateCard(cardId: string) {
     const question = editQuestion.trim();
     const answers = editAnswers.split(",").map(a => a.trim()).filter(Boolean);
+    const imageUrl = editImageUrl.trim() || null;
     if (!question || answers.length === 0) {
       setError("Question et au moins une reponse requises");
       return;
     }
     try {
       setLoading(true);
-      await updateCard(deck.id, cardId, question, answers);
-      setCards(prev => prev.map(c => c.id === cardId ? { ...c, question, answers } : c));
+      await updateCard(deck.id, cardId, question, answers, imageUrl);
+      setCards(prev => prev.map(c => c.id === cardId ? { ...c, question, answers, imageUrl } : c));
       setEditingCardId(null);
       setError("");
     } catch {
@@ -86,16 +90,18 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
   async function handleAddCard() {
     const question = newQuestion.trim();
     const answers = newAnswers.split(",").map(a => a.trim()).filter(Boolean);
+    const imageUrl = newImageUrl.trim() || null;
     if (!question || answers.length === 0) {
       setError("Question et au moins une reponse requises");
       return;
     }
     try {
       setLoading(true);
-      const card = await addCard(deck.id, question, answers);
+      const card = await addCard(deck.id, question, answers, imageUrl);
       setCards(prev => [...prev, card]);
       setNewQuestion("");
       setNewAnswers("");
+      setNewImageUrl("");
       setError("");
     } catch {
       setError("Erreur lors de l'ajout");
@@ -185,6 +191,11 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
                   onChange={e => setEditAnswers(e.target.value)}
                   placeholder="Reponses (separees par des virgules)"
                 />
+                <input
+                  value={editImageUrl}
+                  onChange={e => setEditImageUrl(e.target.value)}
+                  placeholder="URL de l'image (optionnel, ex: https://memoo.fr/storage/flags/france.svg)"
+                />
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     className="primary"
@@ -204,6 +215,13 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
               </div>
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0.5rem 0" }}>
+                {card.imageUrl && (
+                  <img
+                    src={card.imageUrl}
+                    alt=""
+                    style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0 }}
+                  />
+                )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{card.question}</div>
                   <div className="small">{card.answers.join(", ")}</div>
@@ -253,6 +271,11 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
           value={newAnswers}
           onChange={e => setNewAnswers(e.target.value)}
           placeholder="Reponses (separees par des virgules)"
+        />
+        <input
+          value={newImageUrl}
+          onChange={e => setNewImageUrl(e.target.value)}
+          placeholder="URL de l'image (optionnel, ex: https://memoo.fr/storage/flags/france.svg)"
           onKeyDown={e => e.key === "Enter" && handleAddCard()}
         />
         <button
