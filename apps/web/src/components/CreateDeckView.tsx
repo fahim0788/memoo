@@ -177,9 +177,9 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
   return (
     <>
       <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <h2>Créer une liste personnalisée</h2>
-          <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
+          <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
             ← Retour
           </button>
         </div>

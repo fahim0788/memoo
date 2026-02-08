@@ -3,21 +3,26 @@
 @tailwind utilities;
 
 /* ============================================================================
-   THEME VARIABLES - Light & Dark
+   THEME VARIABLES - Light & Dark (contrast fixed)
 ============================================================================ */
 
+/* =========================
+   LIGHT THEME (default)
+========================= */
 :root {
-  /* Light Theme (default) */
+  /* Backgrounds */
   --color-bg: #f8fafc;
   --color-bg-secondary: #ffffff;
   --color-bg-tertiary: #f1f5f9;
 
+  /* Text */
   --color-text: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
-  
-  --color-border: #e2e8f0;
-  --color-border-hover: #cbd5e1;
+  --color-text-secondary: #334155; /* improved contrast */
+  --color-text-muted: #64748b;     /* improved contrast */
+
+  /* Borders */
+  --color-border: #cbd5e1;
+  --color-border-hover: #94a3b8;
 
   /* Primary - Bleu Tech */
   --color-primary: #0ea5e9;
@@ -27,14 +32,14 @@
   /* Accent - Orange */
   --color-accent: #f59e0b;
   --color-accent-hover: #d97706;
-  --color-accent-light: #fef3c7;
+  --color-accent-light: #fde68a;
 
-  /* Success - Vert */
+  /* Success */
   --color-success: #22c55e;
   --color-success-light: #dcfce7;
   --color-success-border: rgba(34, 197, 94, 0.4);
 
-  /* Error - Rouge */
+  /* Error */
   --color-error: #ef4444;
   --color-error-light: #fee2e2;
   --color-error-border: rgba(239, 68, 68, 0.4);
@@ -46,57 +51,48 @@
   --shadow-glow: 0 0 20px rgba(14, 165, 233, 0.15);
 }
 
+/* =========================
+   DARK THEME
+========================= */
 .dark {
   /* Backgrounds */
-  --color-bg: #0d0f12;              /* main background */
-  --color-bg-secondary: #14161a;    /* cards, panels */
-  --color-bg-tertiary: #1b1e23;     /* hover, inputs */
+  --color-bg: #0d0f12;
+  --color-bg-secondary: #14161a;
+  --color-bg-tertiary: #1b1e23;
 
   /* Text */
-  --color-text: #e5e7eb;            /* primary text */
-  --color-text-secondary: #b3b8c4;  /* secondary text */
-  --color-text-muted: #7a808e;      /* muted / hints */
+  --color-text: #e5e7eb;
+  --color-text-secondary: #c7cbd6;
+  --color-text-muted: #9aa0ad;
 
   /* Borders */
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.16);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-hover: rgba(255, 255, 255, 0.22);
 
-  /* =======================================================
-     Primary (neutral – ChatGPT-like, not blue)
-     ======================================================= */
-  --color-primary: #e5e7eb;          /* off-white */
+  /* Primary (neutral) */
+  --color-primary: #e5e7eb;
   --color-primary-hover: #ffffff;
-  --color-primary-light: rgba(229, 231, 235, 0.12);
+  --color-primary-light: rgba(229, 231, 235, 0.18);
 
-  /* =======================================================
-     Accent (subtle green – ChatGPT vibe)
-     ======================================================= */
-  --color-accent: #22c55e;
-  --color-accent-hover: #16a34a;
-  --color-accent-light: rgba(34, 197, 94, 0.18);
+  /* Accent (neutral gray, higher contrast) */
+  --color-accent: #52525b;
+  --color-accent-hover: #71717a;
+  --color-accent-light: rgba(82, 82, 91, 0.35);
 
-  /* =======================================================
-     Success
-     ======================================================= */
+  /* Success */
   --color-success: #4ade80;
   --color-success-light: rgba(74, 222, 128, 0.2);
   --color-success-border: rgba(74, 222, 128, 0.4);
 
-  /* =======================================================
-     Error
-     ======================================================= */
+  /* Error */
   --color-error: #f87171;
   --color-error-light: rgba(248, 113, 113, 0.18);
   --color-error-border: rgba(248, 113, 113, 0.45);
 
-  /* =======================================================
-     Shadows (soft, deep, no blue glow)
-     ======================================================= */
+  /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.6);
-
-  /* Optional subtle glow (neutral, not blue) */
   --shadow-glow: 0 0 24px rgba(255, 255, 255, 0.04);
 }
 
@@ -164,7 +160,7 @@
     color: var(--color-text-muted);
   }
 
-  /* Input */
+  /* Inputs */
   .input-wrapper {
     @apply w-full;
   }
@@ -178,9 +174,9 @@
   }
 
   input:focus {
-    @apply outline-none ring-2;
+    outline: none;
     border-color: var(--color-primary);
-    ring-color: var(--color-primary-light);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
   }
 
   input::placeholder {
@@ -198,6 +194,10 @@
     background: var(--color-accent-light);
     border: 1px solid var(--color-accent);
     color: var(--color-text);
+  }
+
+  .dark button {
+    color: #f9fafb;
   }
 
   button:hover {
@@ -311,12 +311,8 @@
 ============================================================================ */
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes slideUp {

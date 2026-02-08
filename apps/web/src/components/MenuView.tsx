@@ -67,32 +67,36 @@ export function MenuView({
             />
           )}
           {filteredLists.map(deck => (
-            <div key={deck.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button className="primary" style={{ flex: 1 }} onClick={() => onStudy(deck)}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>{deck.isOwned ? "👤" : "📂"}</span>
-                  <span style={{ flex: 1, textAlign: "left" }}>{deck.name}</span>
-                </div>
-                <span className="small" style={{ display: "block", fontWeight: 400, marginTop: "2px" }}>
-                  {deck.cardCount} cartes
-                </span>
-              </button>
-              {deck.isOwned && (
-                <button
-                  onClick={() => onEdit(deck)}
-                  style={{ flex: "none", minWidth: 0, width: "36px", padding: "8px", fontSize: "0.85rem" }}
-                  title="Modifier"
+            <button key={deck.id} className="primary" style={{ position: "relative", flex: 1 }} onClick={() => onStudy(deck)}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span>{deck.isOwned ? "👤" : "📂"}</span>
+                <span style={{ flex: 1, textAlign: "left" }}>{deck.name}</span>
+                <span
+                  style={{ display: "flex", gap: "4px", flex: "none" }}
+                  onClick={e => e.stopPropagation()}
                 >
-                  ✏️
-                </button>
-              )}
-              <button
-                onClick={() => setRemoveTarget({ id: deck.id, name: deck.name })}
-                style={{ flex: "none", minWidth: 0, width: "36px", padding: "8px", fontSize: "0.85rem" }}
-              >
-                ✕
-              </button>
-            </div>
+                  {deck.isOwned && (
+                    <span
+                      onClick={() => onEdit(deck)}
+                      style={{ cursor: "pointer", fontSize: "0.85rem", padding: "2px 4px" }}
+                      title="Modifier"
+                    >
+                      ✏️
+                    </span>
+                  )}
+                  <span
+                    onClick={() => setRemoveTarget({ id: deck.id, name: deck.name })}
+                    style={{ cursor: "pointer", fontSize: "0.85rem", padding: "2px 4px" }}
+                    title="Retirer"
+                  >
+                    ✕
+                  </span>
+                </span>
+              </div>
+              <span className="small" style={{ display: "block", fontWeight: 400, marginTop: "2px" }}>
+                {deck.cardCount} cartes
+              </span>
+            </button>
           ))}
         </div>
       )}
