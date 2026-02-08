@@ -1,14 +1,11 @@
 # =============================================================================
-# Stage 1: Dependencies (monorepo aware)
+# Stage 1: Dependencies
 # =============================================================================
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Copier les manifests racine (OBLIGATOIRE pour npm ci)
-COPY package.json package-lock.json ./
-
-# Copier le package.json du workspace ciblé
-COPY apps/web/package.json apps/web/
+# Copier tout le monorepo (safe avec .dockerignore)
+COPY . .
 
 # Installer uniquement le workspace web
 RUN npm ci \
@@ -23,34 +20,25 @@ RUN npm ci \
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Build arguments pour NEXT_PUBLIC_*
 ARG NEXT_PUBLIC_API_BASE=/api
 ARG NEXT_PUBLIC_APP_NAME=Memooo
 
 ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 
-# Récupérer les deps installées
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app ./
 
-# Copier le reste du monorepo
-COPY . .
-
-# Build du workspace Next.js
 RUN npm run build --workspace=apps/web
 
 # =============================================================================
-# Stage 3: Runtime (standalone)
+# Stage 3: Runtime (Next.js standalone)
 # =============================================================================
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copier le serveur standalone généré par Next
 COPY --from=build /app/apps/web/.next/standalone ./
-
-# Copier les assets statiques requis
 COPY --from=build /app/apps/web/.next/static ./.next/static
 COPY --from=build /app/apps/web/public ./public
 
