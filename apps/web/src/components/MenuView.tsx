@@ -1,10 +1,13 @@
+import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
 import { SettingsButton } from "./SettingsButton";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 type MenuViewProps = {
   myLists: DeckFromApi[];
   userName: string;
   onStudy: (deck: DeckFromApi) => void;
+  onEdit: (deck: DeckFromApi) => void;
   onExplore: () => void;
   onCreateDeck: () => void;
   onRemove: (deckId: string) => void;
@@ -15,17 +18,21 @@ export function MenuView({
   myLists,
   userName,
   onStudy,
+  onEdit,
   onExplore,
   onCreateDeck,
   onRemove,
   onLogout,
 }: MenuViewProps) {
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
+
   return (
     <>
       <div className="header">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <h2 style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <img src="/logo-memoo.png" alt="" style={{ width: "28px", height: "28px" }} />
+            <img src="/logo-memoo-black.png" alt="" style={{ width: "28px", height: "28px" }} className="dark:hidden" />
+            <img src="/logo-memoo-white.png" alt="" style={{ width: "28px", height: "28px" }} className="hidden dark:block" />
             Memoo
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -52,8 +59,17 @@ export function MenuView({
                   {deck.cardCount} cartes
                 </span>
               </button>
+              {deck.isOwned && (
+                <button
+                  onClick={() => onEdit(deck)}
+                  style={{ flex: "none", minWidth: 0, width: "36px", padding: "8px", fontSize: "0.85rem" }}
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+              )}
               <button
-                onClick={() => onRemove(deck.id)}
+                onClick={() => setRemoveTarget({ id: deck.id, name: deck.name })}
                 style={{ flex: "none", minWidth: 0, width: "36px", padding: "8px", fontSize: "0.85rem" }}
               >
                 ✕
@@ -80,6 +96,20 @@ export function MenuView({
           ➕ Ajouter une liste personnalisée
         </button>
       </div>
+
+      <ConfirmDialog
+        isOpen={removeTarget !== null}
+        title="Retirer la liste ?"
+        message={`Retirer "${removeTarget?.name}" de vos listes ? Vous pourrez la rajouter plus tard.`}
+        confirmLabel="Retirer"
+        cancelLabel="Annuler"
+        variant="warning"
+        onConfirm={() => {
+          if (removeTarget) onRemove(removeTarget.id);
+          setRemoveTarget(null);
+        }}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </>
   );
 }

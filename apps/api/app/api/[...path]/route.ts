@@ -31,7 +31,7 @@ function withCors(res: NextResponse, origin?: string | null) {
     res.headers.set("Access-Control-Allow-Origin", origin);
   }
 
-  res.headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.headers.set("Access-Control-Allow-Credentials", "true");
 
@@ -375,6 +375,30 @@ export async function POST(req: NextRequest) {
     return json({ ok: true, created: result.count, serverTime: Date.now() }, req);
   }
 
+  // POST /api/my-decks/:deckId/cards - Add a card to an owned deck
+  const addCardMatch = pathname.match(/^\/api\/my-decks\/([^/]+)\/cards$/);
+  if (addCardMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const deckId = addCardMatch[1];
+    const deck = await getPrisma().deck.findUnique({ where: { id: deckId }, select: { ownerId: true } });
+    if (!deck) return json({ error: "deck not found" }, req, 404);
+    if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
+
+    const { question, answers } = await req.json();
+    if (!question || !Array.isArray(answers) || answers.length === 0) {
+      return json({ error: "question and answers array required" }, req, 400);
+    }
+
+    const card = await getPrisma().card.create({
+      data: { deckId, question, answers },
+      select: { id: true, question: true, answers: true },
+    });
+
+    return json({ ok: true, card: { ...card, answers: card.answers as string[] } }, req);
+  }
+
   // POST /api/tts/generate
   if (pathname === "/api/tts/generate") {
     const auth = requireAuth(req);
@@ -430,11 +454,81 @@ export async function POST(req: NextRequest) {
 }
 
 /* ============================================================================
+   PUT
+============================================================================ */
+
+export async function PUT(req: NextRequest) {
+  const { pathname } = new URL(req.url);
+
+  // PUT /api/my-decks/:deckId/cards/:cardId - Update a card
+  const updateCardMatch = pathname.match(/^\/api\/my-decks\/([^/]+)\/cards\/([^/]+)$/);
+  if (updateCardMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const [, deckId, cardId] = updateCardMatch;
+    const deck = await getPrisma().deck.findUnique({ where: { id: deckId }, select: { ownerId: true } });
+    if (!deck) return json({ error: "deck not found" }, req, 404);
+    if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
+
+    const { question, answers } = await req.json();
+    if (!question || !Array.isArray(answers) || answers.length === 0) {
+      return json({ error: "question and answers array required" }, req, 400);
+    }
+
+    const card = await getPrisma().card.update({
+      where: { id: cardId },
+      data: { question, answers },
+      select: { id: true, question: true, answers: true },
+    });
+
+    return json({ ok: true, card: { ...card, answers: card.answers as string[] } }, req);
+  }
+
+  // PUT /api/my-decks/:deckId - Rename a deck
+  const updateDeckMatch = pathname.match(/^\/api\/my-decks\/([^/]+)$/);
+  if (updateDeckMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const deckId = updateDeckMatch[1];
+    const deck = await getPrisma().deck.findUnique({ where: { id: deckId }, select: { ownerId: true } });
+    if (!deck) return json({ error: "deck not found" }, req, 404);
+    if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
+
+    const { name } = await req.json();
+    if (!name) return json({ error: "name required" }, req, 400);
+
+    await getPrisma().deck.update({ where: { id: deckId }, data: { name } });
+
+    return json({ ok: true }, req);
+  }
+
+  return json({ error: "not found" }, req, 404);
+}
+
+/* ============================================================================
    DELETE
 ============================================================================ */
 
 export async function DELETE(req: NextRequest) {
   const { pathname } = new URL(req.url);
+
+  // DELETE /api/my-decks/:deckId/cards/:cardId - Delete a card from owned deck
+  const deleteCardMatch = pathname.match(/^\/api\/my-decks\/([^/]+)\/cards\/([^/]+)$/);
+  if (deleteCardMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const [, deckId, cardId] = deleteCardMatch;
+    const deck = await getPrisma().deck.findUnique({ where: { id: deckId }, select: { ownerId: true } });
+    if (!deck) return json({ error: "deck not found" }, req, 404);
+    if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
+
+    await getPrisma().card.delete({ where: { id: cardId } });
+
+    return json({ ok: true }, req);
+  }
 
   const myDeckMatch = pathname.match(/^\/api\/my-decks\/([^/]+)$/);
   if (myDeckMatch) {

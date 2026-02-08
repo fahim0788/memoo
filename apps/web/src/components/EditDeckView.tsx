@@ -1,0 +1,264 @@
+"use client";
+
+import { useState } from "react";
+import type { DeckFromApi, CardFromApi } from "../lib/api";
+import { updateDeck, addCard, updateCard, deleteCard } from "../lib/api";
+import { ConfirmDialog } from "./ConfirmDialog";
+
+type EditDeckViewProps = {
+  deck: DeckFromApi;
+  initialCards: CardFromApi[];
+  onBack: () => void;
+};
+
+export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) {
+  const [deckName, setDeckName] = useState(deck.name);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [cards, setCards] = useState<CardFromApi[]>(initialCards);
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [editQuestion, setEditQuestion] = useState("");
+  const [editAnswers, setEditAnswers] = useState("");
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAnswers, setNewAnswers] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; question: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleRenameDeck() {
+    if (!deckName.trim() || deckName === deck.name) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      await updateDeck(deck.id, deckName.trim());
+      setIsEditingName(false);
+    } catch {
+      setError("Erreur lors du renommage");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function startEditCard(card: CardFromApi) {
+    setEditingCardId(card.id);
+    setEditQuestion(card.question);
+    setEditAnswers(card.answers.join(", "));
+    setError("");
+  }
+
+  async function handleUpdateCard(cardId: string) {
+    const question = editQuestion.trim();
+    const answers = editAnswers.split(",").map(a => a.trim()).filter(Boolean);
+    if (!question || answers.length === 0) {
+      setError("Question et au moins une reponse requises");
+      return;
+    }
+    try {
+      setLoading(true);
+      await updateCard(deck.id, cardId, question, answers);
+      setCards(prev => prev.map(c => c.id === cardId ? { ...c, question, answers } : c));
+      setEditingCardId(null);
+      setError("");
+    } catch {
+      setError("Erreur lors de la modification");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteCard() {
+    if (!deleteTarget) return;
+    try {
+      setLoading(true);
+      await deleteCard(deck.id, deleteTarget.id);
+      setCards(prev => prev.filter(c => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setError("");
+    } catch {
+      setError("Erreur lors de la suppression");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAddCard() {
+    const question = newQuestion.trim();
+    const answers = newAnswers.split(",").map(a => a.trim()).filter(Boolean);
+    if (!question || answers.length === 0) {
+      setError("Question et au moins une reponse requises");
+      return;
+    }
+    try {
+      setLoading(true);
+      const card = await addCard(deck.id, question, answers);
+      setCards(prev => [...prev, card]);
+      setNewQuestion("");
+      setNewAnswers("");
+      setError("");
+    } catch {
+      setError("Erreur lors de l'ajout");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      {/* Header */}
+      <div className="header">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          {isEditingName ? (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flex: 1 }}>
+              <input
+                value={deckName}
+                onChange={e => setDeckName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleRenameDeck()}
+                autoFocus
+                style={{ flex: 1 }}
+              />
+              <button
+                onClick={handleRenameDeck}
+                disabled={loading}
+                style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
+              >
+                OK
+              </button>
+            </div>
+          ) : (
+            <h2
+              onClick={() => setIsEditingName(true)}
+              style={{ cursor: "pointer" }}
+              title="Cliquer pour renommer"
+            >
+              {deckName} ✏️
+            </h2>
+          )}
+          <button
+            onClick={onBack}
+            style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="badge bad" style={{ alignSelf: "stretch", textAlign: "center" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Cards List */}
+      <div className="card">
+        <div className="small">{cards.length} carte{cards.length !== 1 ? "s" : ""}</div>
+
+        {cards.map((card, i) => (
+          <div key={card.id}>
+            {i > 0 && <div style={{ borderTop: "1px solid var(--color-border)", margin: "0.25rem 0" }} />}
+
+            {editingCardId === card.id ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", padding: "0.5rem 0" }}>
+                <input
+                  value={editQuestion}
+                  onChange={e => setEditQuestion(e.target.value)}
+                  placeholder="Question"
+                  autoFocus
+                />
+                <input
+                  value={editAnswers}
+                  onChange={e => setEditAnswers(e.target.value)}
+                  placeholder="Reponses (separees par des virgules)"
+                />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    className="primary"
+                    onClick={() => handleUpdateCard(card.id)}
+                    disabled={loading}
+                    style={{ flex: 1 }}
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    onClick={() => setEditingCardId(null)}
+                    style={{ flex: 1 }}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0.5rem 0" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{card.question}</div>
+                  <div className="small">{card.answers.join(", ")}</div>
+                </div>
+                <button
+                  onClick={() => startEditCard(card)}
+                  style={{ minWidth: 0, flex: "none", width: "36px", padding: "8px", fontSize: "0.85rem" }}
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => setDeleteTarget({ id: card.id, question: card.question })}
+                  style={{
+                    minWidth: 0,
+                    flex: "none",
+                    width: "36px",
+                    padding: "8px",
+                    fontSize: "0.85rem",
+                    background: "var(--color-error-light)",
+                    borderColor: "var(--color-error-border)",
+                  }}
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {cards.length === 0 && (
+          <p className="small" style={{ textAlign: "center" }}>Aucune carte dans cette liste.</p>
+        )}
+      </div>
+
+      {/* Add Card Form */}
+      <div className="card">
+        <div className="small">Ajouter une carte</div>
+        <input
+          value={newQuestion}
+          onChange={e => setNewQuestion(e.target.value)}
+          placeholder="Question"
+        />
+        <input
+          value={newAnswers}
+          onChange={e => setNewAnswers(e.target.value)}
+          placeholder="Reponses (separees par des virgules)"
+          onKeyDown={e => e.key === "Enter" && handleAddCard()}
+        />
+        <button
+          className="primary"
+          onClick={handleAddCard}
+          disabled={loading || !newQuestion.trim() || !newAnswers.trim()}
+          style={{ opacity: loading ? 0.7 : 1 }}
+        >
+          Ajouter
+        </button>
+      </div>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Supprimer la carte ?"
+        message={`Supprimer definitivement la carte "${deleteTarget?.question}" ?`}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        onConfirm={handleDeleteCard}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </>
+  );
+}

@@ -139,6 +139,46 @@ export async function deleteDeck(deckId: string): Promise<void> {
   if (!r.ok) throw new Error("Failed to delete deck");
 }
 
+export async function updateDeck(deckId: string, name: string): Promise<void> {
+  const r = await fetch(`${API_BASE}/my-decks/${deckId}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ name }),
+    cache: "no-store",
+  });
+  if (!r.ok) throw new Error("Failed to update deck");
+}
+
+export async function addCard(deckId: string, question: string, answers: string[]): Promise<CardFromApi> {
+  const r = await fetch(`${API_BASE}/my-decks/${deckId}/cards`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ question, answers }),
+    cache: "no-store",
+  });
+  if (!r.ok) throw new Error("Failed to add card");
+  return r.json().then((d: any) => d.card);
+}
+
+export async function updateCard(deckId: string, cardId: string, question: string, answers: string[]): Promise<void> {
+  const r = await fetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ question, answers }),
+    cache: "no-store",
+  });
+  if (!r.ok) throw new Error("Failed to update card");
+}
+
+export async function deleteCard(deckId: string, cardId: string): Promise<void> {
+  const r = await fetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  if (!r.ok) throw new Error("Failed to delete card");
+}
+
 export async function fetchCards(deckId: string): Promise<CardFromApi[]> {
   const r = await fetch(`${API_BASE}/lists/${deckId}/cards`, { headers: authHeaders(), cache: "no-store" });
   if (!r.ok) throw new Error("Failed to fetch cards");

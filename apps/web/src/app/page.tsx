@@ -8,10 +8,11 @@ import { MenuView } from "../components/MenuView";
 import { AvailableView } from "../components/AvailableView";
 import { StudyView } from "../components/StudyView";
 import { CreateDeckView } from "../components/CreateDeckView";
+import { EditDeckView } from "../components/EditDeckView";
 import { SyncStatus } from "../components/SyncStatus";
 import type { DeckFromApi, CardFromApi } from "../lib/api";
 
-type View = "menu" | "available" | "studying" | "create";
+type View = "menu" | "available" | "studying" | "create" | "editing";
 
 export default function HomePage() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function HomePage() {
   const [view, setView] = useState<View>("menu");
   const [studyDeck, setStudyDeck] = useState<DeckFromApi | null>(null);
   const [studyCards, setStudyCards] = useState<CardFromApi[]>([]);
+  const [editDeck, setEditDeck] = useState<DeckFromApi | null>(null);
+  const [editCards, setEditCards] = useState<CardFromApi[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Redirect to login if not authenticated
@@ -110,6 +113,21 @@ export default function HomePage() {
     }
   }
 
+  async function handleEdit(deck: DeckFromApi) {
+    if (actionLoading) return;
+    try {
+      setActionLoading(true);
+      const cards = await getCards(deck.id);
+      setEditDeck(deck);
+      setEditCards(cards);
+      setView("editing");
+    } catch (err) {
+      console.error("Failed to load cards for editing:", err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   function handleLogout() {
     logout();
     router.push("/login");
@@ -130,6 +148,7 @@ export default function HomePage() {
               myLists={myLists}
               userName={user.firstName || user.email}
               onStudy={handleStudy}
+              onEdit={handleEdit}
               onExplore={() => setView("available")}
               onCreateDeck={() => setView("create")}
               onRemove={handleRemove}
@@ -152,6 +171,17 @@ export default function HomePage() {
               deck={studyDeck}
               cards={studyCards}
               onBack={() => setView("menu")}
+            />
+          )}
+
+          {view === "editing" && editDeck && (
+            <EditDeckView
+              deck={editDeck}
+              initialCards={editCards}
+              onBack={async () => {
+                await forceRefresh();
+                setView("menu");
+              }}
             />
           )}
 
