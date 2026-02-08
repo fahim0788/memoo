@@ -29,6 +29,10 @@ export function MenuView({
   stats,
 }: MenuViewProps) {
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
+  const [search, setSearch] = useState("");
+
+  const q = search.toLowerCase().trim();
+  const filteredLists = q ? myLists.filter(d => d.name.toLowerCase().includes(q)) : myLists;
 
   return (
     <>
@@ -54,7 +58,15 @@ export function MenuView({
       {myLists.length > 0 && (
         <div className="card">
           <div className="small">Mes listes</div>
-          {myLists.map(deck => (
+          {myLists.length >= 3 && (
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher..."
+              style={{ marginBottom: "0.25rem" }}
+            />
+          )}
+          {filteredLists.map(deck => (
             <div key={deck.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <button className="primary" style={{ flex: 1 }} onClick={() => onStudy(deck)}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

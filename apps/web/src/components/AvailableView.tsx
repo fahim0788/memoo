@@ -18,6 +18,12 @@ export function AvailableView({
   onBack,
 }: AvailableViewProps) {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [search, setSearch] = useState("");
+
+  const q = search.toLowerCase().trim();
+  const filteredPublic = q ? publicLists.filter(d => d.name.toLowerCase().includes(q)) : publicLists;
+  const filteredPersonal = q ? personalLists.filter(d => d.name.toLowerCase().includes(q)) : personalLists;
+
   return (
     <>
       <div className="header">
@@ -29,19 +35,26 @@ export function AvailableView({
         </div>
       </div>
 
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Rechercher une liste..."
+        style={{ marginBottom: "-0.25rem" }}
+      />
+
       {/* Public Lists Section */}
       <div className="card">
         <div className="small" style={{ fontWeight: 700, marginBottom: "0.5rem" }}>
-          📂 Listes publiques ({publicLists.length})
+          📂 Listes publiques ({filteredPublic.length})
         </div>
 
-        {publicLists.length === 0 && (
+        {filteredPublic.length === 0 && (
           <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
             Toutes les listes publiques sont déjà activées.
           </p>
         )}
 
-        {publicLists.map(deck => (
+        {filteredPublic.map(deck => (
           <div
             key={deck.id}
             style={{
@@ -73,10 +86,10 @@ export function AvailableView({
       {/* Personal Lists Section */}
       <div className="card">
         <div className="small" style={{ fontWeight: 700, marginBottom: "0.5rem" }}>
-          👤 Mes listes personnalisées ({personalLists.length})
+          👤 Mes listes personnalisées ({filteredPersonal.length})
         </div>
 
-        {personalLists.length === 0 && (
+        {filteredPersonal.length === 0 && (
           <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
             Aucune liste personnalisée disponible.
             <br />
@@ -84,7 +97,7 @@ export function AvailableView({
           </p>
         )}
 
-        {personalLists.map(deck => (
+        {filteredPersonal.map(deck => (
           <div
             key={deck.id}
             style={{

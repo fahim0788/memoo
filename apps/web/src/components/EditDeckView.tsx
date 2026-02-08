@@ -23,6 +23,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; question: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchCards, setSearchCards] = useState("");
 
   async function handleRenameDeck() {
     if (!deckName.trim() || deckName === deck.name) {
@@ -153,7 +154,21 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
       <div className="card">
         <div className="small">{cards.length} carte{cards.length !== 1 ? "s" : ""}</div>
 
-        {cards.map((card, i) => (
+        {cards.length >= 5 && (
+          <input
+            value={searchCards}
+            onChange={e => setSearchCards(e.target.value)}
+            placeholder="Rechercher une carte..."
+            style={{ marginBottom: "0.25rem" }}
+          />
+        )}
+
+        {(() => {
+          const q = searchCards.toLowerCase().trim();
+          const filtered = q
+            ? cards.filter(c => c.question.toLowerCase().includes(q) || c.answers.some(a => a.toLowerCase().includes(q)))
+            : cards;
+          return filtered.map((card, i) => (
           <div key={card.id}>
             {i > 0 && <div style={{ borderTop: "1px solid var(--color-border)", margin: "0.25rem 0" }} />}
 
@@ -218,7 +233,8 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
               </div>
             )}
           </div>
-        ))}
+          ));
+        })()}
 
         {cards.length === 0 && (
           <p className="small" style={{ textAlign: "center" }}>Aucune carte dans cette liste.</p>
