@@ -33,7 +33,7 @@ export function useLists() {
       setAvailablePersonalLists([...availablePersonal]);
     } catch (err) {
       console.error("[useLists] Failed to load lists:", err);
-      setError(err instanceof Error ? err.message : "Failed to load lists");
+      setError(err instanceof Error ? err.message : "Impossible de charger les listes");
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export function useLists() {
     } catch (err) {
       // This shouldn't throw in normal operation since errors are queued
       console.error("[useLists] Unexpected error in addList:", err);
-      setError(err instanceof Error ? err.message : "Failed to add list");
+      setError(err instanceof Error ? err.message : "Impossible d'ajouter la liste");
     }
   }, [loadLists]);
 
@@ -66,7 +66,7 @@ export function useLists() {
       await loadLists();
     } catch (err) {
       console.error("[useLists] Unexpected error in removeList:", err);
-      setError(err instanceof Error ? err.message : "Failed to remove list");
+      setError(err instanceof Error ? err.message : "Impossible de retirer la liste");
     }
   }, [loadLists]);
 
@@ -78,7 +78,7 @@ export function useLists() {
       await loadLists();
     } catch (err) {
       console.error("[useLists] Unexpected error in deleteDeck:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete deck");
+      setError(err instanceof Error ? err.message : "Impossible de supprimer la liste");
     }
   }, [loadLists]);
 
@@ -88,7 +88,7 @@ export function useLists() {
       return await fetchCards(deckId);
     } catch (err) {
       console.error(`[useLists] Failed to get cards for deck ${deckId}:`, err);
-      setError(err instanceof Error ? err.message : "Failed to load cards");
+      setError(err instanceof Error ? err.message : "Impossible de charger les cartes");
       throw err;
     }
   }, []);
@@ -102,7 +102,7 @@ export function useLists() {
       await loadLists();
     } catch (err) {
       console.error("[useLists] Failed to force refresh:", err);
-      setError(err instanceof Error ? err.message : "Failed to refresh");
+      setError(err instanceof Error ? err.message : "Impossible de rafraîchir les données");
     } finally {
       setLoading(false);
     }

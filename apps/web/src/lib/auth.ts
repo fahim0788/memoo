@@ -38,8 +38,16 @@ export async function login(
   });
 
   if (!r.ok) {
+    if (r.status === 0 || !navigator.onLine) {
+      throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
+    }
     const data = await r.json().catch(() => ({}));
-    throw new Error(data.error || "Login failed");
+    const messages: Record<string, string> = {
+      "invalid credentials": "Email ou mot de passe incorrect",
+      "account disabled": "Ce compte a été désactivé",
+      "email and password required": "Email et mot de passe requis",
+    };
+    throw new Error(messages[data.error] || data.error || "Impossible de se connecter");
   }
 
   const data = await r.json();
@@ -60,8 +68,15 @@ export async function register(
   });
 
   if (!r.ok) {
+    if (r.status === 0 || !navigator.onLine) {
+      throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
+    }
     const data = await r.json().catch(() => ({}));
-    throw new Error(data.error || "Registration failed");
+    const messages: Record<string, string> = {
+      "email already registered": "Cet email est déjà utilisé",
+      "email and password required": "Email et mot de passe requis",
+    };
+    throw new Error(messages[data.error] || data.error || "Impossible de créer le compte");
   }
 
   const data = await r.json();

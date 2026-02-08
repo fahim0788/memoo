@@ -58,10 +58,40 @@ export type PullResponse = {
   serverTime: number;
 };
 
+// Error helper – user-friendly French messages
+async function apiError(r: Response, action: string): Promise<never> {
+  let detail = "";
+  try {
+    const body = await r.json();
+    if (body.error) detail = body.error;
+  } catch { /* ignore parse errors */ }
+
+  if (r.status === 401) throw new Error("Session expirée, veuillez vous reconnecter");
+  if (r.status === 403) throw new Error("Action non autorisée");
+  if (r.status === 404) throw new Error("Élément introuvable");
+  if (r.status >= 500) throw new Error(`Erreur serveur (${r.status}). Réessayez dans quelques instants.`);
+  throw new Error(detail || `Impossible de ${action}`);
+}
+
+function networkError(action: string): never {
+  if (!navigator.onLine) throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
+  throw new Error(`Connexion au serveur impossible. Impossible de ${action}.`);
+}
+
+async function safeFetch(input: RequestInfo, init: RequestInit | undefined, action: string): Promise<Response> {
+  try {
+    const r = await fetch(input, init);
+    if (!r.ok) await apiError(r, action);
+    return r;
+  } catch (err) {
+    if (err instanceof TypeError) networkError(action);
+    throw err;
+  }
+}
+
 // API Functions
 export async function apiHealth(): Promise<{ ok: boolean; time: number }> {
-  const r = await fetch(`${API_BASE}/health`, { cache: "no-store" });
-  if (!r.ok) throw new Error("API health failed");
+  const r = await safeFetch(`${API_BASE}/health`, { cache: "no-store" }, "vérifier le serveur");
   return r.json();
 }
 
@@ -70,117 +100,101 @@ export async function apiHealth(): Promise<{ ok: boolean; time: number }> {
  * @param reviews Liste des reviews à synchroniser
  */
 export async function pushReviews(reviews: Review[]): Promise<PushResponse> {
-  const r = await fetch(`${API_BASE}/sync/push`, {
+  const r = await safeFetch(`${API_BASE}/sync/push`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ reviews }),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Sync push failed");
+  }, "synchroniser les révisions");
   return r.json();
 }
 
-/**
- * Récupère l'heure serveur (pour sync future)
- */
 export async function pullSync(): Promise<PullResponse> {
-  const r = await fetch(`${API_BASE}/sync/pull`, {
+  const r = await safeFetch(`${API_BASE}/sync/pull`, {
     headers: authHeaders(),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Sync pull failed");
+  }, "synchroniser");
   return r.json();
 }
 
 // API – Lists
 export async function fetchLists(): Promise<DeckFromApi[]> {
-  const r = await fetch(`${API_BASE}/lists`, { headers: authHeaders(), cache: "no-store" });
-  if (!r.ok) throw new Error("Failed to fetch lists");
+  const r = await safeFetch(`${API_BASE}/lists`, { headers: authHeaders(), cache: "no-store" }, "charger les listes");
   return r.json().then((d: any) => d.decks);
 }
 
 export async function fetchMyLists(): Promise<DeckFromApi[]> {
-  const r = await fetch(`${API_BASE}/my-lists`, { headers: authHeaders(), cache: "no-store" });
-  if (!r.ok) throw new Error("Failed to fetch my lists");
+  const r = await safeFetch(`${API_BASE}/my-lists`, { headers: authHeaders(), cache: "no-store" }, "charger vos listes");
   return r.json().then((d: any) => d.decks);
 }
 
 export async function fetchAvailablePersonalDecks(): Promise<DeckFromApi[]> {
-  const r = await fetch(`${API_BASE}/my-decks/available`, { headers: authHeaders(), cache: "no-store" });
-  if (!r.ok) throw new Error("Failed to fetch available personal decks");
+  const r = await safeFetch(`${API_BASE}/my-decks/available`, { headers: authHeaders(), cache: "no-store" }, "charger les listes personnelles");
   return r.json().then((d: any) => d.decks);
 }
 
 export async function addList(deckId: string): Promise<void> {
-  const r = await fetch(`${API_BASE}/my-lists`, {
+  await safeFetch(`${API_BASE}/my-lists`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ deckId }),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to add list");
+  }, "ajouter la liste");
 }
 
 export async function removeList(deckId: string): Promise<void> {
-  const r = await fetch(`${API_BASE}/my-lists/${deckId}`, {
+  await safeFetch(`${API_BASE}/my-lists/${deckId}`, {
     method: "DELETE",
     headers: authHeaders(),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to remove list");
+  }, "retirer la liste");
 }
 
 export async function deleteDeck(deckId: string): Promise<void> {
-  const r = await fetch(`${API_BASE}/my-decks/${deckId}`, {
+  await safeFetch(`${API_BASE}/my-decks/${deckId}`, {
     method: "DELETE",
     headers: authHeaders(),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to delete deck");
+  }, "supprimer la liste");
 }
 
 export async function updateDeck(deckId: string, name: string): Promise<void> {
-  const r = await fetch(`${API_BASE}/my-decks/${deckId}`, {
+  await safeFetch(`${API_BASE}/my-decks/${deckId}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify({ name }),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to update deck");
+  }, "renommer la liste");
 }
 
 export async function addCard(deckId: string, question: string, answers: string[]): Promise<CardFromApi> {
-  const r = await fetch(`${API_BASE}/my-decks/${deckId}/cards`, {
+  const r = await safeFetch(`${API_BASE}/my-decks/${deckId}/cards`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ question, answers }),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to add card");
+  }, "ajouter la carte");
   return r.json().then((d: any) => d.card);
 }
 
 export async function updateCard(deckId: string, cardId: string, question: string, answers: string[]): Promise<void> {
-  const r = await fetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
+  await safeFetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify({ question, answers }),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to update card");
+  }, "modifier la carte");
 }
 
 export async function deleteCard(deckId: string, cardId: string): Promise<void> {
-  const r = await fetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
+  await safeFetch(`${API_BASE}/my-decks/${deckId}/cards/${cardId}`, {
     method: "DELETE",
     headers: authHeaders(),
     cache: "no-store",
-  });
-  if (!r.ok) throw new Error("Failed to delete card");
+  }, "supprimer la carte");
 }
 
 export async function fetchCards(deckId: string): Promise<CardFromApi[]> {
-  const r = await fetch(`${API_BASE}/lists/${deckId}/cards`, { headers: authHeaders(), cache: "no-store" });
-  if (!r.ok) throw new Error("Failed to fetch cards");
+  const r = await safeFetch(`${API_BASE}/lists/${deckId}/cards`, { headers: authHeaders(), cache: "no-store" }, "charger les cartes");
   return r.json().then((d: any) => d.cards);
 }

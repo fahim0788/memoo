@@ -49,8 +49,8 @@ export default function HomePage() {
       <div className="app">
         <div className="container">
           <div className="card">
-            <p style={{ color: "#ef4444" }}>❌ {error}</p>
-            <button onClick={() => window.location.reload()} style={{ marginTop: "1rem" }}>
+            <p style={{ color: "var(--color-error)", fontWeight: 600 }}>{error}</p>
+            <button onClick={() => forceRefresh()} className="primary" style={{ marginTop: "0.5rem" }}>
               Réessayer
             </button>
           </div>
@@ -193,8 +193,16 @@ export default function HomePage() {
           )}
 
           {error && (
-            <div className="card" style={{ background: "#fee", color: "#c00", marginTop: "1rem" }}>
-              ⚠️ {error}
+            <div className="card" style={{ marginTop: "0.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--color-error)", fontSize: "0.875rem" }}>{error}</span>
+                <button
+                  onClick={() => forceRefresh()}
+                  style={{ minWidth: 0, flex: "none", padding: "0.25rem 0.75rem", fontSize: "0.75rem" }}
+                >
+                  Réessayer
+                </button>
+              </div>
             </div>
           )}
         </div>
