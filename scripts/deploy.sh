@@ -121,7 +121,9 @@ if [ "$SKIP_BUILD" = false ]; then
     log_step "4/6 - Rebuild des images Docker"
 
     log_info "Build de l'image WEB (peut prendre 10-20 minutes)..."
-    docker build --no-cache -t memoo-web:latest -f apps/web/Dockerfile .
+    docker build --no-cache -t memoo-web:latest -f apps/web/Dockerfile \
+        --build-arg NEXT_PUBLIC_API_BASE=/api \
+        --build-arg NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME:-MemoList}" .
 
     log_info "Build de l'image API..."
     docker build --no-cache -t memoo-api:latest -f apps/api/Dockerfile .

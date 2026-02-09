@@ -56,6 +56,7 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
     volumes:
       - tts-storage:/app/storage/tts
+      - ./apps/worker/storage/drapeaux:/app/apps/worker/storage/drapeaux:ro
     depends_on:
       db:
         condition: service_healthy
