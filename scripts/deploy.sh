@@ -121,13 +121,13 @@ if [ "$SKIP_BUILD" = false ]; then
     log_step "4/6 - Rebuild des images Docker"
 
     log_info "Build de l'image WEB (peut prendre 10-20 minutes)..."
-    docker build -t memoo-web:latest -f apps/web/Dockerfile apps/web
+    docker build --no-cache -t memoo-web:latest -f apps/web/Dockerfile .
 
     log_info "Build de l'image API..."
-    docker build -t memoo-api:latest -f apps/api/Dockerfile apps/api
+    docker build --no-cache -t memoo-api:latest -f apps/api/Dockerfile .
 
     log_info "Build de l'image WORKER..."
-    docker build -t memoo-worker:latest -f apps/worker/Dockerfile apps/worker
+    docker build --no-cache -t memoo-worker:latest -f apps/worker/Dockerfile .
 
     log_info "✓ Images rebuildées"
 else
