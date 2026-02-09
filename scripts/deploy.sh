@@ -143,11 +143,14 @@ fi
 if [ "$SKIP_MIGRATIONS" = false ]; then
     log_step "5/6 - Migrations de base de données"
 
+    log_info "Attente du démarrage de la base de données..."
+    sleep 5
+
     log_info "Exécution des migrations Prisma..."
-    docker-compose -f docker-compose.prod.yml run --rm api npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma
+    docker-compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma
 
     log_info "Exécution du seed..."
-    docker-compose -f docker-compose.prod.yml run --rm api npx prisma db seed --schema=packages/db/prisma/schema.prisma || {
+    docker-compose -f docker-compose.prod.yml exec -T api npx prisma db seed --schema=packages/db/prisma/schema.prisma || {
         log_warn "Seed ignoré (la base est peut-être déjà seeded)"
     }
 
