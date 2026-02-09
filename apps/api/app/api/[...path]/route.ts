@@ -523,7 +523,7 @@ export async function PUT(req: NextRequest) {
 
     // Update the position field for each subscription
     const updatePromises = deckIds.map((deckId, index) =>
-      getPrisma().subscription.updateMany({
+      getPrisma().userDeck.updateMany({
         where: {
           userId: auth.user.userId,
           deckId: deckId

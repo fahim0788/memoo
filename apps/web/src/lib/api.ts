@@ -15,6 +15,15 @@ function getStorageBase(): string {
 
 export const STORAGE_BASE = getStorageBase();
 
+// Helper – Extract emoji from deck name
+export function extractEmoji(text: string): { emoji: string; name: string } {
+  const emojiMatch = text.match(/^(\p{Emoji})\s+/u);
+  if (emojiMatch) {
+    return { emoji: emojiMatch[1], name: text.slice(emojiMatch[1].length).trim() };
+  }
+  return { emoji: "", name: text };
+}
+
 function authHeaders(): HeadersInit {
   const headers: HeadersInit = { "Content-Type": "application/json" };
   const token = getToken();
