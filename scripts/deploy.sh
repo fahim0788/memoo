@@ -11,12 +11,25 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
+BOLD='\033[1m'
 
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-log_step() { echo -e "${BLUE}[ETAPE]${NC} $1"; }
+CURRENT_STEP=0
+TOTAL_STEPS=6
+
+log_info() { echo -e "${GREEN}✓${NC} $1"; }
+log_warn() { echo -e "${YELLOW}⚠${NC}  $1"; }
+log_error() { echo -e "${RED}✗${NC} $1"; }
+log_step() {
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    PROGRESS=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+    echo ""
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}[${CURRENT_STEP}/${TOTAL_STEPS}] ${MAGENTA}$1${NC} ${CYAN}(${PROGRESS}%)${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
 
 # =============================================================================
 # Arguments
@@ -52,11 +65,11 @@ done
 # Vérifications
 # =============================================================================
 
-log_step "1/6 - Vérifications préliminaires"
+log_step "Vérifications préliminaires"
 
 if [ ! -f ".env" ]; then
     log_error "Fichier .env introuvable!"
-    log_info "Exécutez d'abord ./scripts/initial-setup.sh"
+    log_warn "Exécutez d'abord ./scripts/initial-setup.sh"
     exit 1
 fi
 
@@ -71,14 +84,14 @@ if [ ! -d ".git" ]; then
 fi
 
 source .env
-log_info "✓ Configuration chargée"
+log_info "Configuration chargée depuis .env"
 
 # =============================================================================
 # Backup de la base de données
 # =============================================================================
 
 if [ "$SKIP_BACKUP" = false ]; then
-    log_step "2/6 - Backup de la base de données"
+    log_step "Sauvegarde de la base de données"
 
     BACKUP_DIR="./backups"
     mkdir -p "$BACKUP_DIR"
@@ -91,34 +104,34 @@ if [ "$SKIP_BACKUP" = false ]; then
     }
 
     if [ -f "$BACKUP_FILE" ]; then
-        log_info "✓ Backup créé ($(du -h "$BACKUP_FILE" | cut -f1))"
+        log_info "Backup créé ($(du -h "$BACKUP_FILE" | cut -f1))"
 
         # Garder seulement les 7 derniers backups
         log_info "Nettoyage des anciens backups..."
         ls -t "$BACKUP_DIR"/db-backup-*.sql 2>/dev/null | tail -n +8 | xargs -r rm
-        log_info "✓ Anciens backups nettoyés"
+        log_info "Anciens backups nettoyés (gardés 7 derniers)"
     fi
 else
-    log_warn "⚠️  Backup de la base de données ignoré (--skip-backup)"
+    log_warn "Backup de la base de données ignoré (--skip-backup)"
 fi
 
 # =============================================================================
 # Pull du code depuis Git
 # =============================================================================
 
-log_step "3/6 - Pull du code depuis Git"
+log_step "Mise à jour du code depuis Git"
 
 log_info "Pull des dernières modifications..."
 git pull
 
-log_info "✓ Code mis à jour"
+log_info "Code mis à jour"
 
 # =============================================================================
 # Rebuild des images Docker
 # =============================================================================
 
 if [ "$SKIP_BUILD" = false ]; then
-    log_step "4/6 - Rebuild des images Docker"
+    log_step "Construction des images Docker"
 
     log_info "Build de l'image WEB (peut prendre 10-20 minutes)..."
     docker build --no-cache -t memoo-web:latest -f apps/web/Dockerfile \
@@ -131,9 +144,9 @@ if [ "$SKIP_BUILD" = false ]; then
     log_info "Build de l'image WORKER..."
     docker build --no-cache -t memoo-worker:latest -f apps/worker/Dockerfile .
 
-    log_info "✓ Images rebuildées"
+    log_info "Images rebuildées avec succès"
 else
-    log_warn "⚠️  Rebuild des images ignoré (--skip-build)"
+    log_warn "Rebuild des images ignoré (--skip-build)"
 fi
 
 # =============================================================================
@@ -141,7 +154,7 @@ fi
 # =============================================================================
 
 if [ "$SKIP_MIGRATIONS" = false ]; then
-    log_step "5/6 - Migrations de base de données"
+    log_step "Migrations de la base de données"
 
     log_info "Attente du démarrage de la base de données..."
     sleep 5
@@ -154,16 +167,16 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
         log_warn "Seed ignoré (la base est peut-être déjà seeded)"
     }
 
-    log_info "✓ Migrations et seed appliqués"
+    log_info "Migrations et seed appliqués"
 else
-    log_warn "⚠️  Migrations de base de données ignorées (--skip-migrations)"
+    log_warn "Migrations de base de données ignorées (--skip-migrations)"
 fi
 
 # =============================================================================
 # Redémarrage des services
 # =============================================================================
 
-log_step "6/6 - Redémarrage des services"
+log_step "Démarrage des services"
 
 log_info "Redémarrage des conteneurs..."
 docker-compose -f docker-compose.prod.yml up -d --force-recreate
@@ -196,21 +209,21 @@ fi
 # Fin
 # =============================================================================
 
-log_info ""
-log_info "========================================="
-log_info "   ✅ DÉPLOIEMENT TERMINÉ"
-log_info "========================================="
-log_info ""
-log_info "Application: https://${DOMAIN}"
-log_info ""
-log_info "Commandes utiles:"
-log_info "  - Voir les logs:         docker-compose -f docker-compose.prod.yml logs -f"
-log_info "  - Logs d'un service:     docker-compose -f docker-compose.prod.yml logs -f api"
-log_info "  - Redémarrer un service: docker-compose -f docker-compose.prod.yml restart web"
-log_info "  - Voir l'état:           docker-compose -f docker-compose.prod.yml ps"
-log_info ""
+echo ""
+echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}${BOLD}   ✅ DÉPLOIEMENT TERMINÉ AVEC SUCCÈS${NC}"
+echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${CYAN}Application:${NC} https://${DOMAIN}"
+echo ""
+echo -e "${CYAN}Commandes utiles:${NC}"
+echo -e "  ${YELLOW}Voir les logs${NC}          docker-compose -f docker-compose.prod.yml logs -f"
+echo -e "  ${YELLOW}Logs d'un service${NC}     docker-compose -f docker-compose.prod.yml logs -f api"
+echo -e "  ${YELLOW}Redémarrer un service${NC} docker-compose -f docker-compose.prod.yml restart web"
+echo -e "  ${YELLOW}Voir l'état${NC}           docker-compose -f docker-compose.prod.yml ps"
+echo ""
 if [ "$SKIP_BACKUP" = false ] && [ -f "$BACKUP_FILE" ]; then
-    log_info "Backup de la base: $BACKUP_FILE"
-    log_info "  - Restaurer: cat $BACKUP_FILE | docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
-    log_info ""
+    echo -e "${CYAN}Backup de la base:${NC} $BACKUP_FILE"
+    echo -e "  ${YELLOW}Restaurer${NC}: cat $BACKUP_FILE | docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+    echo ""
 fi
