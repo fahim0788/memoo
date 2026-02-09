@@ -41,10 +41,10 @@
   --color-accent-hover: #d97706;
   --color-accent-light: #fde68a;
 
-  /* Success */
-  --color-success: #22c55e;
-  --color-success-light: #dcfce7;
-  --color-success-border: rgba(34, 197, 94, 0.4);
+  /* Success - Nvidia Green */
+  --color-success: #76B900;
+  --color-success-light: #e8f5d1;
+  --color-success-border: rgba(118, 185, 0, 0.3);
 
   /* Error */
   --color-error: #ef4444;
@@ -93,10 +93,10 @@
   --color-accent-hover: #71717a;
   --color-accent-light: rgba(82, 82, 91, 0.35);
 
-  /* Success */
-  --color-success: #4ade80;
-  --color-success-light: rgba(74, 222, 128, 0.2);
-  --color-success-border: rgba(74, 222, 128, 0.4);
+  /* Success - Nvidia Green */
+  --color-success: #8fd31a;
+  --color-success-light: rgba(143, 211, 26, 0.18);
+  --color-success-border: rgba(143, 211, 26, 0.4);
 
   /* Error */
   --color-error: #f87171;

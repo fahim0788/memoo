@@ -115,10 +115,10 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
   return (
     <>
       <Header
-        rightContent={
+        actions={
           <button
             onClick={onBack}
-            style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
+            style={{ minWidth: 0, flex: "none", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
           >
             {t.common.back}
           </button>

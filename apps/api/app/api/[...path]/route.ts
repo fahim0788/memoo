@@ -27,8 +27,9 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3000";
 ============================================================================ */
 
 function withCors(res: NextResponse, origin?: string | null) {
-  if (origin === CORS_ORIGIN) {
-    res.headers.set("Access-Control-Allow-Origin", origin);
+  // Allow CORS for configured origin or localhost in development
+  if (origin === CORS_ORIGIN || origin?.includes("localhost") || origin?.includes("127.0.0.1")) {
+    res.headers.set("Access-Control-Allow-Origin", origin || CORS_ORIGIN);
   }
 
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");

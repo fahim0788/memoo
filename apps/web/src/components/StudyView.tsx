@@ -160,7 +160,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
   return (
     <>
       <Header
-        rightContent={
+        actions={
           <>
             <span style={{
               background: "var(--color-stats-bg)",

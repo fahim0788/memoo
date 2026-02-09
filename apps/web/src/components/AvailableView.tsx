@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { IconPlus, IconEdit } from "./Icons";
 
 type AvailableViewProps = {
   publicLists: DeckFromApi[];
@@ -91,8 +92,9 @@ export function AvailableView({
           👤 Mes listes personnalisées ({filteredPersonal.length})
         </div>
 
-        <button onClick={onCreateDeck} className="primary" style={{ margin: "0.5rem 0" }}>
-          ➕ Créer une liste personnalisée
+        <button onClick={onCreateDeck} className="primary" style={{ margin: "0.5rem 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          <IconPlus size={16} />
+          Créer une liste personnalisée
         </button>
 
         {filteredPersonal.length === 0 && (

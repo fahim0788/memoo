@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { IconAlert } from "./Icons";
 
 type Card = {
   question: string;
@@ -232,8 +233,9 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
           </div>
 
           {error && (
-            <div style={{ color: "#c43a31", fontSize: "0.875rem" }}>
-              ⚠️ {error}
+            <div style={{ color: "#c43a31", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "6px" }}>
+              <IconAlert size={16} style={{ color: "#c43a31" }} />
+              {error}
             </div>
           )}
 

@@ -25,19 +25,19 @@ export function ConfirmDialog({
 
   const confirmStyles = {
     danger: {
-      background: "rgba(239, 68, 68, 0.25)",
-      borderColor: "rgba(239, 68, 68, 0.5)",
-      color: "#fca5a5",
+      background: "rgba(239, 68, 68, 0.1)",
+      borderColor: "rgba(239, 68, 68, 0.3)",
+      color: "#dc2626",
     },
     warning: {
-      background: "rgba(245, 158, 11, 0.25)",
-      borderColor: "rgba(245, 158, 11, 0.5)",
-      color: "#fcd34d",
+      background: "rgba(245, 158, 11, 0.1)",
+      borderColor: "rgba(245, 158, 11, 0.3)",
+      color: "#d97706",
     },
     default: {
-      background: "rgba(34, 197, 94, 0.2)",
-      borderColor: "rgba(34, 197, 94, 0.4)",
-      color: "#bbf7d0",
+      background: "rgba(118, 185, 0, 0.1)",
+      borderColor: "rgba(118, 185, 0, 0.3)",
+      color: "#76B900",
     },
   };
 
@@ -67,7 +67,7 @@ export function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 style={{ margin: 0, fontSize: "1.125rem" }}>{title}</h3>
-        <p style={{ margin: 0, color: "rgba(229, 231, 235, 0.8)" }}>{message}</p>
+        <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>{message}</p>
         <div style={{ display: "flex", gap: "8px", marginTop: "0.5rem" }}>
           <button onClick={onCancel} style={{ flex: 1 }}>
             {cancelLabel}
