@@ -176,7 +176,7 @@ export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: S
             </button>
             <span style={{
               background: "var(--color-stats-bg)",
-              border: "1px solid var(--color-stats-border)",
+              border: "none",
               padding: "0.25rem 0.5rem",
               borderRadius: "8px",
               fontSize: "0.75rem",
@@ -198,11 +198,11 @@ export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: S
           <>
             <div className="small">{t.study.question}</div>
             {current.imageUrl && (
-              <div style={{ marginBottom: "1rem", textAlign: "center", padding: "1rem", border: "1px solid var(--color-image-border)", borderRadius: "8px", background: "var(--color-image-bg)" }}>
+              <div style={{ marginBottom: "1rem", textAlign: "center", padding: "1rem", borderRadius: "8px", background: "var(--color-image-bg)" }}>
                 <img
                   src={`${STORAGE_BASE}${current.imageUrl}`}
                   alt="Question illustration"
-                  style={{ maxWidth: "100%", maxHeight: "16rem", margin: "0 auto", display: "block", border: "1px solid var(--color-image-border)" }}
+                  style={{ maxWidth: "100%", maxHeight: "16rem", margin: "0 auto", display: "block", borderRadius: "4px" }}
                   loading="lazy"
                 />
               </div>

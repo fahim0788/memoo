@@ -189,7 +189,7 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
             : cards;
           return filtered.map((card, i) => (
           <div key={card.id}>
-            {i > 0 && <div style={{ borderTop: "1px solid var(--color-border)", margin: "0.25rem 0" }} />}
+            {i > 0 && <div style={{ margin: "0.25rem 0" }} />}
 
             {editingCardId === card.id ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", padding: "0.5rem 0" }}>
@@ -232,7 +232,7 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
                   <img
                     src={`${STORAGE_BASE}${card.imageUrl}`}
                     alt=""
-                    style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0, border: "1px solid rgba(255, 255, 255, 0.1)" }}
+                    style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0, borderRadius: "4px" }}
                   />
                 )}
                 <div style={{ flex: 1 }}>
@@ -254,7 +254,7 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
                     width: "36px",
                     padding: "8px",
                     background: "var(--color-error-light)",
-                    borderColor: "var(--color-error-border)",
+                    border: "none",
                   }}
                   title={t.common.delete}
                 >

@@ -25,7 +25,6 @@ export function StatsCard({ stats }: StatsCardProps) {
           padding: "0.5rem 0.75rem",
           borderRadius: "12px",
           background: "var(--color-primary-light)",
-          border: "1px solid var(--color-border)",
         }}>
           <div className="small">{t.stats.todayLabel}</div>
           <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
@@ -41,7 +40,6 @@ export function StatsCard({ stats }: StatsCardProps) {
           padding: "0.5rem 0.75rem",
           borderRadius: "12px",
           background: stats.streak > 0 ? "var(--color-accent-light)" : "var(--color-bg-tertiary)",
-          border: "1px solid var(--color-border)",
         }}>
           <div className="small">{t.stats.streak}</div>
           <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>

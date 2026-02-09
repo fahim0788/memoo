@@ -30,17 +30,14 @@ export function ConfirmDialog({
   const confirmStyles = {
     danger: {
       background: "rgba(239, 68, 68, 0.1)",
-      borderColor: "rgba(239, 68, 68, 0.3)",
       color: "#dc2626",
     },
     warning: {
       background: "rgba(245, 158, 11, 0.1)",
-      borderColor: "rgba(245, 158, 11, 0.3)",
       color: "#d97706",
     },
     default: {
       background: "rgba(118, 185, 0, 0.1)",
-      borderColor: "rgba(118, 185, 0, 0.3)",
       color: "#76B900",
     },
   };

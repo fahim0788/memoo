@@ -1,23 +1,9 @@
 "use client";
 
 import { SettingsButton } from "./SettingsButton";
+import { IconProfile, IconFlagFR, IconFlagUS } from "./Icons";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
-
-// Profile Icon SVG
-function ProfileIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      style={style}
-    >
-      <path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3zm0 2c-3.313 0-10 1.657-10 5v3h20v-3c0-3.343-6.687-5-10-5z" />
-    </svg>
-  );
-}
 
 type HeaderProps = {
   userName?: string;
@@ -77,7 +63,7 @@ export function Header({ userName, onLogout, onHome, title, secondaryActions }: 
           {/* Always visible: profile + settings + language */}
           {userName && (
             <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-              <ProfileIcon className="w-4 h-4" style={{ color: "var(--color-text-secondary)" }} />
+              <IconProfile size={16} style={{ color: "var(--color-text-secondary)" }} />
               <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
                 {userName}
               </span>
@@ -103,12 +89,12 @@ export function Header({ userName, onLogout, onHome, title, secondaryActions }: 
           >
             {lang === 'fr' ? (
               <>
-                <svg width="14" height="10" viewBox="0 0 21 15"><rect width="7" height="15" fill="#0055A4"/><rect x="7" width="7" height="15" fill="#fff"/><rect x="14" width="7" height="15" fill="#EF4135"/></svg>
+                <IconFlagFR size={15} />
                 FR
               </>
             ) : (
               <>
-                <svg width="14" height="10" viewBox="0 0 21 15"><rect width="21" height="15" fill="#fff"/><rect y="0" width="21" height="1.15" fill="#B22234"/><rect y="2.31" width="21" height="1.15" fill="#B22234"/><rect y="4.62" width="21" height="1.15" fill="#B22234"/><rect y="6.92" width="21" height="1.15" fill="#B22234"/><rect y="9.23" width="21" height="1.15" fill="#B22234"/><rect y="11.54" width="21" height="1.15" fill="#B22234"/><rect y="13.85" width="21" height="1.15" fill="#B22234"/><rect width="8.4" height="8.08" fill="#3C3B6E"/></svg>
+                <IconFlagUS size={14} />
                 EN
               </>
             )}
@@ -126,7 +112,7 @@ export function Header({ userName, onLogout, onHome, title, secondaryActions }: 
           width: "100%",
           marginTop: "0.75rem",
           paddingTop: "0.75rem",
-          borderTop: "1px solid var(--color-border)"
+          borderTop: "none"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1", minWidth: 0 }}>
             {secondaryActions}

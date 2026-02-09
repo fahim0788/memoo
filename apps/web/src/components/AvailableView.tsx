@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
+import { extractEmoji } from "../lib/api";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { IconPlus, IconTrash, IconFolderPublic, IconUser } from "./Icons";
 import { Header } from "./Header";
@@ -61,10 +62,15 @@ export function AvailableView({
       />
 
       {/* Public Lists Section */}
-      <div className="card">
-        <div className="small" style={{ fontWeight: 700, marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <IconFolderPublic size={16} />
-          {t.available.publicLists} ({filteredPublic.length})
+      <div className="card" style={{ position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+          <div className="small" style={{ fontWeight: 700 }}>
+            {t.available.publicLists} ({filteredPublic.length})
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.7rem", color: "#999", textTransform: "lowercase", fontWeight: 500 }}>
+            <IconFolderPublic size={12} />
+            public
+          </div>
         </div>
 
         {filteredPublic.length === 0 && (
@@ -73,33 +79,39 @@ export function AvailableView({
           </p>
         )}
 
-        {filteredPublic.map(deck => (
-          <div
-            key={deck.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "8px",
-              padding: "0.75rem 0",
-              borderTop: "1px solid #eee",
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600 }}>{deck.name}</div>
-              <div className="small" style={{ color: "#666" }}>
-                {deck.cardCount} {t.plural.cards(deck.cardCount)}
-              </div>
-            </div>
-            <button
-              className="primary"
-              onClick={() => onAdd(deck.id)}
-              style={{ flex: "none", minWidth: 0, padding: "8px 16px" }}
+        {filteredPublic.map(deck => {
+          const { emoji, name } = extractEmoji(deck.name);
+          return (
+            <div
+              key={deck.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+                padding: "0.75rem 0",
+                borderTop: "none",
+              }}
             >
-              {t.available.addButton}
-            </button>
-          </div>
-        ))}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
+                {emoji && <span style={{ fontSize: "1.2rem" }}>{emoji}</span>}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600 }}>{name}</div>
+                  <div className="small" style={{ color: "#666" }}>
+                    {deck.cardCount} {t.plural.cards(deck.cardCount)}
+                  </div>
+                </div>
+              </div>
+              <button
+                className="primary"
+                onClick={() => onAdd(deck.id)}
+                style={{ flex: "none", minWidth: 0, padding: "8px 16px" }}
+              >
+                {t.available.addButton}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Personal Lists Section */}
@@ -129,7 +141,7 @@ export function AvailableView({
               alignItems: "center",
               gap: "8px",
               padding: "0.75rem 0",
-              borderTop: "1px solid #eee",
+              borderTop: "none",
             }}
           >
             <div style={{ flex: 1 }}>
@@ -154,7 +166,7 @@ export function AvailableView({
                   padding: "8px 12px",
                   background: "#fee",
                   color: "#c00",
-                  border: "1px solid #fcc",
+                  border: "none",
                 }}
                 title={t.common.delete}
               >
