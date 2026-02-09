@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import type { DeckFromApi, CardFromApi } from "../lib/api";
-import { updateDeck, addCard, updateCard, deleteCard } from "../lib/api";
+import { updateDeck, addCard, updateCard, deleteCard, STORAGE_BASE } from "../lib/api";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { t } from "../lib/i18n";
+import { Header } from "./Header";
 
 type EditDeckViewProps = {
   deck: DeckFromApi;
@@ -37,7 +39,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
       await updateDeck(deck.id, deckName.trim());
       setIsEditingName(false);
     } catch {
-      setError("Erreur lors du renommage");
+      setError(t.edit.errorRename);
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
     const answers = editAnswers.split(",").map(a => a.trim()).filter(Boolean);
     const imageUrl = editImageUrl.trim() || null;
     if (!question || answers.length === 0) {
-      setError("Question et au moins une reponse requises");
+      setError(t.edit.questionRequired);
       return;
     }
     try {
@@ -66,7 +68,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
       setEditingCardId(null);
       setError("");
     } catch {
-      setError("Erreur lors de la modification");
+      setError(t.edit.errorUpdate);
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
       setDeleteTarget(null);
       setError("");
     } catch {
-      setError("Erreur lors de la suppression");
+      setError(t.edit.errorDelete);
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
     const answers = newAnswers.split(",").map(a => a.trim()).filter(Boolean);
     const imageUrl = newImageUrl.trim() || null;
     if (!question || answers.length === 0) {
-      setError("Question et au moins une reponse requises");
+      setError(t.edit.questionRequired);
       return;
     }
     try {
@@ -104,7 +106,7 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
       setNewImageUrl("");
       setError("");
     } catch {
-      setError("Erreur lors de l'ajout");
+      setError(t.edit.errorAdd);
     } finally {
       setLoading(false);
     }
@@ -112,42 +114,44 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
 
   return (
     <>
-      {/* Header */}
-      <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          {isEditingName ? (
-            <div style={{ display: "flex", gap: "8px", alignItems: "center", flex: 1 }}>
-              <input
-                value={deckName}
-                onChange={e => setDeckName(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleRenameDeck()}
-                autoFocus
-                style={{ flex: 1 }}
-              />
-              <button
-                onClick={handleRenameDeck}
-                disabled={loading}
-                style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
-              >
-                OK
-              </button>
-            </div>
-          ) : (
-            <h2
-              onClick={() => setIsEditingName(true)}
-              style={{ cursor: "pointer" }}
-              title="Cliquer pour renommer"
-            >
-              {deckName} ✏️
-            </h2>
-          )}
+      <Header
+        rightContent={
           <button
             onClick={onBack}
             style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
           >
-            Retour
+            {t.common.back}
           </button>
-        </div>
+        }
+      />
+
+      <div style={{ padding: "0 1rem", marginTop: "0.5rem" }}>
+        {isEditingName ? (
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <input
+              value={deckName}
+              onChange={e => setDeckName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleRenameDeck()}
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            <button
+              onClick={handleRenameDeck}
+              disabled={loading}
+              style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
+            >
+              OK
+            </button>
+          </div>
+        ) : (
+          <h2
+            onClick={() => setIsEditingName(true)}
+            style={{ cursor: "pointer", margin: 0, fontWeight: 500 }}
+            title="Cliquer pour renommer"
+          >
+            {deckName} ✏️
+          </h2>
+        )}
       </div>
 
       {error && (
@@ -158,13 +162,13 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
 
       {/* Cards List */}
       <div className="card">
-        <div className="small">{cards.length} carte{cards.length !== 1 ? "s" : ""}</div>
+        <div className="small">{cards.length} {t.edit.cardCount}</div>
 
         {cards.length >= 5 && (
           <input
             value={searchCards}
             onChange={e => setSearchCards(e.target.value)}
-            placeholder="Rechercher une carte..."
+            placeholder={t.edit.searchCards}
             style={{ marginBottom: "0.25rem" }}
           />
         )}
@@ -183,18 +187,18 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
                 <input
                   value={editQuestion}
                   onChange={e => setEditQuestion(e.target.value)}
-                  placeholder="Question"
+                  placeholder={t.edit.cardQuestion}
                   autoFocus
                 />
                 <input
                   value={editAnswers}
                   onChange={e => setEditAnswers(e.target.value)}
-                  placeholder="Reponses (separees par des virgules)"
+                  placeholder={t.edit.cardAnswers}
                 />
                 <input
                   value={editImageUrl}
                   onChange={e => setEditImageUrl(e.target.value)}
-                  placeholder="URL de l'image (optionnel, ex: https://memoo.fr/storage/flags/france.svg)"
+                  placeholder={t.edit.cardImage}
                 />
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
@@ -203,13 +207,13 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
                     disabled={loading}
                     style={{ flex: 1 }}
                   >
-                    Enregistrer
+                    {t.common.save}
                   </button>
                   <button
                     onClick={() => setEditingCardId(null)}
                     style={{ flex: 1 }}
                   >
-                    Annuler
+                    {t.common.cancel}
                   </button>
                 </div>
               </div>
@@ -217,9 +221,9 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
               <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0.5rem 0" }}>
                 {card.imageUrl && (
                   <img
-                    src={card.imageUrl}
+                    src={`${STORAGE_BASE}${card.imageUrl}`}
                     alt=""
-                    style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0 }}
+                    style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0, border: "1px solid rgba(255, 255, 255, 0.1)" }}
                   />
                 )}
                 <div style={{ flex: 1 }}>
@@ -255,27 +259,27 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
         })()}
 
         {cards.length === 0 && (
-          <p className="small" style={{ textAlign: "center" }}>Aucune carte dans cette liste.</p>
+          <p className="small" style={{ textAlign: "center" }}>{t.edit.noCards}</p>
         )}
       </div>
 
       {/* Add Card Form */}
       <div className="card">
-        <div className="small">Ajouter une carte</div>
+        <div className="small">{t.edit.addCard}</div>
         <input
           value={newQuestion}
           onChange={e => setNewQuestion(e.target.value)}
-          placeholder="Question"
+          placeholder={t.edit.cardQuestion}
         />
         <input
           value={newAnswers}
           onChange={e => setNewAnswers(e.target.value)}
-          placeholder="Reponses (separees par des virgules)"
+          placeholder={t.edit.cardAnswers}
         />
         <input
           value={newImageUrl}
           onChange={e => setNewImageUrl(e.target.value)}
-          placeholder="URL de l'image (optionnel, ex: https://memoo.fr/storage/flags/france.svg)"
+          placeholder={t.edit.cardImage}
           onKeyDown={e => e.key === "Enter" && handleAddCard()}
         />
         <button
@@ -284,17 +288,17 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
           disabled={loading || !newQuestion.trim() || !newAnswers.trim()}
           style={{ opacity: loading ? 0.7 : 1 }}
         >
-          Ajouter
+          {t.common.add}
         </button>
       </div>
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog
         isOpen={deleteTarget !== null}
-        title="Supprimer la carte ?"
-        message={`Supprimer definitivement la carte "${deleteTarget?.question}" ?`}
-        confirmLabel="Supprimer"
-        cancelLabel="Annuler"
+        title={t.edit.deleteCard}
+        message={deleteTarget ? `${t.edit.confirmDelete} "${deleteTarget.question}" ?` : ''}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
         onConfirm={handleDeleteCard}
         onCancel={() => setDeleteTarget(null)}
       />

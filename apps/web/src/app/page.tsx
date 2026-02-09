@@ -152,7 +152,6 @@ export default function HomePage() {
               onStudy={handleStudy}
               onEdit={handleEdit}
               onExplore={() => setView("available")}
-              onCreateDeck={() => setView("create")}
               onRemove={handleRemove}
               onLogout={handleLogout}
               stats={stats}
@@ -165,6 +164,7 @@ export default function HomePage() {
               personalLists={availablePersonalLists}
               onAdd={handleAdd}
               onDelete={handleDelete}
+              onCreateDeck={() => setView("create")}
               onBack={() => setView("menu")}
             />
           )}

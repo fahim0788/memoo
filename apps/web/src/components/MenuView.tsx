@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
-import { SettingsButton } from "./SettingsButton";
+import { Header } from "./Header";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { StatsCard } from "./StatsCard";
 import type { Stats } from "../hooks/useStats";
@@ -11,7 +11,6 @@ type MenuViewProps = {
   onStudy: (deck: DeckFromApi) => void;
   onEdit: (deck: DeckFromApi) => void;
   onExplore: () => void;
-  onCreateDeck: () => void;
   onRemove: (deckId: string) => void;
   onLogout: () => void;
   stats: Stats | null;
@@ -23,7 +22,6 @@ export function MenuView({
   onStudy,
   onEdit,
   onExplore,
-  onCreateDeck,
   onRemove,
   onLogout,
   stats,
@@ -36,22 +34,7 @@ export function MenuView({
 
   return (
     <>
-      <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          <h2 style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <img src="/logo-memoo-black.png" alt="" style={{ width: "28px", height: "28px" }} className="dark:hidden" />
-            <img src="/logo-memoo-white.png" alt="" style={{ width: "28px", height: "28px" }} className="hidden dark:block" />
-            Memoo
-          </h2>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>{userName}</span>
-            <SettingsButton />
-            <button onClick={onLogout} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", minWidth: "auto" }}>
-              Déconnexion
-            </button>
-          </div>
-        </div>
-      </div>
+      <Header userName={userName} onLogout={onLogout} />
 
       {stats && <StatsCard stats={stats} />}
 
@@ -110,12 +93,6 @@ export function MenuView({
       <div className="card">
         <button onClick={onExplore} style={{ margin: 0 }}>
           Explorer les listes disponibles
-        </button>
-      </div>
-
-      <div className="card">
-        <button onClick={onCreateDeck} className="primary" style={{ margin: 0 }}>
-          ➕ Ajouter une liste personnalisée
         </button>
       </div>
 

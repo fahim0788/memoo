@@ -10,11 +10,14 @@ services:
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - tts-storage:/app/storage/tts:ro
+      - ./apps/worker/storage/drapeaux:/app/storage/drapeaux:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - web
       - api
     restart: unless-stopped
+    profiles:
+      - prod
 
   # ===========================================================================
   # Frontend Web (Next.js PWA)
@@ -24,10 +27,12 @@ services:
       context: .
       dockerfile: ./apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-/api}
+        # DEV: Utiliser http://localhost:3001/api pour que STORAGE_BASE fonctionne
+        # PROD: Utiliser /api (nginx gère le routing)
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:3001/api}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-MemoList}
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     depends_on:
       - api
     restart: unless-stopped
@@ -39,8 +44,8 @@ services:
     build:
       context: .
       dockerfile: ./apps/api/Dockerfile
-    expose:
-      - "3001"
+    ports:
+      - "3001:3001"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
@@ -56,6 +61,7 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
     volumes:
       - tts-storage:/app/storage/tts
+      - ./apps/worker/storage/drapeaux:/app/apps/worker/storage/drapeaux:ro
     depends_on:
       db:
         condition: service_healthy

@@ -1,0 +1,1196 @@
+{
+  "name": "Drapeaux du Monde",
+  "description": "Reconnaître les drapeaux de 144 pays",
+  "cards": [
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bahamas",
+        "bahamas"
+      ],
+      "imageUrl": "/storage/flags/bahamas.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bangladesh",
+        "bangladesh"
+      ],
+      "imageUrl": "/storage/flags/bangladesh.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Barbade",
+        "barbade"
+      ],
+      "imageUrl": "/storage/flags/barbade.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Belgique",
+        "belgique"
+      ],
+      "imageUrl": "/storage/flags/belgique.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Belize",
+        "belize"
+      ],
+      "imageUrl": "/storage/flags/belize.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Benin",
+        "benin"
+      ],
+      "imageUrl": "/storage/flags/benin.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bhoutan",
+        "bhoutan"
+      ],
+      "imageUrl": "/storage/flags/bhoutan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bielorussie",
+        "bielorussie"
+      ],
+      "imageUrl": "/storage/flags/bielorussie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Birmanie",
+        "birmanie"
+      ],
+      "imageUrl": "/storage/flags/birmanie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bolivie",
+        "bolivie"
+      ],
+      "imageUrl": "/storage/flags/bolivie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bosnie-Herzégovine",
+        "bosnie-herzégovine",
+        "Bosnie-Herzegovine",
+        "bosnie-herzegovine"
+      ],
+      "imageUrl": "/storage/flags/bosnie_herzegovine.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Botswana",
+        "botswana"
+      ],
+      "imageUrl": "/storage/flags/botswana.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bresil",
+        "bresil"
+      ],
+      "imageUrl": "/storage/flags/bresil.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Brunei",
+        "brunei"
+      ],
+      "imageUrl": "/storage/flags/brunei.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Bulgarie",
+        "bulgarie"
+      ],
+      "imageUrl": "/storage/flags/bulgarie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Burkina Faso",
+        "burkina faso"
+      ],
+      "imageUrl": "/storage/flags/burkina_faso.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Burundi",
+        "burundi"
+      ],
+      "imageUrl": "/storage/flags/burundi.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Cambodge",
+        "cambodge"
+      ],
+      "imageUrl": "/storage/flags/cambodge.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Cameroun",
+        "cameroun"
+      ],
+      "imageUrl": "/storage/flags/cameroun.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Canada",
+        "canada"
+      ],
+      "imageUrl": "/storage/flags/canada.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Cap-Vert",
+        "cap-vert"
+      ],
+      "imageUrl": "/storage/flags/cap_vert.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Chili",
+        "chili"
+      ],
+      "imageUrl": "/storage/flags/chili.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Chine",
+        "chine"
+      ],
+      "imageUrl": "/storage/flags/chine.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Colombie",
+        "colombie"
+      ],
+      "imageUrl": "/storage/flags/colombie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Comores",
+        "comores"
+      ],
+      "imageUrl": "/storage/flags/comores.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Corée du Nord",
+        "corée du nord",
+        "Coree du Nord",
+        "coree du nord"
+      ],
+      "imageUrl": "/storage/flags/coree_du_nord.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Corée du Sud",
+        "corée du sud",
+        "Coree du Sud",
+        "coree du sud"
+      ],
+      "imageUrl": "/storage/flags/coree_du_sud.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Costa Rica",
+        "costa rica"
+      ],
+      "imageUrl": "/storage/flags/costa_rica.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Côte d'Ivoire",
+        "côte d'ivoire",
+        "Cote dIvoire",
+        "cote divoire"
+      ],
+      "imageUrl": "/storage/flags/cote_d_ivoire.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Croatie",
+        "croatie"
+      ],
+      "imageUrl": "/storage/flags/croatie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Danemark",
+        "danemark"
+      ],
+      "imageUrl": "/storage/flags/danemark.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Dominique",
+        "dominique"
+      ],
+      "imageUrl": "/storage/flags/dominique.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Émirats Arabes Unis",
+        "émirats arabes unis",
+        "Emirats Arabes Unis",
+        "emirats arabes unis"
+      ],
+      "imageUrl": "/storage/flags/emirats_arabes_unis.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "États Fédérés de Micronésie",
+        "états fédérés de micronésie",
+        "Etats Federes de Micronesie",
+        "etats federes de micronesie"
+      ],
+      "imageUrl": "/storage/flags/etats_federes_de_micronesie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "États-Unis",
+        "états-unis",
+        "Etats-Unis",
+        "etats-unis"
+      ],
+      "imageUrl": "/storage/flags/etats_unis.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Fidji",
+        "fidji"
+      ],
+      "imageUrl": "/storage/flags/fidji.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Finlande",
+        "finlande"
+      ],
+      "imageUrl": "/storage/flags/finlande.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "France",
+        "france"
+      ],
+      "imageUrl": "/storage/flags/france.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Gabon",
+        "gabon"
+      ],
+      "imageUrl": "/storage/flags/gabon.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Gambie",
+        "gambie"
+      ],
+      "imageUrl": "/storage/flags/gambie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Georgie",
+        "georgie"
+      ],
+      "imageUrl": "/storage/flags/georgie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Ghana",
+        "ghana"
+      ],
+      "imageUrl": "/storage/flags/ghana.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Grece",
+        "grece"
+      ],
+      "imageUrl": "/storage/flags/grece.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Grenade",
+        "grenade"
+      ],
+      "imageUrl": "/storage/flags/grenade.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Guatemala",
+        "guatemala"
+      ],
+      "imageUrl": "/storage/flags/guatemala.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Guinee",
+        "guinee"
+      ],
+      "imageUrl": "/storage/flags/guinee.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Guinée-Bissau",
+        "guinée-bissau",
+        "Guinee-Bissau",
+        "guinee-bissau"
+      ],
+      "imageUrl": "/storage/flags/guinee_bissau.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Guinée Équatoriale",
+        "guinée équatoriale",
+        "Guinee Equatoriale",
+        "guinee equatoriale"
+      ],
+      "imageUrl": "/storage/flags/guinee_equatoriale.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Guyana",
+        "guyana"
+      ],
+      "imageUrl": "/storage/flags/guyana.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Honduras",
+        "honduras"
+      ],
+      "imageUrl": "/storage/flags/honduras.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Hongrie",
+        "hongrie"
+      ],
+      "imageUrl": "/storage/flags/hongrie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Îles Cook",
+        "îles cook",
+        "Iles Cook",
+        "iles cook"
+      ],
+      "imageUrl": "/storage/flags/iles_cook.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Îles Marshall",
+        "îles marshall",
+        "Iles Marshall",
+        "iles marshall"
+      ],
+      "imageUrl": "/storage/flags/iles_marshall.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Jamaique",
+        "jamaique"
+      ],
+      "imageUrl": "/storage/flags/jamaique.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Japon",
+        "japon"
+      ],
+      "imageUrl": "/storage/flags/japon.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Jordanie",
+        "jordanie"
+      ],
+      "imageUrl": "/storage/flags/jordanie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Kazakhstan",
+        "kazakhstan"
+      ],
+      "imageUrl": "/storage/flags/kazakhstan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Kenya",
+        "kenya"
+      ],
+      "imageUrl": "/storage/flags/kenya.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Kirghizistan",
+        "kirghizistan"
+      ],
+      "imageUrl": "/storage/flags/kirghizistan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Kiribati",
+        "kiribati"
+      ],
+      "imageUrl": "/storage/flags/kiribati.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Koweit",
+        "koweit"
+      ],
+      "imageUrl": "/storage/flags/koweit.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Laos",
+        "laos"
+      ],
+      "imageUrl": "/storage/flags/laos.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Lesotho",
+        "lesotho"
+      ],
+      "imageUrl": "/storage/flags/lesotho.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Lettonie",
+        "lettonie"
+      ],
+      "imageUrl": "/storage/flags/lettonie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Liban",
+        "liban"
+      ],
+      "imageUrl": "/storage/flags/liban.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Liberia",
+        "liberia"
+      ],
+      "imageUrl": "/storage/flags/liberia.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Libye",
+        "libye"
+      ],
+      "imageUrl": "/storage/flags/libye.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Liechtenstein",
+        "liechtenstein"
+      ],
+      "imageUrl": "/storage/flags/liechtenstein.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Lituanie",
+        "lituanie"
+      ],
+      "imageUrl": "/storage/flags/lituanie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Luxembourg",
+        "luxembourg"
+      ],
+      "imageUrl": "/storage/flags/luxembourg.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Macédoine du Nord",
+        "macédoine du nord",
+        "Macedoine du Nord",
+        "macedoine du nord"
+      ],
+      "imageUrl": "/storage/flags/macedoine_du_nord.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Malaisie",
+        "malaisie"
+      ],
+      "imageUrl": "/storage/flags/malaisie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Malawi",
+        "malawi"
+      ],
+      "imageUrl": "/storage/flags/malawi.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Maldives",
+        "maldives"
+      ],
+      "imageUrl": "/storage/flags/maldives.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Mali",
+        "mali"
+      ],
+      "imageUrl": "/storage/flags/mali.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Maroc",
+        "maroc"
+      ],
+      "imageUrl": "/storage/flags/maroc.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Mauritanie",
+        "mauritanie"
+      ],
+      "imageUrl": "/storage/flags/mauritanie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Mexique",
+        "mexique"
+      ],
+      "imageUrl": "/storage/flags/mexique.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Moldavie",
+        "moldavie"
+      ],
+      "imageUrl": "/storage/flags/moldavie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Mongolie",
+        "mongolie"
+      ],
+      "imageUrl": "/storage/flags/mongolie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Montenegro",
+        "montenegro"
+      ],
+      "imageUrl": "/storage/flags/montenegro.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Mozambique",
+        "mozambique"
+      ],
+      "imageUrl": "/storage/flags/mozambique.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Namibie",
+        "namibie"
+      ],
+      "imageUrl": "/storage/flags/namibie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Nepal",
+        "nepal"
+      ],
+      "imageUrl": "/storage/flags/nepal.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Nicaragua",
+        "nicaragua"
+      ],
+      "imageUrl": "/storage/flags/nicaragua.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Niger",
+        "niger"
+      ],
+      "imageUrl": "/storage/flags/niger.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Nigeria",
+        "nigeria"
+      ],
+      "imageUrl": "/storage/flags/nigeria.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Norvege",
+        "norvege"
+      ],
+      "imageUrl": "/storage/flags/norvege.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Nouvelle-Zélande",
+        "nouvelle-zélande",
+        "Nouvelle-Zelande",
+        "nouvelle-zelande"
+      ],
+      "imageUrl": "/storage/flags/nouvelle_zelande.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Pakistan",
+        "pakistan"
+      ],
+      "imageUrl": "/storage/flags/pakistan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Palaos",
+        "palaos"
+      ],
+      "imageUrl": "/storage/flags/palaos.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Palestine",
+        "palestine"
+      ],
+      "imageUrl": "/storage/flags/palestine.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Panama",
+        "panama"
+      ],
+      "imageUrl": "/storage/flags/panama.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Papouasie-Nouvelle-Guinée",
+        "papouasie-nouvelle-guinée",
+        "Papouasie-Nouvelle-Guinee",
+        "papouasie-nouvelle-guinee"
+      ],
+      "imageUrl": "/storage/flags/papouasie_nouvelle_guinee.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Paraguay",
+        "paraguay"
+      ],
+      "imageUrl": "/storage/flags/paraguay.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Pays-Bas",
+        "pays-bas"
+      ],
+      "imageUrl": "/storage/flags/pays_bas.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Perou",
+        "perou"
+      ],
+      "imageUrl": "/storage/flags/perou.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Philippines",
+        "philippines"
+      ],
+      "imageUrl": "/storage/flags/philippines.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Pologne",
+        "pologne"
+      ],
+      "imageUrl": "/storage/flags/pologne.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Portugal",
+        "portugal"
+      ],
+      "imageUrl": "/storage/flags/portugal.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Qatar",
+        "qatar"
+      ],
+      "imageUrl": "/storage/flags/qatar.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "République Centrafricaine",
+        "république centrafricaine",
+        "Republique Centrafricaine",
+        "republique centrafricaine"
+      ],
+      "imageUrl": "/storage/flags/republique_centrafricaine.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "République Démocratique du Congo",
+        "république démocratique du congo",
+        "Republique Democratique du Congo",
+        "republique democratique du congo"
+      ],
+      "imageUrl": "/storage/flags/republique_democratique_du_congo.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "République Dominicaine",
+        "république dominicaine",
+        "Republique Dominicaine",
+        "republique dominicaine"
+      ],
+      "imageUrl": "/storage/flags/republique_dominicaine.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "République du Congo",
+        "république du congo",
+        "Republique du Congo",
+        "republique du congo"
+      ],
+      "imageUrl": "/storage/flags/republique_du_congo.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Roumanie",
+        "roumanie"
+      ],
+      "imageUrl": "/storage/flags/roumanie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Royaume-Uni",
+        "royaume-uni"
+      ],
+      "imageUrl": "/storage/flags/royaume_uni.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Russie",
+        "russie"
+      ],
+      "imageUrl": "/storage/flags/russie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Rwanda",
+        "rwanda"
+      ],
+      "imageUrl": "/storage/flags/rwanda.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Salomon",
+        "salomon"
+      ],
+      "imageUrl": "/storage/flags/salomon.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Salvador",
+        "salvador"
+      ],
+      "imageUrl": "/storage/flags/salvador.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Samoa",
+        "samoa"
+      ],
+      "imageUrl": "/storage/flags/samoa.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Senegal",
+        "senegal"
+      ],
+      "imageUrl": "/storage/flags/senegal.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Serbie",
+        "serbie"
+      ],
+      "imageUrl": "/storage/flags/serbie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Seychelles",
+        "seychelles"
+      ],
+      "imageUrl": "/storage/flags/seychelles.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Slovaquie",
+        "slovaquie"
+      ],
+      "imageUrl": "/storage/flags/slovaquie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Slovenie",
+        "slovenie"
+      ],
+      "imageUrl": "/storage/flags/slovenie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Somalie",
+        "somalie"
+      ],
+      "imageUrl": "/storage/flags/somalie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Soudan",
+        "soudan"
+      ],
+      "imageUrl": "/storage/flags/soudan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Soudan du Sud",
+        "soudan du sud"
+      ],
+      "imageUrl": "/storage/flags/soudan_du_sud.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Sri Lanka",
+        "sri lanka"
+      ],
+      "imageUrl": "/storage/flags/sri_lanka.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Suede",
+        "suede"
+      ],
+      "imageUrl": "/storage/flags/suede.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Suisse",
+        "suisse"
+      ],
+      "imageUrl": "/storage/flags/suisse.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Suriname",
+        "suriname"
+      ],
+      "imageUrl": "/storage/flags/suriname.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Syrie",
+        "syrie"
+      ],
+      "imageUrl": "/storage/flags/syrie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tadjikistan",
+        "tadjikistan"
+      ],
+      "imageUrl": "/storage/flags/tadjikistan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tanzanie",
+        "tanzanie"
+      ],
+      "imageUrl": "/storage/flags/tanzanie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tchad",
+        "tchad"
+      ],
+      "imageUrl": "/storage/flags/tchad.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tchequie",
+        "tchequie"
+      ],
+      "imageUrl": "/storage/flags/tchequie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Thailande",
+        "thailande"
+      ],
+      "imageUrl": "/storage/flags/thailande.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Timor Oriental",
+        "timor oriental"
+      ],
+      "imageUrl": "/storage/flags/timor_oriental.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Togo",
+        "togo"
+      ],
+      "imageUrl": "/storage/flags/togo.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tonga",
+        "tonga"
+      ],
+      "imageUrl": "/storage/flags/tonga.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tunisie",
+        "tunisie"
+      ],
+      "imageUrl": "/storage/flags/tunisie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Turkmenistan",
+        "turkmenistan"
+      ],
+      "imageUrl": "/storage/flags/turkmenistan.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Turquie",
+        "turquie"
+      ],
+      "imageUrl": "/storage/flags/turquie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Tuvalu",
+        "tuvalu"
+      ],
+      "imageUrl": "/storage/flags/tuvalu.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Vanuatu",
+        "vanuatu"
+      ],
+      "imageUrl": "/storage/flags/vanuatu.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Vatican",
+        "vatican"
+      ],
+      "imageUrl": "/storage/flags/vatican.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Venezuela",
+        "venezuela"
+      ],
+      "imageUrl": "/storage/flags/venezuela.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Viêt Nam",
+        "viêt nam",
+        "Viet Nam",
+        "viet nam"
+      ],
+      "imageUrl": "/storage/flags/viet_nam.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Yemen",
+        "yemen"
+      ],
+      "imageUrl": "/storage/flags/yemen.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Zambie",
+        "zambie"
+      ],
+      "imageUrl": "/storage/flags/zambie.svg"
+    },
+    {
+      "question": "Quel est ce pays ?",
+      "answers": [
+        "Zimbabwe",
+        "zimbabwe"
+      ],
+      "imageUrl": "/storage/flags/zimbabwe.svg"
+    }
+  ]
+}

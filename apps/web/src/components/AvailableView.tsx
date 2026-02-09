@@ -7,6 +7,7 @@ type AvailableViewProps = {
   personalLists: DeckFromApi[];
   onAdd: (deckId: string) => void;
   onDelete: (deckId: string) => void;
+  onCreateDeck: () => void;
   onBack: () => void;
 };
 
@@ -15,6 +16,7 @@ export function AvailableView({
   personalLists,
   onAdd,
   onDelete,
+  onCreateDeck,
   onBack,
 }: AvailableViewProps) {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -89,11 +91,13 @@ export function AvailableView({
           👤 Mes listes personnalisées ({filteredPersonal.length})
         </div>
 
+        <button onClick={onCreateDeck} className="primary" style={{ margin: "0.5rem 0" }}>
+          ➕ Créer une liste personnalisée
+        </button>
+
         {filteredPersonal.length === 0 && (
           <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
-            Aucune liste personnalisée disponible.
-            <br />
-            Créez-en une depuis le menu principal.
+            Aucune liste personnalisée pour le moment.
           </p>
         )}
 

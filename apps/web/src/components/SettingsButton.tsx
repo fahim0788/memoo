@@ -135,48 +135,55 @@ export function SettingsButton() {
           <div
             className="settings-content"
             onClick={(e) => e.stopPropagation()}
+            style={{ position: "relative" }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6">
               <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
                 Paramètres
               </h3>
-              <button
-                className="settings-btn"
-                onClick={() => setIsOpen(false)}
-                aria-label="Fermer"
-              >
-                <CloseIcon className="w-4 h-4" />
-              </button>
             </div>
 
-            {/* Theme Toggle */}
+            {/* Close Button - Top Right Corner */}
+            <button
+              onClick={() => setIsOpen(false)}
+              aria-label="Fermer"
+              style={{
+                position: "absolute",
+                top: "1rem",
+                right: "1rem",
+                width: "2rem",
+                height: "2rem",
+                minWidth: 0,
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "var(--color-bg-tertiary)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "2px",
+                cursor: "pointer",
+                color: "var(--color-text-secondary)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--color-border-hover)";
+                e.currentTarget.style.color = "var(--color-text)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--color-bg-tertiary)";
+                e.currentTarget.style.color = "var(--color-text-secondary)";
+              }}
+            >
+              <CloseIcon className="w-5 h-5" />
+            </button>
+
+            {/* Theme Options */}
             <div className="space-y-4">
               <label className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
                 Apparence
               </label>
-              <div
-                className="theme-toggle"
-                onClick={toggleTheme}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && toggleTheme()}
-              >
-                <div className="flex items-center gap-3">
-                  {theme === "light" ? (
-                    <SunIcon className="w-5 h-5 text-[var(--color-accent)]" />
-                  ) : (
-                    <MoonIcon className="w-5 h-5 text-[var(--color-primary)]" />
-                  )}
-                  <span style={{ color: "var(--color-text)" }}>
-                    {theme === "light" ? "Mode clair" : "Mode sombre"}
-                  </span>
-                </div>
-                <div className={`toggle-switch ${theme === "dark" ? "active" : ""}`} />
-              </div>
-
-              {/* Theme Options */}
-              <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   className={`p-3 rounded-xl text-sm font-medium transition-all ${
                     theme === "light"

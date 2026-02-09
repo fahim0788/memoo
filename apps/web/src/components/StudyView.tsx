@@ -7,8 +7,10 @@ import { isCorrect } from "../lib/text";
 import { queueReview } from "../lib/sync";
 import { STORAGE_BASE, type DeckFromApi, type CardFromApi } from "../lib/api";
 import { updateStreak } from "../lib/streak";
+import { t } from "../lib/i18n";
+import { Header } from "./Header";
 
-function AudioButton({ url, label, autoPlay }: { url?: string | null; label: string; autoPlay?: boolean }) {
+function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null; label: string; autoPlay?: boolean; fullWidth?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -43,10 +45,12 @@ function AudioButton({ url, label, autoPlay }: { url?: string | null; label: str
     <button
       onClick={play}
       style={{
-        padding: "0.25rem 0.5rem",
-        fontSize: "0.85rem",
-        marginLeft: "0.5rem",
+        padding: fullWidth ? "0.75rem 1rem" : "0.25rem 0.5rem",
+        fontSize: fullWidth ? "1rem" : "0.85rem",
+        marginLeft: fullWidth ? "0" : "0.5rem",
         opacity: playing ? 0.6 : 1,
+        flex: fullWidth ? "1" : "none",
+        minHeight: fullWidth ? "3rem" : "auto",
       }}
       disabled={playing}
     >
@@ -149,56 +153,59 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
 
   if (!study) {
     return (
-      <div className="card">Chargement...</div>
+      <div className="card">{t.common.loading}</div>
     );
   }
 
   return (
     <>
-      <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          <h2>{deck.name}</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+      <Header
+        rightContent={
+          <>
             <span style={{
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
+              background: "var(--color-stats-bg)",
+              border: "1px solid var(--color-stats-border)",
               padding: "0.25rem 0.5rem",
               borderRadius: "8px",
               fontSize: "0.75rem",
-              color: "#e5e7eb"
+              color: "var(--color-stats-text)"
             }}>
-              Aujourd'hui : <b>{study.doneToday}</b>
+              {t.study.todayLabel}<b>{study.doneToday}</b>
             </span>
             <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-              ← Retour
+              {t.common.back}
             </button>
-          </div>
-        </div>
+          </>
+        }
+      />
+
+      <div style={{ padding: "0 1rem", marginTop: "0.5rem" }}>
+        <h2 style={{ margin: 0, fontWeight: 500 }}>{deck.name}</h2>
       </div>
 
       <div className="card">
         {!current ? (
           <>
-            <span className="badge ok">🎉 Terminé</span>
-            <p className="small">Aucune carte due pour le moment.</p>
+            <span className="badge ok">{t.study.finished}</span>
+            <p className="small">{t.study.noDueCards}</p>
           </>
         ) : (
           <>
-            <div className="small" style={{ display: "flex", alignItems: "center" }}>
-              Question
-              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="EN" autoPlay />
-            </div>
+            <div className="small">{t.study.question}</div>
             {current.imageUrl && (
-              <div style={{ marginBottom: "1rem", textAlign: "center" }}>
+              <div style={{ marginBottom: "1rem", textAlign: "center", padding: "1rem", border: "1px solid var(--color-image-border)", borderRadius: "8px", background: "var(--color-image-bg)" }}>
                 <img
-                  src={current.imageUrl}
+                  src={`${STORAGE_BASE}${current.imageUrl}`}
                   alt="Question illustration"
-                  style={{ maxWidth: "100%", maxHeight: "16rem", margin: "0 auto", display: "block" }}
+                  style={{ maxWidth: "100%", maxHeight: "16rem", margin: "0 auto", display: "block", border: "1px solid var(--color-image-border)" }}
                   loading="lazy"
                 />
               </div>
             )}
             <h3>{current.question}</h3>
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="Écouter EN" autoPlay fullWidth />
+            </div>
 
             {!showResult && (
               <>
@@ -206,19 +213,19 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
                   <input
                     value={answer}
                     onChange={e => setAnswer(e.target.value)}
-                    placeholder="Tape ta réponse…"
+                    placeholder={t.study.typeYourAnswer}
                     onKeyDown={e => e.key === "Enter" && onValidate()}
                   />
                 </div>
                 <div className="actions">
-                  <button className="primary" onClick={onValidate}>Valider</button>
+                  <button className="primary" onClick={onValidate}>{t.study.validate}</button>
                   <button
                     onClick={() => {
                       setResult({ ok: false, expected: current.answers[0] ?? "" });
                       setShowResult(true);
                     }}
                   >
-                    Voir la réponse
+                    {t.study.showAnswer}
                   </button>
                 </div>
               </>
@@ -227,13 +234,15 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
             {showResult && result && (
               <>
                 <span className={`badge ${result.ok ? "ok" : "bad"}`}>
-                  {result.ok ? "✅ Correct" : "❌ Incorrect"}
+                  {result.ok ? t.study.correct : t.study.incorrect}
                 </span>
-                <div className="small" style={{ display: "flex", alignItems: "center", marginTop: "0.5rem" }}>
-                  Référence : <b>{result.expected}</b>
-                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label="FR" autoPlay />
+                <div className="small" style={{ marginTop: "0.5rem" }}>
+                  {t.study.reference}<b>{result.expected}</b>
                 </div>
-                <button className="primary" onClick={goNext}>Suivant</button>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", marginBottom: "1rem" }}>
+                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label="Écouter FR" autoPlay fullWidth />
+                </div>
+                <button className="primary" onClick={goNext}>{t.study.next}</button>
               </>
             )}
           </>

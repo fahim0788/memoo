@@ -26,7 +26,11 @@
       "Bash(npx prisma migrate:*)",
       "Bash(npm run build:*)",
       "Bash(npx next:*)",
-      "Bash(node --import tsx -e:*)"
+      "Bash(node --import tsx -e:*)",
+      "Bash(DATABASE_URL=\"postgresql://memolist:memolist@localhost:5432/memolist\" npx prisma migrate dev:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose up:*)"
     ]
   }
 }
