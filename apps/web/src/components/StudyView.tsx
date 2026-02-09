@@ -8,6 +8,7 @@ import { queueReview } from "../lib/sync";
 import { STORAGE_BASE, type DeckFromApi, type CardFromApi } from "../lib/api";
 import { updateStreak } from "../lib/streak";
 import { t } from "../lib/i18n";
+import { useLanguage } from "../hooks/useLanguage";
 import { Header } from "./Header";
 
 function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null; label: string; autoPlay?: boolean; fullWidth?: boolean }) {
@@ -69,6 +70,9 @@ type StudyViewProps = {
   deck: DeckFromApi;
   cards: CardFromApi[];
   onBack: () => void;
+  userName?: string;
+  onLogout?: () => void;
+  onHome?: () => void;
 };
 
 function todayKey(d = new Date()) {
@@ -95,7 +99,8 @@ function pickNextDue(cards: CardFromApi[], state: StudyState) {
   return due[0] ?? null;
 }
 
-export function StudyView({ deck, cards, onBack }: StudyViewProps) {
+export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: StudyViewProps) {
+  useLanguage();
   const [study, setStudy] = useState<StudyState | null>(null);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<{ ok: boolean; expected: string } | null>(null);
@@ -160,8 +165,15 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
   return (
     <>
       <Header
-        actions={
+        userName={userName}
+        onLogout={onLogout}
+        onHome={onHome}
+        title={deck.name}
+        secondaryActions={
           <>
+            <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
+              {t.common.back}
+            </button>
             <span style={{
               background: "var(--color-stats-bg)",
               border: "1px solid var(--color-stats-border)",
@@ -172,16 +184,9 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
             }}>
               {t.study.todayLabel}<b>{study.doneToday}</b>
             </span>
-            <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-              {t.common.back}
-            </button>
           </>
         }
       />
-
-      <div style={{ padding: "0 1rem", marginTop: "0.5rem" }}>
-        <h2 style={{ margin: 0, fontWeight: 500 }}>{deck.name}</h2>
-      </div>
 
       <div className="card">
         {!current ? (
@@ -204,7 +209,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
             )}
             <h3>{current.question}</h3>
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label="Écouter EN" autoPlay fullWidth />
+              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label={t.study.listenEn} autoPlay fullWidth />
             </div>
 
             {!showResult && (
@@ -240,7 +245,7 @@ export function StudyView({ deck, cards, onBack }: StudyViewProps) {
                   {t.study.reference}<b>{result.expected}</b>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", marginBottom: "1rem" }}>
-                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label="Écouter FR" autoPlay fullWidth />
+                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label={t.study.listenFr} autoPlay fullWidth />
                 </div>
                 <button className="primary" onClick={goNext}>{t.study.next}</button>
               </>

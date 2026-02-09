@@ -67,12 +67,14 @@ model UserDeck {
   id        String   @id @default(cuid())
   userId   String
   deckId    String
+  position  Int      @default(0)
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@unique([userId, deckId])
+  @@index([userId, position])
 }
 
 model TtsJob {

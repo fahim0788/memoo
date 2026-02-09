@@ -14,6 +14,7 @@ import {
 import {
   addList as apiAddList,
   removeList as apiRemoveList,
+  reorderLists as apiReorderLists,
   deleteDeck as apiDeleteDeck,
 } from "./api";
 import { idbGet, idbSet } from "./idb";
@@ -86,10 +87,13 @@ async function executeOperation(operation: QueuedOperation): Promise<void> {
       await apiAddList(payload.deckId);
       break;
     case "REMOVE_LIST":
-      await apiRemoveList(payload.deckId);
+      await apiRemoveList(payload.deckId!);
+      break;
+    case "REORDER_LISTS":
+      await apiReorderLists(payload.deckIds!);
       break;
     case "DELETE_DECK":
-      await apiDeleteDeck(payload.deckId);
+      await apiDeleteDeck(payload.deckId!);
       break;
     default:
       throw new Error(`Unknown operation type: ${type}`);

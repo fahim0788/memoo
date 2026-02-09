@@ -151,6 +151,15 @@ export async function removeList(deckId: string): Promise<void> {
   }, "retirer la liste");
 }
 
+export async function reorderLists(deckIds: string[]): Promise<void> {
+  await safeFetch(`${API_BASE}/my-lists/reorder`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ deckIds }),
+    cache: "no-store",
+  }, "réorganiser les listes");
+}
+
 export async function deleteDeck(deckId: string): Promise<void> {
   await safeFetch(`${API_BASE}/my-decks/${deckId}`, {
     method: "DELETE",

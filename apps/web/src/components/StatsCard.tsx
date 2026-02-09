@@ -1,10 +1,15 @@
+"use client";
+
 import type { Stats } from "../hooks/useStats";
+import { t } from "../lib/i18n";
+import { useLanguage } from "../hooks/useLanguage";
 
 type StatsCardProps = {
   stats: Stats;
 };
 
 export function StatsCard({ stats }: StatsCardProps) {
+  useLanguage();
   const hasActivity = stats.todayTotal > 0 || stats.streak > 0 || stats.perDeck.length > 0;
   const totalUpcoming = stats.upcoming.reduce((s, b) => s + b.count, 0);
 
@@ -22,11 +27,11 @@ export function StatsCard({ stats }: StatsCardProps) {
           background: "var(--color-primary-light)",
           border: "1px solid var(--color-border)",
         }}>
-          <div className="small">Aujourd'hui</div>
+          <div className="small">{t.stats.todayLabel}</div>
           <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
             {stats.todayTotal}
             <span style={{ fontSize: "0.75rem", fontWeight: 400, marginLeft: "4px", color: "var(--color-text-secondary)" }}>
-              carte{stats.todayTotal !== 1 ? "s" : ""}
+              {t.plural.cards(stats.todayTotal)}
             </span>
           </div>
         </div>
@@ -38,11 +43,11 @@ export function StatsCard({ stats }: StatsCardProps) {
           background: stats.streak > 0 ? "var(--color-accent-light)" : "var(--color-bg-tertiary)",
           border: "1px solid var(--color-border)",
         }}>
-          <div className="small">Streak</div>
+          <div className="small">{t.stats.streak}</div>
           <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
             {stats.streak > 0 ? stats.streak : "-"}
             <span style={{ fontSize: "0.75rem", fontWeight: 400, marginLeft: "4px", color: "var(--color-text-secondary)" }}>
-              {stats.streak > 0 ? `jour${stats.streak !== 1 ? "s" : ""}` : ""}
+              {stats.streak > 0 ? t.plural.days(stats.streak) : ""}
             </span>
           </div>
         </div>
@@ -51,7 +56,7 @@ export function StatsCard({ stats }: StatsCardProps) {
       {/* Success rate per deck */}
       {stats.perDeck.length > 0 && (
         <div>
-          <div className="small" style={{ marginBottom: "0.4rem" }}>Taux de reussite</div>
+          <div className="small" style={{ marginBottom: "0.4rem" }}>{t.stats.successRate}</div>
           {stats.perDeck.map(d => (
             <div key={d.deckId} style={{ marginBottom: "0.35rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "2px" }}>
@@ -86,7 +91,7 @@ export function StatsCard({ stats }: StatsCardProps) {
       {/* Upcoming reviews */}
       {totalUpcoming > 0 && (
         <div>
-          <div className="small" style={{ marginBottom: "0.4rem" }}>Prochaines revisions</div>
+          <div className="small" style={{ marginBottom: "0.4rem" }}>{t.stats.nextReviews}</div>
           {stats.upcoming.filter(b => b.count > 0).map(b => (
             <div key={b.label} style={{
               display: "flex",

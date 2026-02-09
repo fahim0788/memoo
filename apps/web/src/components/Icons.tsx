@@ -187,3 +187,118 @@ export function IconSettings({ size = 20, className = "", style }: IconProps) {
     </svg>
   );
 }
+
+export function IconFolderPublic({ size = 20, className = "", style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+      style={style}
+    >
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+export function IconUser({ size = 20, className = "", style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+      style={style}
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+export function IconArrowUp({ size = 20, className = "", style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+      style={style}
+    >
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </svg>
+  );
+}
+
+export function IconArrowDown({ size = 20, className = "", style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+      style={style}
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <polyline points="19 12 12 19 5 12" />
+    </svg>
+  );
+}
+
+/**
+ * Drapeaux pour le switch de langue
+ */
+export function IconFlagFR({ size = 20, className = "", style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      style={style}
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.1" />
+      <rect x="2" y="4" width="6.67" height="16" fill="#0055A4" />
+      <rect x="8.67" y="4" width="6.67" height="16" fill="#FFFFFF" />
+      <rect x="15.34" y="4" width="6.67" height="16" rx="0 2 2 0" fill="#EF4135" />
+    </svg>
+  );
+}
+
+export function IconFlagUS({ size = 20, className = "", style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      style={style}
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.1" />
+      {/* Rayures rouges et blanches */}
+      <rect x="2" y="4" width="20" height="1.23" fill="#B22234" />
+      <rect x="2" y="6.46" width="20" height="1.23" fill="#B22234" />
+      <rect x="2" y="8.92" width="20" height="1.23" fill="#B22234" />
+      <rect x="2" y="11.38" width="20" height="1.23" fill="#B22234" />
+      <rect x="2" y="13.85" width="20" height="1.23" fill="#B22234" />
+      <rect x="2" y="16.31" width="20" height="1.23" fill="#B22234" />
+      <rect x="2" y="18.77" width="20" height="1.23" rx="0 0 2 2" fill="#B22234" />
+      {/* Canton bleu */}
+      <rect x="2" y="4" width="8" height="8.62" rx="2 0 0 0" fill="#3C3B6E" />
+    </svg>
+  );
+}

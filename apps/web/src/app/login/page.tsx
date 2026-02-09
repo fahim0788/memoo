@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
+import { t } from "../../lib/i18n";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function LoginPage() {
+  useLanguage(); // Force re-render on language change
   const router = useRouter();
   const { login, register } = useAuth();
 
@@ -29,7 +32,7 @@ export default function LoginPage() {
       }
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : t.errors.unknown);
     } finally {
       setLoading(false);
     }
@@ -42,67 +45,67 @@ export default function LoginPage() {
         <div style={{ textAlign: "center", marginBottom: "1rem" }}>
           <img src="/logo-memoo-black.png" alt="Memoo Logo" style={{ width: "100px", height: "100px", margin: "0 auto" }} className="dark:hidden" />
           <img src="/logo-memoo-white.png" alt="Memoo Logo" style={{ width: "100px", height: "100px", margin: "0 auto" }} className="hidden dark:block" />
-          <h1 style={{ fontSize: "2.5rem", margin: 0, fontWeight: 800 }}>
-            Memoo
+          <h1 style={{ fontSize: "2.5rem", margin: "-1.0rem 0 0 0", fontWeight: 500 }}>
+            {t.menu.title}
           </h1>
           <p className="small" style={{ marginTop: "0.5rem" }}>
-            Apprends par repetition espacee
+            {t.auth.tagline}
           </p>
         </div>
 
         {/* Login Card */}
         <div className="card">
           <h2 style={{ margin: 0, fontSize: "1.25rem", textAlign: "center" }}>
-            {mode === "login" ? "Connexion" : "Creer un compte"}
+            {mode === "login" ? t.auth.loginTitle : t.auth.registerTitle}
           </h2>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {mode === "register" && (
               <>
                 <div>
-                  <label htmlFor="firstName" className="small">Prenom</label>
+                  <label htmlFor="firstName" className="small">{t.auth.firstName}</label>
                   <input
                     id="firstName"
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jean"
+                    placeholder={t.auth.firstNamePlaceholder}
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="small">Nom</label>
+                  <label htmlFor="lastName" className="small">{t.auth.lastName}</label>
                   <input
                     id="lastName"
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Dupont"
+                    placeholder={t.auth.lastNamePlaceholder}
                   />
                 </div>
               </>
             )}
 
             <div>
-              <label htmlFor="email" className="small">Email</label>
+              <label htmlFor="email" className="small">{t.auth.email}</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jean@exemple.fr"
+                placeholder={t.auth.emailPlaceholder}
                 required
                 autoComplete="email"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="small">Mot de passe</label>
+              <label htmlFor="password" className="small">{t.auth.password}</label>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t.auth.passwordPlaceholder}
                 required
                 minLength={6}
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
@@ -122,17 +125,17 @@ export default function LoginPage() {
               style={{ opacity: loading ? 0.7 : 1, marginTop: "0.5rem" }}
             >
               {loading
-                ? "Chargement..."
+                ? t.common.loading
                 : mode === "login"
-                ? "Se connecter"
-                : "Creer mon compte"}
+                ? t.auth.loginButton
+                : t.auth.registerButton}
             </button>
           </form>
 
           <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
             {mode === "login" ? (
               <p className="small">
-                Pas encore de compte ?{" "}
+                {t.auth.noAccount}{" "}
                 <button
                   type="button"
                   onClick={() => setMode("register")}
@@ -149,12 +152,12 @@ export default function LoginPage() {
                     fontWeight: 400,
                   }}
                 >
-                  Inscription
+                  {t.auth.register}
                 </button>
               </p>
             ) : (
               <p className="small">
-                Deja inscrit ?{" "}
+                {t.auth.alreadyAccount}{" "}
                 <button
                   type="button"
                   onClick={() => setMode("login")}
@@ -171,7 +174,7 @@ export default function LoginPage() {
                     fontWeight: 400,
                   }}
                 >
-                  Connexion
+                  {t.auth.login}
                 </button>
               </p>
             )}
@@ -180,7 +183,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="small" style={{ textAlign: "center", marginTop: "1rem" }}>
-            Leçons populaires ou créez les votre avec vos propres cartes mémoire !
+          {t.auth.footerText}
         </p>
       </div>
     </div>

@@ -160,6 +160,7 @@ export async function GET(req: NextRequest) {
       include: {
         deck: { include: { cards: { select: { id: true } } } },
       },
+      orderBy: { position: "asc" },
     });
 
     const decks = userDecks.map(ud => ({
@@ -506,6 +507,34 @@ export async function PUT(req: NextRequest) {
     if (!name) return json({ error: "name required" }, req, 400);
 
     await getPrisma().deck.update({ where: { id: deckId }, data: { name } });
+
+    return json({ ok: true }, req);
+  }
+
+  // PUT /api/my-lists/reorder - Reorder user's subscribed lists
+  if (pathname === "/api/my-lists/reorder") {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const { deckIds } = await req.json();
+    if (!Array.isArray(deckIds) || deckIds.length === 0) {
+      return json({ error: "deckIds array required" }, req, 400);
+    }
+
+    // Update the position field for each subscription
+    const updatePromises = deckIds.map((deckId, index) =>
+      getPrisma().subscription.updateMany({
+        where: {
+          userId: auth.user.userId,
+          deckId: deckId
+        },
+        data: {
+          position: index
+        }
+      })
+    );
+
+    await Promise.all(updatePromises);
 
     return json({ ok: true }, req);
   }

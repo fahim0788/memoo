@@ -18,7 +18,7 @@ type View = "menu" | "available" | "studying" | "create" | "editing";
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
-  const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, getCards, reload, forceRefresh } = useLists();
+  const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, reorderLists, getCards, reload, forceRefresh } = useLists();
   const { stats, refreshStats } = useStats(myLists);
 
   const [view, setView] = useState<View>("menu");
@@ -85,6 +85,18 @@ export default function HomePage() {
     }
   }
 
+  async function handleReorder(deckIds: string[]) {
+    if (actionLoading) return;
+    try {
+      setActionLoading(true);
+      await reorderLists(deckIds);
+    } catch (err) {
+      console.error("Failed to reorder lists:", err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleDelete(deckId: string) {
     if (actionLoading) return;
     // TODO: Add confirmation dialog
@@ -135,6 +147,10 @@ export default function HomePage() {
     router.push("/login");
   }
 
+  function handleHome() {
+    setView("menu");
+  }
+
   async function handleDeckCreated() {
     // Force refresh from API after creating a deck (bypasses cache)
     await forceRefresh();
@@ -153,6 +169,7 @@ export default function HomePage() {
               onEdit={handleEdit}
               onExplore={() => setView("available")}
               onRemove={handleRemove}
+              onReorder={handleReorder}
               onLogout={handleLogout}
               stats={stats}
             />
@@ -166,6 +183,9 @@ export default function HomePage() {
               onDelete={handleDelete}
               onCreateDeck={() => setView("create")}
               onBack={() => setView("menu")}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onHome={handleHome}
             />
           )}
 
@@ -177,6 +197,9 @@ export default function HomePage() {
                 refreshStats();
                 setView("menu");
               }}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onHome={handleHome}
             />
           )}
 
@@ -188,6 +211,9 @@ export default function HomePage() {
                 await forceRefresh();
                 setView("menu");
               }}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onHome={handleHome}
             />
           )}
 
@@ -195,6 +221,9 @@ export default function HomePage() {
             <CreateDeckView
               onBack={() => setView("menu")}
               onCreated={handleDeckCreated}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onHome={handleHome}
             />
           )}
 

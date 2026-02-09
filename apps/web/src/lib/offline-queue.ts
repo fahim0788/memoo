@@ -5,13 +5,14 @@
 
 import { idbGet, idbSet } from "./idb";
 
-export type OperationType = "ADD_LIST" | "REMOVE_LIST" | "DELETE_DECK";
+export type OperationType = "ADD_LIST" | "REMOVE_LIST" | "REORDER_LISTS" | "DELETE_DECK";
 
 export type QueuedOperation = {
   id: string;
   type: OperationType;
   payload: {
-    deckId: string;
+    deckId?: string;
+    deckIds?: string[];
     // Snapshot for rollback
     snapshot?: {
       myLists?: unknown[];

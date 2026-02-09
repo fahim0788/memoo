@@ -2,8 +2,11 @@
 
 import { useSyncStatus } from "../hooks/useSyncStatus";
 import { IconSync, IconAlert, IconCheck, IconWifi } from "./Icons";
+import { t } from "../lib/i18n";
+import { useLanguage } from "../hooks/useLanguage";
 
 export function SyncStatus() {
+  useLanguage();
   const {
     isOnline,
     pendingCount,
@@ -32,7 +35,7 @@ export function SyncStatus() {
         gap: "8px",
       }}>
         <IconSync size={16} style={{ animation: "spin 1s linear infinite" }} />
-        Synchronisation...
+        {t.sync.syncing}
         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -54,7 +57,7 @@ export function SyncStatus() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconWifi size={16} />
-          <span>Hors ligne • {pendingCount} opération{pendingCount > 1 ? "s" : ""} en attente</span>
+          <span>{t.sync.offlinePrefix} {pendingCount} {t.plural.operations(pendingCount)} {t.sync.pending.toLowerCase()}</span>
         </div>
       </div>
     );
@@ -76,7 +79,7 @@ export function SyncStatus() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconWifi size={16} />
-          <span>Hors ligne</span>
+          <span>{t.sync.offline}</span>
         </div>
       </div>
     );
@@ -98,7 +101,7 @@ export function SyncStatus() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconAlert size={16} />
-          <span>{pendingCount} opération{pendingCount > 1 ? "s" : ""} en erreur (réessai automatique)</span>
+          <span>{pendingCount} {t.plural.operations(pendingCount)} {t.sync.errorRetry}</span>
         </div>
       </div>
     );
@@ -108,10 +111,10 @@ export function SyncStatus() {
   if (pendingCount > 0) {
     const parts = [];
     if (reviewsPendingCount > 0) {
-      parts.push(`${reviewsPendingCount} révision${reviewsPendingCount > 1 ? "s" : ""}`);
+      parts.push(`${reviewsPendingCount} ${t.plural.revisions(reviewsPendingCount)}`);
     }
     if (listOpsPendingCount > 0) {
-      parts.push(`${listOpsPendingCount} action${listOpsPendingCount > 1 ? "s" : ""}`);
+      parts.push(`${listOpsPendingCount} ${t.plural.actions(listOpsPendingCount)}`);
     }
 
     return (
@@ -128,7 +131,7 @@ export function SyncStatus() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconSync size={16} />
-          <span>{parts.join(" + ")} en attente</span>
+          <span>{parts.join(" + ")} {t.sync.pending.toLowerCase()}</span>
         </div>
       </div>
     );
@@ -150,7 +153,7 @@ export function SyncStatus() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconCheck size={16} />
-          <span>{lastSyncCount} révision{lastSyncCount > 1 ? "s" : ""} synchronisée{lastSyncCount > 1 ? "s" : ""}</span>
+          <span>{lastSyncCount} {t.plural.revisions(lastSyncCount)} {t.sync.synchronized}</span>
         </div>
       </div>
     );

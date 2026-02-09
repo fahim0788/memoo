@@ -7,6 +7,7 @@ import {
   fetchCards,
   addList as apiAddList,
   removeList as apiRemoveList,
+  reorderLists as apiReorderLists,
   deleteDeck as apiDeleteDeck,
   refreshCache,
 } from "../lib/api-cache";
@@ -70,6 +71,18 @@ export function useLists() {
     }
   }, [loadLists]);
 
+  const reorderLists = useCallback(async (deckIds: string[]) => {
+    try {
+      setError(null);
+      await apiReorderLists(deckIds);
+      // Reload from cache to get updated state
+      await loadLists();
+    } catch (err) {
+      console.error("[useLists] Unexpected error in reorderLists:", err);
+      setError(err instanceof Error ? err.message : "Impossible de réorganiser les listes");
+    }
+  }, [loadLists]);
+
   const deleteDeck = useCallback(async (deckId: string) => {
     try {
       setError(null);
@@ -116,6 +129,7 @@ export function useLists() {
     error,
     addList,
     removeList,
+    reorderLists,
     deleteDeck,
     getCards,
     reload: loadLists,

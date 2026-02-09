@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "../lib/i18n";
+
 type ConfirmDialogProps = {
   isOpen: boolean;
   title: string;
@@ -15,12 +17,14 @@ export function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
   variant = "danger",
 }: ConfirmDialogProps) {
+  const confirm = confirmLabel ?? t.dialog.confirm;
+  const cancel = cancelLabel ?? t.dialog.cancel;
   if (!isOpen) return null;
 
   const confirmStyles = {
@@ -70,7 +74,7 @@ export function ConfirmDialog({
         <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>{message}</p>
         <div style={{ display: "flex", gap: "8px", marginTop: "0.5rem" }}>
           <button onClick={onCancel} style={{ flex: 1 }}>
-            {cancelLabel}
+            {cancel}
           </button>
           <button
             onClick={onConfirm}
@@ -79,7 +83,7 @@ export function ConfirmDialog({
               ...confirmStyles[variant],
             }}
           >
-            {confirmLabel}
+            {confirm}
           </button>
         </div>
       </div>

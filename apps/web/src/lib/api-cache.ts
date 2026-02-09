@@ -9,6 +9,7 @@ import {
   fetchMyLists as apiFetchMyLists,
   fetchAvailablePersonalDecks as apiFetchAvailablePersonalDecks,
   fetchCards as apiFetchCards,
+  reorderLists as apiReorderLists,
   type DeckFromApi,
   type CardFromApi,
 } from "./api";
@@ -238,6 +239,36 @@ export async function removeList(deckId: string): Promise<void> {
   await enqueue("REMOVE_LIST", { deckId, snapshot });
 
   // 6. Try to process queue immediately if online
+  processQueue();
+}
+
+/**
+ * Reorder user's lists
+ * TRUE OFFLINE-FIRST: Updates cache immediately, queues API call
+ */
+export async function reorderLists(deckIds: string[]): Promise<void> {
+  // 1. Read current cache for snapshot
+  const myListsCache = await idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.MY_LISTS);
+
+  // 2. Create snapshot for potential rollback
+  const snapshot = {
+    myLists: myListsCache?.data,
+  };
+
+  // 3. Optimistic update - reorder cache locally
+  if (myListsCache?.data) {
+    const reordered = deckIds
+      .map(id => myListsCache.data.find(d => d.id === id))
+      .filter((d): d is DeckFromApi => d !== undefined);
+    await idbSet(CACHE_KEYS.MY_LISTS, { data: reordered, timestamp: Date.now() });
+  }
+
+  console.log("[Cache] Optimistic update done for reorderLists");
+
+  // 4. Queue the operation for API sync
+  await enqueue("REORDER_LISTS", { deckIds, snapshot });
+
+  // 5. Try to process queue immediately if online
   processQueue();
 }
 

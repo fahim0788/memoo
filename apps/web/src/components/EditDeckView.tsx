@@ -5,15 +5,21 @@ import type { DeckFromApi, CardFromApi } from "../lib/api";
 import { updateDeck, addCard, updateCard, deleteCard, STORAGE_BASE } from "../lib/api";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { t } from "../lib/i18n";
+import { useLanguage } from "../hooks/useLanguage";
 import { Header } from "./Header";
+import { IconTrash, IconEdit } from "./Icons";
 
 type EditDeckViewProps = {
   deck: DeckFromApi;
   initialCards: CardFromApi[];
   onBack: () => void;
+  userName?: string;
+  onLogout?: () => void;
+  onHome?: () => void;
 };
 
-export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) {
+export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, onHome }: EditDeckViewProps) {
+  useLanguage();
   const [deckName, setDeckName] = useState(deck.name);
   const [isEditingName, setIsEditingName] = useState(false);
   const [cards, setCards] = useState<CardFromApi[]>(initialCards);
@@ -115,7 +121,39 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
   return (
     <>
       <Header
-        actions={
+        userName={userName}
+        onLogout={onLogout}
+        onHome={onHome}
+        title={
+          isEditingName ? (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flex: 1 }}>
+              <input
+                value={deckName}
+                onChange={e => setDeckName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleRenameDeck()}
+                autoFocus
+                style={{ flex: 1, fontSize: "1rem", padding: "0.25rem 0.5rem" }}
+              />
+              <button
+                onClick={handleRenameDeck}
+                disabled={loading}
+                style={{ minWidth: 0, flex: "none", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+              >
+                OK
+              </button>
+            </div>
+          ) : (
+            <span
+              onClick={() => setIsEditingName(true)}
+              className="icon-clickable"
+              style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}
+              title={t.edit.clickToRename}
+            >
+              {deckName} <IconEdit size={14} />
+            </span>
+          )
+        }
+        secondaryActions={
           <button
             onClick={onBack}
             style={{ minWidth: 0, flex: "none", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
@@ -124,35 +162,6 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
           </button>
         }
       />
-
-      <div style={{ padding: "0 1rem", marginTop: "0.5rem" }}>
-        {isEditingName ? (
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <input
-              value={deckName}
-              onChange={e => setDeckName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleRenameDeck()}
-              autoFocus
-              style={{ flex: 1 }}
-            />
-            <button
-              onClick={handleRenameDeck}
-              disabled={loading}
-              style={{ minWidth: 0, flex: "none", padding: "0.5rem 1rem" }}
-            >
-              OK
-            </button>
-          </div>
-        ) : (
-          <h2
-            onClick={() => setIsEditingName(true)}
-            style={{ cursor: "pointer", margin: 0, fontWeight: 500 }}
-            title="Cliquer pour renommer"
-          >
-            {deckName} ✏️
-          </h2>
-        )}
-      </div>
 
       {error && (
         <div className="badge bad" style={{ alignSelf: "stretch", textAlign: "center" }}>
@@ -232,10 +241,10 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
                 </div>
                 <button
                   onClick={() => startEditCard(card)}
-                  style={{ minWidth: 0, flex: "none", width: "36px", padding: "8px", fontSize: "0.85rem" }}
-                  title="Modifier"
+                  style={{ minWidth: 0, flex: "none", width: "36px", padding: "8px" }}
+                  title={t.common.edit}
                 >
-                  ✏️
+                  <IconEdit size={16} />
                 </button>
                 <button
                   onClick={() => setDeleteTarget({ id: card.id, question: card.question })}
@@ -244,13 +253,12 @@ export function EditDeckView({ deck, initialCards, onBack }: EditDeckViewProps) 
                     flex: "none",
                     width: "36px",
                     padding: "8px",
-                    fontSize: "0.85rem",
                     background: "var(--color-error-light)",
                     borderColor: "var(--color-error-border)",
                   }}
-                  title="Supprimer"
+                  title={t.common.delete}
                 >
-                  🗑️
+                  <IconTrash size={16} />
                 </button>
               </div>
             )}

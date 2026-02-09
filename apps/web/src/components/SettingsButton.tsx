@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTheme } from "../hooks/useTheme";
+import { t } from "../lib/i18n";
+import { useLanguage } from "../hooks/useLanguage";
 
 // Gear/Cog Icon SVG
 function GearIcon({ className }: { className?: string }) {
@@ -85,7 +87,12 @@ function CloseIcon({ className }: { className?: string }) {
   );
 }
 
-export function SettingsButton() {
+type SettingsButtonProps = {
+  onLogout?: () => void;
+};
+
+export function SettingsButton({ onLogout }: SettingsButtonProps = {}) {
+  useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const { theme, toggleTheme, mounted } = useTheme();
 
@@ -114,8 +121,8 @@ export function SettingsButton() {
       {/* Settings Button */}
       <button
         onClick={() => setIsOpen(true)}
-        aria-label="Paramètres"
-        title="Paramètres"
+        aria-label={t.settings.title}
+        title={t.settings.title}
         style={{
           background: "none",
           border: "none",
@@ -140,14 +147,14 @@ export function SettingsButton() {
             {/* Header */}
             <div className="mb-6">
               <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-                Paramètres
+                {t.settings.title}
               </h3>
             </div>
 
             {/* Close Button - Top Right Corner */}
             <button
               onClick={() => setIsOpen(false)}
-              aria-label="Fermer"
+              aria-label={t.settings.closeButton}
               style={{
                 position: "absolute",
                 top: "1rem",
@@ -181,7 +188,7 @@ export function SettingsButton() {
             {/* Theme Options */}
             <div className="space-y-4">
               <label className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                Apparence
+                {t.settings.appearance}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -201,7 +208,7 @@ export function SettingsButton() {
                   }}
                 >
                   <SunIcon className="w-5 h-5 mx-auto mb-2 text-[var(--color-accent)]" />
-                  Clair
+                  {t.settings.light}
                 </button>
                 <button
                   className={`p-3 rounded-xl text-sm font-medium transition-all ${
@@ -220,15 +227,54 @@ export function SettingsButton() {
                   }}
                 >
                   <MoonIcon className="w-5 h-5 mx-auto mb-2 text-[var(--color-primary)]" />
-                  Sombre
+                  {t.settings.dark}
                 </button>
               </div>
+            </div>
+
+            {/* Logout Section */}
+            <div className="mt-8 pt-4" style={{ borderTop: "1px solid var(--color-border)" }}>
+              <label className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                {t.settings.account}
+              </label>
+              {onLogout && (
+                <div className="mt-6">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      onLogout();
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      background: "var(--color-error-light)",
+                      border: "1px solid var(--color-error-border)",
+                      borderRadius: "8px",
+                      color: "var(--color-error)",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "var(--color-error)";
+                      e.currentTarget.style.color = "white";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "var(--color-error-light)";
+                      e.currentTarget.style.color = "var(--color-error)";
+                    }}
+                  >
+                    {t.settings.logout}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Version */}
             <div className="mt-8 pt-4" style={{ borderTop: "1px solid var(--color-border)" }}>
               <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
-                MemoList v0.1.0
+                {t.settings.version}
               </p>
             </div>
           </div>

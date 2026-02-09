@@ -2,6 +2,9 @@
 
 import { useState, useRef } from "react";
 import { IconAlert } from "./Icons";
+import { Header } from "./Header";
+import { t } from "../lib/i18n";
+import { useLanguage } from "../hooks/useLanguage";
 
 type Card = {
   question: string;
@@ -11,6 +14,9 @@ type Card = {
 type CreateDeckViewProps = {
   onBack: () => void;
   onCreated: () => void;
+  userName?: string;
+  onLogout?: () => void;
+  onHome?: () => void;
 };
 
 function parseJSON(text: string): { name: string; cards: Card[] } | null {
@@ -56,7 +62,8 @@ function parseCSV(text: string): Card[] | null {
   }
 }
 
-export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
+export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHome }: CreateDeckViewProps) {
+  useLanguage();
   const [name, setName] = useState("");
   const [jsonText, setJsonText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -67,31 +74,31 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
     setError(null);
 
     if (!name.trim()) {
-      setError("Le nom de la liste est requis");
+      setError(t.create.nameRequiredError);
       return;
     }
 
     if (!jsonText.trim()) {
-      setError("Le contenu JSON est requis");
+      setError(t.create.jsonRequiredError);
       return;
     }
 
     // Try parsing as JSON first
     const parsed = parseJSON(jsonText);
     if (!parsed) {
-      setError("Format JSON invalide. Vérifiez la syntaxe.");
+      setError(t.create.jsonInvalidError);
       return;
     }
 
     if (parsed.cards.length === 0) {
-      setError("La liste doit contenir au moins une carte");
+      setError(t.create.minOneCardError);
       return;
     }
 
     // Validate cards
     for (const card of parsed.cards) {
       if (!card.question || !Array.isArray(card.answers) || card.answers.length === 0) {
-        setError("Chaque carte doit avoir une question et au moins une réponse");
+        setError(t.create.cardFormatError);
         return;
       }
     }
@@ -114,12 +121,12 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Erreur lors de la création");
+        throw new Error(data.error || t.create.errorCreate);
       }
 
       onCreated();
     } catch (err: any) {
-      setError(err.message || "Erreur réseau");
+      setError(err.message || t.create.networkError);
     } finally {
       setLoading(false);
     }
@@ -146,7 +153,7 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
           }
           setError(null);
         } else {
-          setError("Fichier JSON invalide");
+          setError(t.create.formatInvalid);
         }
       } else if (ext === 'csv') {
         // Parse CSV and convert to JSON format
@@ -162,10 +169,10 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
           }
           setError(null);
         } else {
-          setError("Fichier CSV invalide. Vérifiez le format.");
+          setError(t.create.csvInvalid);
         }
       } else {
-        setError("Format non supporté. Utilisez JSON ou CSV.");
+        setError(t.create.formatUnsupported);
       }
     };
 
@@ -177,34 +184,37 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
 
   return (
     <>
-      <div className="header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          <h2>Créer une liste personnalisée</h2>
+      <Header
+        userName={userName}
+        onLogout={onLogout}
+        onHome={onHome}
+        title={t.create.title}
+        secondaryActions={
           <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-            ← Retour
+            {t.common.back}
           </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="card">
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label htmlFor="deck-name" className="small" style={{ display: "block", marginBottom: "0.25rem" }}>
-              Nom de la liste
+              {t.create.deckName}
             </label>
             <input
               id="deck-name"
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Ma liste personnalisée"
+              placeholder={t.create.namePlaceholder}
               style={{ width: "100%" }}
             />
           </div>
 
           <div>
             <label htmlFor="deck-json" className="small" style={{ display: "block", marginBottom: "0.25rem" }}>
-              Contenu JSON
+              {t.create.jsonContent}
             </label>
             <textarea
               id="deck-json"
@@ -228,7 +238,7 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
               onClick={() => fileInputRef.current?.click()}
               style={{ width: "100%" }}
             >
-              📁 Importer depuis un fichier (JSON/CSV)
+              📁 {t.create.noteText}
             </button>
           </div>
 
@@ -245,40 +255,28 @@ export function CreateDeckView({ onBack, onCreated }: CreateDeckViewProps) {
             disabled={loading}
             style={{ width: "100%" }}
           >
-            {loading ? "Création..." : "Créer la liste"}
+            {loading ? t.create.creating : t.create.create}
           </button>
         </div>
       </div>
 
       <div className="card">
         <div className="small" style={{ color: "#666" }}>
-          <h3 style={{ marginTop: 0 }}>Format JSON attendu :</h3>
+          <h3 style={{ marginTop: 0 }}>{t.create.formatTitle}</h3>
+          <p>{t.create.formatDesc}</p>
+
+          <h4 style={{ marginTop: "1rem" }}>{t.create.exampleTitle} JSON:</h4>
           <pre style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "4px", overflow: "auto" }}>
-{`{
-  "name": "Nom de la liste",
-  "cards": [
-    {
-      "question": "Quelle est la capitale de France?",
-      "answers": ["Paris", "paris"]
-    },
-    {
-      "question": "Combien font 2+2?",
-      "answers": ["4", "quatre"]
-    }
-  ]
-}`}
+{t.create.exampleJson}
           </pre>
 
-          <h3>Format CSV attendu :</h3>
+          <h4 style={{ marginTop: "1rem" }}>{t.create.exampleTitle} CSV:</h4>
           <pre style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "4px", overflow: "auto" }}>
-{`question,answer1,answer2,answer3
-Capitale de France?,Paris,paris
-2+2=?,4,quatre`}
+{t.create.exampleCsv}
           </pre>
+
           <p style={{ marginTop: "0.5rem", fontSize: "0.75rem" }}>
-            📝 La première ligne doit commencer par "question", suivie des colonnes de réponses.
-            <br />
-            Les colonnes de réponses vides sont ignorées.
+            <strong>{t.create.noteTitle}:</strong> {t.create.noteText}
           </p>
         </div>
       </div>
