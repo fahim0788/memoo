@@ -35,7 +35,10 @@
       "Bash(cmd /c \"taskkill /PID 81332 /F & taskkill /PID 70792 /F\")",
       "Bash(docker-compose build:*)",
       "Bash(docker ps:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest run)",
+      "Bash(npm run dev:api:*)",
+      "Bash(npm run dev:web:*)"
     ]
   }
 }

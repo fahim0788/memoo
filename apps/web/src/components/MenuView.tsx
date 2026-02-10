@@ -173,7 +173,7 @@ export function MenuView({
                                     borderRadius: "1px",
                                     background: i < started.length
                                       ? "#a3e635"
-                                      : "rgba(255,255,255,0.25)",
+                                      : "var(--color-chapter-empty)",
                                   }}
                                 />
                               ))}

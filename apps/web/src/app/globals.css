@@ -55,6 +55,9 @@
   --color-error-light: #fee2e2;
   --color-error-border: rgba(239, 68, 68, 0.4);
 
+  /* Chapter grid empty square */
+  --color-chapter-empty: rgba(0, 0, 0, 0.18);
+
   /* Globe icon - gray in light mode */
   --color-globe: #888888;
 
@@ -113,6 +116,9 @@
   --color-error: #f87171;
   --color-error-light: rgba(248, 113, 113, 0.18);
   --color-error-border: rgba(248, 113, 113, 0.45);
+
+  /* Chapter grid empty square */
+  --color-chapter-empty: rgba(255, 255, 255, 0.25);
 
   /* Globe icon - white in dark mode */
   --color-globe: #ffffff;
@@ -175,8 +181,17 @@
   /* Card */
   .card {
     @apply rounded-2xl p-4 flex flex-col gap-3;
-    background: transparent;
     transition: all 0.2s ease;
+  }
+
+  :root .card {
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .dark .card {
+    background: var(--color-bg-secondary);
+    box-shadow: var(--shadow-sm);
   }
 
   /* Text */
@@ -230,7 +245,8 @@
   }
 
   .dark button {
-    color: #f9fafb;
+    background: rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
   }
 
   button:hover {
@@ -240,26 +256,35 @@
     box-shadow: var(--shadow-md);
   }
 
+  .dark button:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #f9fafb;
+    box-shadow: none;
+  }
+
   button:active {
     transform: translateY(0);
   }
 
   button.primary {
-    background: #71717a;
-    color: white;
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--color-text);
+    font-weight: 500;
   }
 
   .dark button.primary {
-    background: #52525b;
+    background: rgba(255, 255, 255, 0.06);
+    color: #d1d5db;
   }
 
   button.primary:hover {
-    background: #52525b;
-    color: white;
+    background: rgba(0, 0, 0, 0.12);
+    color: var(--color-text);
   }
 
   .dark button.primary:hover {
-    background: #71717a;
+    background: rgba(255, 255, 255, 0.12);
+    color: #f9fafb;
   }
 
   /* Badge */
