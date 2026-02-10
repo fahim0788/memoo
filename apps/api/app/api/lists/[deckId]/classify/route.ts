@@ -7,7 +7,11 @@ import { requireAuth } from "../../../../_lib/auth";
 export const dynamic = "force-dynamic";
 export { OPTIONS };
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 export async function POST(
   req: NextRequest,
@@ -52,7 +56,7 @@ export async function POST(
         return `${i + 1}. ${c.question} → ${answers}`;
       }).join("\n");
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4o-mini",
         temperature: 0.3,
         max_tokens: 4096,
