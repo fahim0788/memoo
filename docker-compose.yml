@@ -59,6 +59,7 @@ services:
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
       - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - tts-storage:/app/storage/tts
       - ./apps/worker/storage/drapeaux:/app/apps/worker/storage/drapeaux:ro

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@memolist/db";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -125,7 +128,7 @@ export async function GET(req: NextRequest) {
 
     const cards = await getPrisma().card.findMany({
       where: { deckId: cardsMatch[1] },
-      select: { id: true, question: true, answers: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true },
+      select: { id: true, question: true, answers: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true, chapterId: true },
       orderBy: { createdAt: "asc" },
     });
 
@@ -158,7 +161,7 @@ export async function GET(req: NextRequest) {
     const userDecks = await getPrisma().userDeck.findMany({
       where: { userId: auth.user.userId },
       include: {
-        deck: { include: { cards: { select: { id: true } } } },
+        deck: { include: { cards: { select: { id: true } }, _count: { select: { chapters: true } } } },
       },
       orderBy: { position: "asc" },
     });
@@ -167,7 +170,9 @@ export async function GET(req: NextRequest) {
       id: ud.deck.id,
       name: ud.deck.name,
       cardCount: ud.deck.cards.length,
+      chapterCount: ud.deck._count.chapters,
       isOwned: ud.deck.ownerId === auth.user.userId,
+      icon: ud.icon ?? null,
     }));
 
     return json({ decks }, req);
@@ -230,6 +235,30 @@ export async function GET(req: NextRequest) {
     }
 
     return json({ job }, req);
+  }
+
+  // GET /api/lists/:deckId/chapters
+  const chaptersMatch = pathname.match(/^\/api\/lists\/([^/]+)\/chapters$/);
+  if (chaptersMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const deckId = chaptersMatch[1];
+    const chapters = await getPrisma().chapter.findMany({
+      where: { deckId },
+      include: { cards: { select: { id: true } } },
+      orderBy: { position: "asc" },
+    });
+
+    return json({
+      chapters: chapters.map(ch => ({
+        id: ch.id,
+        name: ch.name,
+        description: ch.description,
+        position: ch.position,
+        cardCount: ch.cards.length,
+      })),
+    }, req);
   }
 
   return json({ error: "not found" }, req, 404);
@@ -338,7 +367,7 @@ export async function POST(req: NextRequest) {
     const auth = requireAuth(req);
     if ("error" in auth) return auth.error;
 
-    const { deckId } = await req.json();
+    const { deckId, icon } = await req.json();
     if (!deckId) {
       return json({ error: "deckId required" }, req, 400);
     }
@@ -348,9 +377,10 @@ export async function POST(req: NextRequest) {
       return json({ error: "list not found" }, req, 404);
     }
 
-    await getPrisma().userDeck.createMany({
-      data: [{ userId: auth.user.userId, deckId }],
-      skipDuplicates: true,
+    await getPrisma().userDeck.create({
+      data: { userId: auth.user.userId, deckId, icon: icon || null },
+    }).catch(() => {
+      // Duplicate - ignore (skipDuplicates equivalent)
     });
 
     return json({ ok: true }, req);
@@ -453,6 +483,170 @@ export async function POST(req: NextRequest) {
     return json({ ok: true, jobId: job.id }, req, 202); // 202 Accepted
   }
 
+  // POST /api/lists/:deckId/classify - AI chapter clustering
+  const classifyMatch = pathname.match(/^\/api\/lists\/([^/]+)\/classify$/);
+  if (classifyMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    const deckId = classifyMatch[1];
+    try {
+
+    // Verify user has access
+    const userDeck = await getPrisma().userDeck.findFirst({
+      where: { userId: auth.user.userId, deckId },
+    });
+    if (!userDeck) return json({ error: "deck not found or not subscribed" }, req, 404);
+
+    const deck = await getPrisma().deck.findUnique({
+      where: { id: deckId },
+      select: { name: true },
+    });
+
+    const cards = await getPrisma().card.findMany({
+      where: { deckId },
+      select: { id: true, question: true, answers: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (cards.length === 0) return json({ error: "deck has no cards" }, req, 400);
+
+    // Batch cards (max 100 per OpenAI call to keep response compact)
+    const BATCH_SIZE = 100;
+    const batches: typeof cards[] = [];
+    for (let i = 0; i < cards.length; i += BATCH_SIZE) {
+      batches.push(cards.slice(i, i + BATCH_SIZE));
+    }
+
+    let allChapters: { name: string; description: string; indices: number[] }[] = [];
+
+    for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+      const batch = batches[batchIdx];
+      const cardList = batch.map((c, i) => {
+        const answers = Array.isArray(c.answers) ? (c.answers as string[]).slice(0, 2).join(", ") : "";
+        return `${i + 1}. ${c.question} → ${answers}`;
+      }).join("\n");
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        temperature: 0.3,
+        max_tokens: 4096,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: `You are a classification assistant for a flashcard learning app.
+Given a list of numbered flashcard items (question → answer) from a deck named "${deck?.name ?? "Unknown"}",
+group them into a FEW broad logical chapters/categories.
+Use BOTH the question AND the answer to determine the correct category.
+
+Rules:
+- Create between 3 and 7 chapters MAXIMUM. Prefer fewer, larger chapters.
+- Each chapter should contain at least 15-20 cards. Do NOT create small chapters with only a few cards.
+- Merge similar or related topics into one chapter rather than splitting them.
+- For geography/flags: group by continent (Europe, Asia, Africa, Americas, Oceania). Use the ANSWER (country name) to determine the continent.
+- For vocabulary: group by broad theme (max 5-6 themes)
+- Chapter names should be short (2-4 words)
+- Every card must be assigned to exactly one chapter
+- When in doubt, merge into a larger chapter rather than creating a new one
+
+IMPORTANT: Return card numbers (not text) for compactness.
+Return JSON: { "chapters": [{ "name": "Chapter Name", "description": "Brief description", "indices": [1, 2, 3, ...] }] }`,
+          },
+          {
+            role: "user",
+            content: `Classify these ${batch.length} flashcard items into chapters:\n\n${cardList}`,
+          },
+        ],
+      });
+
+      try {
+        const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+        if (parsed.chapters && Array.isArray(parsed.chapters)) {
+          // Convert 1-based indices to actual card IDs for this batch
+          for (const ch of parsed.chapters) {
+            const batchIndices = (ch.indices ?? []) as number[];
+            // Map indices to global card positions
+            const globalIndices = batchIndices.map((idx: number) => idx - 1 + batchIdx * BATCH_SIZE);
+            allChapters.push({ name: ch.name, description: ch.description, indices: globalIndices });
+          }
+        }
+      } catch (parseErr) {
+        console.error("[Classify] Failed to parse OpenAI response:", parseErr);
+        // Continue with other batches
+      }
+    }
+
+    // Merge same-name chapters from multi-batch
+    if (batches.length > 1) {
+      const merged = new Map<string, { name: string; description: string; indices: number[] }>();
+      for (const ch of allChapters) {
+        const key = ch.name.toLowerCase().trim();
+        if (merged.has(key)) {
+          merged.get(key)!.indices.push(...(ch.indices ?? []));
+        } else {
+          merged.set(key, { name: ch.name, description: ch.description, indices: ch.indices ?? [] });
+        }
+      }
+      allChapters = Array.from(merged.values());
+    }
+
+    // Idempotent: clear existing chapters
+    await getPrisma().card.updateMany({ where: { deckId }, data: { chapterId: null } });
+    await getPrisma().chapter.deleteMany({ where: { deckId } });
+
+    // Create chapters and assign cards using indices
+    const createdChapters = [];
+
+    for (let i = 0; i < allChapters.length; i++) {
+      const ch = allChapters[i];
+      const chapter = await getPrisma().chapter.create({
+        data: { deckId, name: ch.name, description: ch.description ?? null, position: i },
+      });
+
+      const matchedCardIds: string[] = [];
+      for (const idx of ch.indices ?? []) {
+        if (idx >= 0 && idx < cards.length) {
+          matchedCardIds.push(cards[idx].id);
+        }
+      }
+
+      if (matchedCardIds.length > 0) {
+        await getPrisma().card.updateMany({
+          where: { id: { in: matchedCardIds } },
+          data: { chapterId: chapter.id },
+        });
+      }
+
+      createdChapters.push({
+        id: chapter.id, name: chapter.name, description: chapter.description,
+        position: chapter.position, cardCount: matchedCardIds.length,
+      });
+    }
+
+    // Unmatched cards -> "Autres" chapter
+    const unmatchedCount = await getPrisma().card.count({ where: { deckId, chapterId: null } });
+    if (unmatchedCount > 0) {
+      const otherChapter = await getPrisma().chapter.create({
+        data: { deckId, name: "Autres", description: "Cartes non classifiées", position: allChapters.length },
+      });
+      await getPrisma().card.updateMany({
+        where: { deckId, chapterId: null },
+        data: { chapterId: otherChapter.id },
+      });
+      createdChapters.push({
+        id: otherChapter.id, name: otherChapter.name, description: otherChapter.description,
+        position: otherChapter.position, cardCount: unmatchedCount,
+      });
+    }
+
+    return json({ ok: true, chapters: createdChapters }, req);
+    } catch (err) {
+      console.error("[Classify] Error:", err);
+      return json({ error: "classification failed" }, req, 500);
+    }
+  }
+
   return json({ error: "not found" }, req, 404);
 }
 
@@ -509,6 +703,30 @@ export async function PUT(req: NextRequest) {
     await getPrisma().deck.update({ where: { id: deckId }, data: { name } });
 
     return json({ ok: true }, req);
+  }
+
+  // PUT /api/my-lists/:deckId/icon - Update icon for a subscribed list
+  const iconMatch = pathname.match(/^\/api\/my-lists\/([^/]+)\/icon$/);
+  if (iconMatch) {
+    const auth = requireAuth(req);
+    if ("error" in auth) return auth.error;
+
+    try {
+      const { icon } = await req.json();
+      if (!icon || typeof icon !== "string") {
+        return json({ error: "icon string required" }, req, 400);
+      }
+
+      await getPrisma().userDeck.updateMany({
+        where: { userId: auth.user.userId, deckId: iconMatch[1] },
+        data: { icon },
+      });
+
+      return json({ ok: true }, req);
+    } catch (err) {
+      console.error("Failed to update icon:", err);
+      return json({ error: "failed to update icon" }, req, 500);
+    }
   }
 
   // PUT /api/my-lists/reorder - Reorder user's subscribed lists

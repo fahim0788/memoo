@@ -31,14 +31,16 @@ model Deck {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner     User?     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner     User?      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   cards     Card[]
+  chapters  Chapter[]
   userDecks UserDeck[]
 }
 
 model Card {
   id         String   @id @default(cuid())
   deckId     String
+  chapterId  String?
   question   String
   answers    Json     @default("[]")
   audioUrlEn String?
@@ -48,7 +50,23 @@ model Card {
   updatedAt  DateTime @updatedAt
 
   deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
   reviews   Review[]
+}
+
+model Chapter {
+  id          String   @id @default(cuid())
+  deckId      String
+  name        String
+  description String?
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deck  Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([deckId, position])
 }
 
 model Review {
@@ -68,6 +86,7 @@ model UserDeck {
   userId   String
   deckId    String
   position  Int      @default(0)
+  icon      String?
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
