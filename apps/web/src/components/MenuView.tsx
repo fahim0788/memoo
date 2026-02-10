@@ -6,9 +6,10 @@ import { Header } from "./Header";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { StatsCard } from "./StatsCard";
 import type { Stats } from "../hooks/useStats";
-import { IconFolderPublic, IconUser, IconEdit, IconTrash, IconArrowUp, IconArrowDown } from "./Icons";
+import { IconFolderPublic, IconUser, IconEdit, IconTrash, IconArrowUp, IconArrowDown, DeckIcon, DECK_ICONS, DECK_COLORS } from "./Icons";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
+import { getStartedChapters } from "../lib/chapter-progress";
 
 type MenuViewProps = {
   myLists: DeckFromApi[];
@@ -18,6 +19,7 @@ type MenuViewProps = {
   onExplore: () => void;
   onRemove: (deckId: string) => void;
   onReorder: (deckIds: string[]) => void;
+  onChangeIcon: (deckId: string, icon: string) => void;
   onLogout: () => void;
   stats: Stats | null;
 };
@@ -30,6 +32,7 @@ export function MenuView({
   onExplore,
   onRemove,
   onReorder,
+  onChangeIcon,
   onLogout,
   stats,
 }: MenuViewProps) {
@@ -37,9 +40,14 @@ export function MenuView({
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
   const [search, setSearch] = useState("");
   const [animating, setAnimating] = useState<string | null>(null);
+  const [iconPicker, setIconPicker] = useState<string | null>(null);
 
   const q = search.toLowerCase().trim();
   const filteredLists = q ? myLists.filter(d => d.name.toLowerCase().includes(q)) : myLists;
+
+  // Compute fixed grid area width based on the widest chapter grid across all decks
+  const maxCols = Math.max(0, ...myLists.filter(d => (d.chapterCount ?? 0) > 0).map(d => Math.ceil(Math.sqrt(d.chapterCount!))));
+  const gridAreaWidth = maxCols > 0 ? maxCols * 7 + (maxCols - 1) * 2 : 0;
 
   function handleMoveUp(index: number) {
     if (index === 0) return;
@@ -80,85 +88,179 @@ export function MenuView({
             const originalIndex = myLists.findIndex(d => d.id === deck.id);
             const isAnimating = animating === deck.id;
             return (
-              <button
-                key={deck.id}
-                className="primary card-button"
-                style={{
-                  position: "relative",
-                  flex: 1,
-                  transition: isAnimating ? "transform 0.3s ease-in-out" : "none",
-                  transform: isAnimating ? "scale(1.02)" : "scale(1)",
-                }}
-                onClick={() => onStudy(deck)}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  {/* Reorder buttons (only show in non-filtered view) */}
-                  {!q && myLists.length > 1 && (
-                    <span
-                      style={{ display: "flex", flexDirection: "column", gap: "2px", flex: "none" }}
-                      onClick={e => e.stopPropagation()}
-                    >
+              <div key={deck.id} style={{ position: "relative", width: "100%" }}>
+                <button
+                  className="primary card-button"
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    transition: isAnimating ? "transform 0.3s ease-in-out" : "none",
+                    transform: isAnimating ? "scale(1.02)" : "scale(1)",
+                  }}
+                  onClick={() => onStudy(deck)}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {/* Reorder buttons (only show in non-filtered view) */}
+                    {!q && myLists.length > 1 && (
                       <span
-                        onClick={() => handleMoveUp(originalIndex)}
-                        className="reorder-btn"
-                        style={{
-                          padding: "2px",
-                          display: "flex",
-                          alignItems: "center",
-                          opacity: originalIndex === 0 ? 0.3 : 1,
-                        }}
-                        title={t.menuView.moveUp}
+                        style={{ display: "flex", flexDirection: "column", gap: "2px", flex: "none" }}
+                        onClick={e => e.stopPropagation()}
                       >
-                        <IconArrowUp size={12} />
+                        <span
+                          onClick={() => handleMoveUp(originalIndex)}
+                          className="reorder-btn"
+                          style={{
+                            padding: "2px",
+                            display: "flex",
+                            alignItems: "center",
+                            opacity: originalIndex === 0 ? 0.3 : 1,
+                          }}
+                          title={t.menuView.moveUp}
+                        >
+                          <IconArrowUp size={12} />
+                        </span>
+                        <span
+                          onClick={() => handleMoveDown(originalIndex)}
+                          className="reorder-btn"
+                          style={{
+                            padding: "2px",
+                            display: "flex",
+                            alignItems: "center",
+                            opacity: originalIndex === myLists.length - 1 ? 0.3 : 1,
+                          }}
+                          title={t.menuView.moveDown}
+                        >
+                          <IconArrowDown size={12} />
+                        </span>
                       </span>
-                      <span
-                        onClick={() => handleMoveDown(originalIndex)}
-                        className="reorder-btn"
-                        style={{
-                          padding: "2px",
-                          display: "flex",
-                          alignItems: "center",
-                          opacity: originalIndex === myLists.length - 1 ? 0.3 : 1,
-                        }}
-                        title={t.menuView.moveDown}
-                      >
-                        <IconArrowDown size={12} />
-                      </span>
-                    </span>
-                  )}
+                    )}
 
-                  {deck.isOwned ? (
-                    <IconUser size={16} style={{ flexShrink: 0 }} />
-                  ) : (
-                    <IconFolderPublic size={16} style={{ flexShrink: 0 }} />
-                  )}
-                  <span style={{ flex: 1, textAlign: "left" }}>{deck.name}</span>
-                  <span
-                    style={{ display: "flex", gap: "4px", flex: "none", alignItems: "center" }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {deck.isOwned && (
-                      <span
-                        onClick={() => onEdit(deck)}
-                        className="action-icon"
-                        title={t.common.edit}
-                      >
-                        <IconEdit size={14} />
+                    <span
+                      onClick={e => { e.stopPropagation(); setIconPicker(iconPicker === deck.id ? null : deck.id); }}
+                      style={{ display: "flex", alignItems: "center", cursor: "pointer", flex: "none" }}
+                      title="Changer l'icône"
+                    >
+                      {deck.icon ? (
+                        <DeckIcon icon={deck.icon} size={16} />
+                      ) : (
+                        <DeckIcon icon="star:#6b7280" size={16} />
+                      )}
+                    </span>
+                    {deck.isOwned ? (
+                      <IconUser size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
+                    ) : (
+                      <IconFolderPublic size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
+                    )}
+                    <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deck.name}</span>
+                    {gridAreaWidth > 0 && (
+                      <span style={{ width: gridAreaWidth + "px", flexShrink: 0, display: "flex", justifyContent: "flex-start", marginLeft: "6px" }}>
+                        {(deck.chapterCount ?? 0) > 0 && (() => {
+                          const started = getStartedChapters(deck.id);
+                          const total = deck.chapterCount!;
+                          const cols = Math.ceil(Math.sqrt(total));
+                          return (
+                            <span style={{
+                              display: "grid",
+                              gridTemplateColumns: `repeat(${cols}, 7px)`,
+                              gap: "2px",
+                            }}>
+                              {Array.from({ length: total }, (_, i) => (
+                                <span
+                                  key={i}
+                                  style={{
+                                    width: "7px",
+                                    height: "7px",
+                                    borderRadius: "1px",
+                                    background: i < started.length
+                                      ? "#a3e635"
+                                      : "rgba(255,255,255,0.25)",
+                                  }}
+                                />
+                              ))}
+                            </span>
+                          );
+                        })()}
                       </span>
                     )}
                     <span
-                      onClick={() => setRemoveTarget({ id: deck.id, name: deck.name })}
-                      className="action-icon delete"
-                      title={t.common.remove}
+                      style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", width: "50px", justifyContent: "flex-end" }}
+                      onClick={e => e.stopPropagation()}
                     >
-                      <IconTrash size={14} />
+                      {deck.isOwned && (
+                        <span
+                          onClick={() => onEdit(deck)}
+                          className="action-icon"
+                          title={t.common.edit}
+                        >
+                          <IconEdit size={14} />
+                        </span>
+                      )}
+                      <span
+                        onClick={() => setRemoveTarget({ id: deck.id, name: deck.name })}
+                        className="action-icon delete"
+                        title={t.common.remove}
+                      >
+                        <IconTrash size={14} />
+                      </span>
                     </span>
-                  </span>
-                </div>
-                <span className="small" style={{ display: "block", fontWeight: 400, marginTop: "2px" }}>
-                  {deck.cardCount} {t.plural.cards(deck.cardCount)}
-                </span>
-              </button>
+                  </div>
+                  <div style={{ marginTop: "2px" }}>
+                    <span className="small" style={{ fontWeight: 400 }}>
+                      {deck.cardCount} {t.plural.cards(deck.cardCount)}
+                    </span>
+                  </div>
+                </button>
+                {iconPicker === deck.id && (
+                  <>
+                    {/* Backdrop transparent pour fermer au clic extérieur */}
+                    <div
+                      onClick={() => setIconPicker(null)}
+                      style={{ position: "fixed", inset: 0, zIndex: 90 }}
+                    />
+                    <div
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        top: "100%",
+                        zIndex: 91,
+                        display: "grid",
+                        gridTemplateColumns: `repeat(${DECK_ICONS.length}, 1fr)`,
+                        gap: "2px",
+                        padding: "0.5rem",
+                        background: "var(--color-bg-secondary)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--color-border)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                      }}
+                    >
+                      {DECK_COLORS.map(color => (
+                        <div key={color} style={{ display: "contents" }}>
+                          {DECK_ICONS.map(ic => (
+                            <span
+                              key={`${ic.name}:${color}`}
+                              onClick={() => { onChangeIcon(deck.id, `${ic.name}:${color}`); setIconPicker(null); }}
+                              title={ic.label}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "4px",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                background: deck.icon === `${ic.name}:${color}` ? "var(--color-bg-tertiary)" : "transparent",
+                              }}
+                            >
+                              <DeckIcon icon={`${ic.name}:${color}`} size={14} />
+                            </span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })}
         </div>
@@ -171,7 +273,7 @@ export function MenuView({
       )}
 
       <div className="card">
-        <button onClick={onExplore} style={{ margin: 0 }}>
+        <button onClick={onExplore} style={{ margin: 0, width: "100%", padding: "0.75rem 1rem", fontSize: "1rem" }}>
           {t.menuView.exploreAvailable}
         </button>
       </div>

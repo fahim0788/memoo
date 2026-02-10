@@ -84,7 +84,7 @@ async function executeOperation(operation: QueuedOperation): Promise<void> {
 
   switch (type) {
     case "ADD_LIST":
-      await apiAddList(payload.deckId);
+      await apiAddList(payload.deckId!, payload.icon);
       break;
     case "REMOVE_LIST":
       await apiRemoveList(payload.deckId!);

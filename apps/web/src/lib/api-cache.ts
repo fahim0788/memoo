@@ -151,7 +151,7 @@ export async function fetchCards(deckId: string): Promise<CardFromApi[]> {
  * Add a list to user's subscriptions
  * TRUE OFFLINE-FIRST: Updates cache immediately, queues API call
  */
-export async function addList(deckId: string): Promise<void> {
+export async function addList(deckId: string, icon?: string): Promise<void> {
   // 1. Read current caches for snapshot (rollback data)
   const [myListsCache, allListsCache, availableCache] = await Promise.all([
     idbGet<CachedData<DeckFromApi[]>>(CACHE_KEYS.MY_LISTS),
@@ -173,7 +173,7 @@ export async function addList(deckId: string): Promise<void> {
 
   // 4. Optimistic update - modify caches locally
   if (deckToAdd) {
-    const newMyLists = [...(myListsCache?.data || []), deckToAdd];
+    const newMyLists = [...(myListsCache?.data || []), { ...deckToAdd, icon: icon || null }];
     await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
   }
   if (allListsCache?.data) {
@@ -188,7 +188,7 @@ export async function addList(deckId: string): Promise<void> {
   console.log("[Cache] Optimistic update done for addList");
 
   // 5. Queue the operation for API sync
-  await enqueue("ADD_LIST", { deckId, snapshot });
+  await enqueue("ADD_LIST", { deckId, icon, snapshot });
 
   // 6. Try to process queue immediately if online
   processQueue();

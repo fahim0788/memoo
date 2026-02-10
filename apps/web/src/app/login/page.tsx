@@ -54,7 +54,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="card">
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           <h2 style={{ margin: 0, fontSize: "1.25rem", textAlign: "center" }}>
             {mode === "login" ? t.auth.loginTitle : t.auth.registerTitle}
           </h2>

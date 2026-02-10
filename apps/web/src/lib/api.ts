@@ -41,13 +41,24 @@ export type CardFromApi = {
   audioUrlEn?: string | null;
   audioUrlFr?: string | null;
   imageUrl?: string | null;
+  chapterId?: string | null;
+};
+
+export type ChapterFromApi = {
+  id: string;
+  name: string;
+  description?: string | null;
+  position: number;
+  cardCount: number;
 };
 
 export type DeckFromApi = {
   id: string;
   name: string;
   cardCount: number;
+  chapterCount?: number;
   isOwned?: boolean;
+  icon?: string | null;
 };
 
 // Types – Sync
@@ -143,11 +154,11 @@ export async function fetchAvailablePersonalDecks(): Promise<DeckFromApi[]> {
   return r.json().then((d: any) => d.decks);
 }
 
-export async function addList(deckId: string): Promise<void> {
+export async function addList(deckId: string, icon?: string): Promise<void> {
   await safeFetch(`${API_BASE}/my-lists`, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ deckId }),
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ deckId, icon: icon || undefined }),
     cache: "no-store",
   }, "ajouter la liste");
 }
@@ -216,4 +227,27 @@ export async function deleteCard(deckId: string, cardId: string): Promise<void> 
 export async function fetchCards(deckId: string): Promise<CardFromApi[]> {
   const r = await safeFetch(`${API_BASE}/lists/${deckId}/cards`, { headers: authHeaders(), cache: "no-store" }, "charger les cartes");
   return r.json().then((d: any) => d.cards);
+}
+
+export async function fetchChapters(deckId: string): Promise<ChapterFromApi[]> {
+  const r = await safeFetch(`${API_BASE}/lists/${deckId}/chapters`, { headers: authHeaders(), cache: "no-store" }, "charger les chapitres");
+  return r.json().then((d: any) => d.chapters);
+}
+
+export async function classifyDeck(deckId: string): Promise<ChapterFromApi[]> {
+  const r = await safeFetch(`${API_BASE}/lists/${deckId}/classify`, {
+    method: "POST",
+    headers: authHeaders(),
+    cache: "no-store",
+  }, "classifier les cartes");
+  return r.json().then((d: any) => d.chapters);
+}
+
+export async function updateDeckIcon(deckId: string, icon: string): Promise<void> {
+  await safeFetch(`${API_BASE}/my-lists/${deckId}/icon`, {
+    method: "PUT",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ icon }),
+    cache: "no-store",
+  }, "mettre à jour l'icône");
 }

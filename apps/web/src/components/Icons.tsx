@@ -379,6 +379,52 @@ export function IconFlagFR({ size = 20, className = "", style }: IconProps) {
   );
 }
 
+/* ============================================================================
+   Deck Icons - Colored SVG icons for user lists
+============================================================================ */
+
+type DeckIconDef = { name: string; label: string; path: string };
+
+export const DECK_ICONS: DeckIconDef[] = [
+  { name: "book", label: "Livre", path: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z" },
+  { name: "globe", label: "Globe", path: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 0c2.5 0 4.5 4.5 4.5 10S14.5 22 12 22s-4.5-4.5-4.5-10S9.5 2 12 2zM2 12h20" },
+  { name: "star", label: "Etoile", path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+  { name: "music", label: "Musique", path: "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" },
+  { name: "flask", label: "Science", path: "M9 3h6M10 3v5.172a2 2 0 0 1-.586 1.414L4 15v2a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-2l-5.414-5.414A2 2 0 0 1 14 8.172V3" },
+  { name: "heart", label: "Coeur", path: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" },
+  { name: "flag", label: "Drapeau", path: "M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7" },
+  { name: "lightning", label: "Eclair", path: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
+  { name: "brain", label: "Cerveau", path: "M12 2a4 4 0 0 0-4 4v1a3 3 0 0 0-3 3v1a3 3 0 0 0 1 5.83V18a4 4 0 0 0 8 0v-.17A3 3 0 0 0 15 14a3 3 0 0 0 0-6 4 4 0 0 0-3-6z" },
+  { name: "palette", label: "Art", path: "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.67 1.5-1.5 0-.38-.15-.74-.42-1.01-.26-.27-.42-.63-.42-1.01 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6 0-5.17-4.5-9-10-9zM6.5 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" },
+  { name: "camera", label: "Cinema", path: "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },
+  { name: "trophy", label: "Sport", path: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 22V14.4a2 2 0 0 1 .6-1.4L12 12l1.4 1a2 2 0 0 1 .6 1.4V22M6 2h12v7a6 6 0 0 1-12 0V2z" },
+];
+
+export const DECK_COLORS = [
+  "#ef4444", "#f97316", "#f59e0b", "#10b981",
+  "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899",
+  "#6b7280", "#78716c",
+];
+
+export function DeckIcon({ icon, size = 16 }: { icon: string; size?: number }) {
+  const [name, color] = icon.split(":");
+  const def = DECK_ICONS.find(d => d.name === name);
+  if (!def) {
+    // Fallback: star grise
+    const fallback = DECK_ICONS.find(d => d.name === "star")!;
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" style={{ flexShrink: 0 }}>
+        <path d={fallback.path} />
+      </svg>
+    );
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "#6b7280"} strokeWidth="2" style={{ flexShrink: 0 }}>
+      <path d={def.path} />
+    </svg>
+  );
+}
+
 export function IconFlagUS({ size = 20, className = "", style }: IconProps) {
   return (
     <svg

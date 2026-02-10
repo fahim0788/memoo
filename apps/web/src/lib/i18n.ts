@@ -163,6 +163,7 @@ export interface Translations {
     addButton: string;
     confirmDelete: string;
     confirmDeleteMessage: string;
+    privateBadge: string;
   };
 
   // Vue du menu (MenuView)
@@ -248,6 +249,19 @@ export interface Translations {
     closeButton: string;
   };
 
+  // Chapitres (classification IA)
+  chapters: {
+    title: string;
+    studyAll: string;
+    classify: string;
+    reclassify: string;
+    classifying: string;
+    cardCount: string;
+    noChapters: string;
+    errorClassify: string;
+    other: string;
+  };
+
   // Pluralisation
   plural: {
     cards: (count: number) => string;
@@ -311,8 +325,8 @@ const fr: Translations = {
 
   menu: {
     title: "Memoo",
-    myDecks: "Mes listes",
-    myLists: "Mes listes",
+    myDecks: "Mes études en cours",
+    myLists: "Mes études en cours",
     available: "Listes disponibles",
     stats: "Statistiques",
     settings: "Paramètres",
@@ -407,12 +421,13 @@ const fr: Translations = {
     searchPlaceholder: "Rechercher une liste...",
     publicLists: "Listes publiques",
     personalLists: "Mes listes personnalisées",
-    createPersonal: "Créer une liste personnalisée",
+    createPersonal: "Créer une liste",
     noPersonalLists: "Aucune liste personnalisée pour le moment.",
     allPublicActivated: "Toutes les listes publiques sont déjà activées.",
-    addButton: "Ajouter",
+    addButton: "Étudier",
     confirmDelete: "Supprimer la liste ?",
     confirmDeleteMessage: "Êtes-vous sûr de vouloir supprimer définitivement cette liste ?",
+    privateBadge: "privé",
   },
 
   menuView: {
@@ -492,6 +507,18 @@ const fr: Translations = {
     closeButton: "Fermer",
   },
 
+  chapters: {
+    title: "Chapitres",
+    studyAll: "Tout étudier",
+    classify: "Organiser en chapitres (IA)",
+    reclassify: "Réorganiser (IA)",
+    classifying: "Classification en cours...",
+    cardCount: "cartes",
+    noChapters: "Pas encore de chapitres. Utilisez l'IA pour organiser automatiquement.",
+    errorClassify: "Erreur lors de la classification",
+    other: "Autres",
+  },
+
   plural: {
     cards: (count: number) => count === 1 ? "carte" : "cartes",
     days: (count: number) => count === 1 ? "jour" : "jours",
@@ -554,8 +581,8 @@ const en: Translations = {
 
   menu: {
     title: "Memoo",
-    myDecks: "My Lists",
-    myLists: "My Lists",
+    myDecks: "My Current Studies",
+    myLists: "My Current Studies",
     available: "Available Lists",
     stats: "Statistics",
     settings: "Settings",
@@ -650,12 +677,13 @@ const en: Translations = {
     searchPlaceholder: "Search for a list...",
     publicLists: "Public Lists",
     personalLists: "My Custom Lists",
-    createPersonal: "Create a custom list",
+    createPersonal: "Create a list",
     noPersonalLists: "No custom lists yet.",
     allPublicActivated: "All public lists are already activated.",
-    addButton: "Add",
+    addButton: "Study",
     confirmDelete: "Delete list?",
     confirmDeleteMessage: "Are you sure you want to permanently delete this list?",
+    privateBadge: "private",
   },
 
   menuView: {
@@ -733,6 +761,18 @@ const en: Translations = {
     logout: "Logout",
     version: "Memoo v0.1.0",
     closeButton: "Close",
+  },
+
+  chapters: {
+    title: "Chapters",
+    studyAll: "Study all",
+    classify: "Organize into chapters (AI)",
+    reclassify: "Reorganize (AI)",
+    classifying: "Classifying...",
+    cardCount: "cards",
+    noChapters: "No chapters yet. Use AI to organize automatically.",
+    errorClassify: "Error classifying cards",
+    other: "Other",
   },
 
   plural: {

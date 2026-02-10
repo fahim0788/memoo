@@ -79,7 +79,7 @@ export function AvailableView({
           </p>
         )}
 
-        {filteredPublic.map(deck => {
+        {filteredPublic.map((deck, index) => {
           const { emoji, name } = extractEmoji(deck.name);
           return (
             <div
@@ -90,7 +90,7 @@ export function AvailableView({
                 alignItems: "center",
                 gap: "8px",
                 padding: "0.75rem 0",
-                borderTop: "none",
+                borderTop: index > 0 ? "1px solid var(--color-border, rgba(0,0,0,0.08))" : "none",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
@@ -115,16 +115,16 @@ export function AvailableView({
       </div>
 
       {/* Personal Lists Section */}
-      <div className="card">
-        <div className="small" style={{ fontWeight: 700, marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <IconUser size={16} />
-          {t.available.personalLists} ({filteredPersonal.length})
+      <div className="card" style={{ position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+          <div className="small" style={{ fontWeight: 700 }}>
+            {t.available.personalLists} ({filteredPersonal.length})
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.7rem", color: "#999", textTransform: "lowercase", fontWeight: 500 }}>
+            <IconUser size={12} />
+            {t.available.privateBadge || "privé"}
+          </div>
         </div>
-
-        <button onClick={onCreateDeck} className="primary" style={{ margin: "0.5rem 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-          <IconPlus size={16} />
-          {t.available.createPersonal}
-        </button>
 
         {filteredPersonal.length === 0 && (
           <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
@@ -132,7 +132,7 @@ export function AvailableView({
           </p>
         )}
 
-        {filteredPersonal.map(deck => (
+        {filteredPersonal.map((deck, index) => (
           <div
             key={deck.id}
             style={{
@@ -141,7 +141,7 @@ export function AvailableView({
               alignItems: "center",
               gap: "8px",
               padding: "0.75rem 0",
-              borderTop: "none",
+              borderTop: index > 0 ? "1px solid var(--color-border, rgba(0,0,0,0.08))" : "none",
             }}
           >
             <div style={{ flex: 1 }}>
@@ -175,6 +175,11 @@ export function AvailableView({
             </div>
           </div>
         ))}
+
+        <button onClick={onCreateDeck} className="primary" style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%" }}>
+          <IconPlus size={16} />
+          {t.available.createPersonal}
+        </button>
       </div>
 
       <ConfirmDialog

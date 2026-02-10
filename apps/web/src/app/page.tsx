@@ -9,11 +9,14 @@ import { AvailableView } from "../components/AvailableView";
 import { StudyView } from "../components/StudyView";
 import { CreateDeckView } from "../components/CreateDeckView";
 import { EditDeckView } from "../components/EditDeckView";
+import { ChapterPickerView } from "../components/ChapterPickerView";
 import { SyncStatus } from "../components/SyncStatus";
 import { useStats } from "../hooks/useStats";
-import type { DeckFromApi, CardFromApi } from "../lib/api";
+import type { DeckFromApi, CardFromApi, ChapterFromApi } from "../lib/api";
+import { suggestIcon } from "../lib/icon-suggest";
+import { markChapterStarted, markAllChaptersStarted } from "../lib/chapter-progress";
 
-type View = "menu" | "available" | "studying" | "create" | "editing";
+type View = "menu" | "available" | "studying" | "create" | "editing" | "chapters";
 
 export default function HomePage() {
   const router = useRouter();
@@ -26,6 +29,9 @@ export default function HomePage() {
   const [studyCards, setStudyCards] = useState<CardFromApi[]>([]);
   const [editDeck, setEditDeck] = useState<DeckFromApi | null>(null);
   const [editCards, setEditCards] = useState<CardFromApi[]>([]);
+  const [chapters, setChapters] = useState<ChapterFromApi[]>([]);
+  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+  const [classifying, setClassifying] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Redirect to login if not authenticated
@@ -65,11 +71,24 @@ export default function HomePage() {
     if (actionLoading) return;
     try {
       setActionLoading(true);
-      await addList(deckId);
+      // Find deck name for icon suggestion
+      const deck = allLists.find(d => d.id === deckId) || availablePersonalLists.find(d => d.id === deckId);
+      const icon = deck ? suggestIcon(deck.name) : undefined;
+      await addList(deckId, icon);
     } catch (err) {
       console.error("Failed to add list:", err);
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function handleChangeIcon(deckId: string, icon: string) {
+    try {
+      const { updateDeckIcon } = await import("../lib/api");
+      await updateDeckIcon(deckId, icon);
+      await forceRefresh();
+    } catch (err) {
+      console.error("Failed to update icon:", err);
     }
   }
 
@@ -116,14 +135,54 @@ export default function HomePage() {
     if (actionLoading) return;
     try {
       setActionLoading(true);
-      const cards = await getCards(deck.id);
+      const { fetchChapters, fetchCards } = await import("../lib/api");
+      const [cards, chaps] = await Promise.all([
+        fetchCards(deck.id), // Direct API call to get fresh chapterId
+        fetchChapters(deck.id).catch(() => [] as ChapterFromApi[]),
+      ]);
       setStudyDeck(deck);
       setStudyCards(cards);
-      setView("studying");
+      setChapters(chaps);
+      setView("chapters");
     } catch (err) {
       console.error("Failed to load cards:", err);
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  function handleStudyAll() {
+    if (studyDeck && chapters.length > 0) {
+      markAllChaptersStarted(studyDeck.id, chapters.map(ch => ch.id));
+    }
+    setSelectedChapterId(null);
+    setView("studying");
+  }
+
+  function handleStudyChapter(chapterId: string) {
+    if (studyDeck) {
+      markChapterStarted(studyDeck.id, chapterId);
+    }
+    setSelectedChapterId(chapterId);
+    setView("studying");
+  }
+
+  async function handleClassify() {
+    if (!studyDeck || classifying) return;
+    try {
+      setClassifying(true);
+      const { classifyDeck, fetchChapters, fetchCards } = await import("../lib/api");
+      await classifyDeck(studyDeck.id);
+      const [chaps, cards] = await Promise.all([
+        fetchChapters(studyDeck.id),
+        fetchCards(studyDeck.id), // Direct API call, not cache (chapterId must be fresh)
+      ]);
+      setChapters(chaps);
+      setStudyCards(cards);
+    } catch (err) {
+      console.error("Failed to classify deck:", err);
+    } finally {
+      setClassifying(false);
     }
   }
 
@@ -170,6 +229,7 @@ export default function HomePage() {
               onExplore={() => setView("available")}
               onRemove={handleRemove}
               onReorder={handleReorder}
+              onChangeIcon={handleChangeIcon}
               onLogout={handleLogout}
               stats={stats}
             />
@@ -189,13 +249,37 @@ export default function HomePage() {
             />
           )}
 
+          {view === "chapters" && studyDeck && (
+            <ChapterPickerView
+              deck={studyDeck}
+              chapters={chapters}
+              totalCardCount={studyCards.length}
+              classifying={classifying}
+              onStudyAll={handleStudyAll}
+              onStudyChapter={handleStudyChapter}
+              onClassify={handleClassify}
+              onBack={() => {
+                setView("menu");
+              }}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onHome={handleHome}
+            />
+          )}
+
           {view === "studying" && studyDeck && (
             <StudyView
               deck={studyDeck}
-              cards={studyCards}
+              cards={selectedChapterId ? studyCards.filter(c => c.chapterId === selectedChapterId) : studyCards}
+              chapterName={selectedChapterId ? chapters.find(ch => ch.id === selectedChapterId)?.name : null}
               onBack={() => {
                 refreshStats();
-                setView("menu");
+                setSelectedChapterId(null);
+                if (chapters.length > 0) {
+                  setView("chapters");
+                } else {
+                  setView("menu");
+                }
               }}
               userName={user.firstName || user.email}
               onLogout={handleLogout}

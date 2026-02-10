@@ -44,11 +44,11 @@ export function useLists() {
     loadLists();
   }, [loadLists]);
 
-  const addList = useCallback(async (deckId: string) => {
+  const addList = useCallback(async (deckId: string, icon?: string) => {
     try {
       setError(null);
       // Optimistic update happens in api-cache, operation is queued
-      await apiAddList(deckId);
+      await apiAddList(deckId, icon);
       // Reload from cache to get updated state
       await loadLists();
     } catch (err) {

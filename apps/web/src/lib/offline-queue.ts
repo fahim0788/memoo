@@ -13,6 +13,7 @@ export type QueuedOperation = {
   payload: {
     deckId?: string;
     deckIds?: string[];
+    icon?: string;
     // Snapshot for rollback
     snapshot?: {
       myLists?: unknown[];

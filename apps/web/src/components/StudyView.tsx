@@ -69,6 +69,7 @@ type StudyState = {
 type StudyViewProps = {
   deck: DeckFromApi;
   cards: CardFromApi[];
+  chapterName?: string | null;
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
@@ -94,12 +95,13 @@ function pickNextDue(cards: CardFromApi[], state: StudyState) {
   const now = Date.now();
   const due = cards
     .map(c => ({ ...c, cs: state.cards[c.id] ?? defaultCardState(now) }))
-    .filter(x => x.cs.nextReviewAt <= now)
-    .sort((a, b) => a.cs.nextReviewAt - b.cs.nextReviewAt);
-  return due[0] ?? null;
+    .filter(x => x.cs.nextReviewAt <= now);
+  if (due.length === 0) return null;
+  // Random pick among due cards for variety
+  return due[Math.floor(Math.random() * due.length)];
 }
 
-export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: StudyViewProps) {
+export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout, onHome }: StudyViewProps) {
   useLanguage();
   const [study, setStudy] = useState<StudyState | null>(null);
   const [answer, setAnswer] = useState("");
@@ -112,6 +114,16 @@ export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: S
   }, [deck.id, cards]);
 
   const current = useMemo(() => (study ? pickNextDue(cards, study) : null), [study, cards]);
+
+  const progress = useMemo(() => {
+    if (!study) return { done: 0, total: cards.length };
+    const now = Date.now();
+    const done = cards.filter(c => {
+      const cs = study.cards[c.id];
+      return cs && cs.nextReviewAt > now;
+    }).length;
+    return { done, total: cards.length };
+  }, [study, cards]);
 
   useEffect(() => {
     if (!showResult) {
@@ -168,7 +180,7 @@ export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: S
         userName={userName}
         onLogout={onLogout}
         onHome={onHome}
-        title={deck.name}
+        title={chapterName ? `${deck.name} › ${chapterName}` : deck.name}
         secondaryActions={
           <>
             <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
@@ -187,6 +199,34 @@ export function StudyView({ deck, cards, onBack, userName, onLogout, onHome }: S
           </>
         }
       />
+
+      {cards.length > 0 && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "0 0.25rem",
+        }}>
+          <div style={{
+            flex: 1,
+            height: "6px",
+            borderRadius: "3px",
+            background: "var(--color-border)",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              width: `${progress.total > 0 ? (progress.done / progress.total) * 100 : 0}%`,
+              height: "100%",
+              borderRadius: "3px",
+              background: "#a3e635",
+              transition: "width 0.4s ease",
+            }} />
+          </div>
+          <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600, whiteSpace: "nowrap" }}>
+            {progress.done}/{progress.total}
+          </span>
+        </div>
+      )}
 
       <div className="card">
         {!current ? (
