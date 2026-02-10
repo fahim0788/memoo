@@ -140,6 +140,22 @@ services:
     networks:
       - memoo-network
 
+  # ===========================================================================
+  # Migration runner (manual only, via --profile tools)
+  # ===========================================================================
+  migrate:
+    image: memoo-migrate:latest
+    container_name: memoo-migrate
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - memoo-network
+    profiles:
+      - tools
+
 networks:
   memoo-network:
     driver: bridge

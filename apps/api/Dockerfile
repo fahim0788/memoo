@@ -40,7 +40,14 @@ WORKDIR /app/apps/api
 RUN npm run build
 
 # =============================================================================
-# Stage 3: Runtime
+# Stage 3: Migrations (used by deploy script)
+# =============================================================================
+FROM build AS migrate
+WORKDIR /app/packages/db
+CMD ["npx", "prisma", "migrate", "deploy"]
+
+# =============================================================================
+# Stage 4: Runtime
 # =============================================================================
 FROM node:20-alpine AS runtime
 WORKDIR /app
