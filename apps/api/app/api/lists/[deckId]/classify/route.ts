@@ -22,6 +22,11 @@ export async function POST(
 
   const { deckId } = params;
 
+  if (!process.env.OPENAI_API_KEY) {
+    console.error("[Classify] OPENAI_API_KEY is not set");
+    return json({ error: "OPENAI_API_KEY not configured on server" }, req, 500);
+  }
+
   try {
     const userDeck = await prisma.userDeck.findFirst({
       where: { userId: auth.user.userId, deckId },
