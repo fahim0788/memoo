@@ -2,8 +2,10 @@
 
 import type { ChapterFromApi, DeckFromApi } from "../lib/api";
 import { Header } from "./Header";
+
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
+import { getStartedChapters } from "../lib/chapter-progress";
 
 type ChapterPickerViewProps = {
   deck: DeckFromApi;
@@ -16,7 +18,8 @@ type ChapterPickerViewProps = {
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
-  onHome?: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
 };
 
 export function ChapterPickerView({
@@ -30,7 +33,8 @@ export function ChapterPickerView({
   onBack,
   userName,
   onLogout,
-  onHome,
+  onHelp,
+  onProfile,
 }: ChapterPickerViewProps) {
   useLanguage();
 
@@ -41,13 +45,10 @@ export function ChapterPickerView({
       <Header
         userName={userName}
         onLogout={onLogout}
-        onHome={onHome}
+        onHelp={onHelp}
+        onProfile={onProfile}
         title={deck.name}
-        secondaryActions={
-          <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-            {t.common.back}
-          </button>
-        }
+        onBack={onBack}
       />
 
       {/* Study All button */}
@@ -63,6 +64,35 @@ export function ChapterPickerView({
       >
         {t.chapters.studyAll} ({totalCardCount} {t.plural.cards(totalCardCount)})
       </button>
+
+      {/* Chapter progress bar */}
+      {hasChapters && (() => {
+        const started = getStartedChapters(deck.id);
+        const startedSet = new Set(started);
+        return (
+          <div style={{
+            display: "flex",
+            gap: "2px",
+            height: "6px",
+            borderRadius: "3px",
+            overflow: "hidden",
+          }}>
+            {chapters.map((ch) => (
+              <span
+                key={ch.id}
+                style={{
+                  flex: 1,
+                  height: "100%",
+                  borderRadius: "3px",
+                  background: startedSet.has(ch.id)
+                    ? "#a3e635"
+                    : "var(--color-chapter-empty)",
+                }}
+              />
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Chapters list */}
       {hasChapters && (

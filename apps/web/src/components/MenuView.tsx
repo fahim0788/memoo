@@ -16,11 +16,12 @@ type MenuViewProps = {
   userName: string;
   onStudy: (deck: DeckFromApi) => void;
   onEdit: (deck: DeckFromApi) => void;
-  onExplore: () => void;
   onRemove: (deckId: string) => void;
   onReorder: (deckIds: string[]) => void;
   onChangeIcon: (deckId: string, icon: string) => void;
   onLogout: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
   stats: Stats | null;
 };
 
@@ -29,11 +30,12 @@ export function MenuView({
   userName,
   onStudy,
   onEdit,
-  onExplore,
   onRemove,
   onReorder,
   onChangeIcon,
   onLogout,
+  onHelp,
+  onProfile,
   stats,
 }: MenuViewProps) {
   useLanguage();
@@ -44,10 +46,6 @@ export function MenuView({
 
   const q = search.toLowerCase().trim();
   const filteredLists = q ? myLists.filter(d => d.name.toLowerCase().includes(q)) : myLists;
-
-  // Compute fixed grid area width based on the widest chapter grid across all decks
-  const maxCols = Math.max(0, ...myLists.filter(d => (d.chapterCount ?? 0) > 0).map(d => Math.ceil(Math.sqrt(d.chapterCount!))));
-  const gridAreaWidth = maxCols > 0 ? maxCols * 7 + (maxCols - 1) * 2 : 0;
 
   function handleMoveUp(index: number) {
     if (index === 0) return;
@@ -69,7 +67,7 @@ export function MenuView({
 
   return (
     <>
-      <Header userName={userName} onLogout={onLogout} />
+      <Header userName={userName} onLogout={onLogout} onHelp={onHelp} onProfile={onProfile} />
 
       {stats && <StatsCard stats={stats} />}
 
@@ -84,7 +82,7 @@ export function MenuView({
               style={{ marginBottom: "0.25rem" }}
             />
           )}
-          {filteredLists.map((deck, index) => {
+          {filteredLists.map((deck) => {
             const originalIndex = myLists.findIndex(d => d.id === deck.id);
             const isAnimating = animating === deck.id;
             return (
@@ -94,6 +92,7 @@ export function MenuView({
                   style={{
                     position: "relative",
                     width: "100%",
+                    overflow: "hidden",
                     transition: isAnimating ? "transform 0.3s ease-in-out" : "none",
                     transform: isAnimating ? "scale(1.02)" : "scale(1)",
                   }}
@@ -152,36 +151,6 @@ export function MenuView({
                       <IconFolderPublic size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
                     )}
                     <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deck.name}</span>
-                    {gridAreaWidth > 0 && (
-                      <span style={{ width: gridAreaWidth + "px", flexShrink: 0, display: "flex", justifyContent: "flex-start", marginLeft: "6px" }}>
-                        {(deck.chapterCount ?? 0) > 0 && (() => {
-                          const started = getStartedChapters(deck.id);
-                          const total = deck.chapterCount!;
-                          const cols = Math.ceil(Math.sqrt(total));
-                          return (
-                            <span style={{
-                              display: "grid",
-                              gridTemplateColumns: `repeat(${cols}, 7px)`,
-                              gap: "2px",
-                            }}>
-                              {Array.from({ length: total }, (_, i) => (
-                                <span
-                                  key={i}
-                                  style={{
-                                    width: "7px",
-                                    height: "7px",
-                                    borderRadius: "1px",
-                                    background: i < started.length
-                                      ? "#a3e635"
-                                      : "var(--color-chapter-empty)",
-                                  }}
-                                />
-                              ))}
-                            </span>
-                          );
-                        })()}
-                      </span>
-                    )}
                     <span
                       style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", width: "50px", justifyContent: "flex-end" }}
                       onClick={e => e.stopPropagation()}
@@ -209,6 +178,35 @@ export function MenuView({
                       {deck.cardCount} {t.plural.cards(deck.cardCount)}
                     </span>
                   </div>
+                  {(deck.chapterCount ?? 0) > 0 && (() => {
+                    const started = getStartedChapters(deck.id);
+                    const total = deck.chapterCount!;
+                    return (
+                      <div style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        display: "flex",
+                        gap: "1px",
+                        padding: "0 1px",
+                        height: "3px",
+                      }}>
+                        {Array.from({ length: total }, (_, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              flex: 1,
+                              height: "4px",
+                              background: i < started.length
+                                ? "#a3e635"
+                                : "var(--color-chapter-empty)",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </button>
                 {iconPicker === deck.id && (
                   <>
@@ -271,12 +269,6 @@ export function MenuView({
           <p className="small">{t.menuView.noDecksCta}</p>
         </div>
       )}
-
-      <div className="card">
-        <button onClick={onExplore} style={{ margin: 0, width: "100%", padding: "0.75rem 1rem", fontSize: "1rem" }}>
-          {t.menuView.exploreAvailable}
-        </button>
-      </div>
 
       <ConfirmDialog
         isOpen={removeTarget !== null}

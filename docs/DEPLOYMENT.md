@@ -142,8 +142,9 @@ DATABASE_URL=postgresql://memolist:VOTRE_MOT_DE_PASSE_SECURISE@db:5432/memolist
 JWT_SECRET=VOTRE_SECRET_JWT_MIN_32_CHARS
 CORS_ORIGIN=https://memoo.fr
 NODE_ENV=production
+NEXT_PUBLIC_API_BASE=/api
 
-# OpenAI (pour la génération audio TTS)
+# OpenAI (pour classification IA + génération audio TTS)
 OPENAI_API_KEY=sk-...
 
 # Storage TTS (MinIO)
@@ -158,7 +159,8 @@ MINIO_BUCKET=memolist-tts
 
 **⚠️ IMPORTANT :**
 - `DATABASE_URL` doit contenir les **mêmes valeurs** que `POSTGRES_USER` et `POSTGRES_PASSWORD` — pas de variables `${}` !
-- `OPENAI_API_KEY` est nécessaire pour la génération audio (worker TTS)
+- `OPENAI_API_KEY` est nécessaire pour la classification IA des cartes ET la génération audio (worker TTS)
+- `NEXT_PUBLIC_API_BASE=/api` est requis en production (nginx gère le routing)
 - `MINIO_ACCESS_KEY` et `MINIO_SECRET_KEY` doivent être sécurisés (min. 16 caractères)
 - Ne jamais commiter le fichier `.env`
 

@@ -249,6 +249,29 @@ export interface Translations {
     closeButton: string;
   };
 
+  // Page d'aide (HelpView)
+  help: {
+    title: string;
+    welcomeTitle: string;
+    welcomeText: string;
+    studyTitle: string;
+    studyText: string;
+    listsTitle: string;
+    listsText: string;
+    createTitle: string;
+    createText: string;
+    chaptersTitle: string;
+    chaptersText: string;
+    aiTitle: string;
+    aiText: string;
+    offlineTitle: string;
+    offlineText: string;
+    settingsTitle: string;
+    settingsText: string;
+    tipsTitle: string;
+    tipsText: string;
+  };
+
   // Chapitres (classification IA)
   chapters: {
     title: string;
@@ -260,6 +283,32 @@ export interface Translations {
     noChapters: string;
     errorClassify: string;
     other: string;
+  };
+
+  // Profil utilisateur
+  profile: {
+    title: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    memberSince: string;
+    changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    save: string;
+    saving: string;
+    saved: string;
+    errorUpdate: string;
+    passwordMismatch: string;
+    currentPasswordRequired: string;
+  };
+
+  // Navigation bottom bar
+  nav: {
+    home: string;
+    explore: string;
+    add: string;
   };
 
   // Pluralisation
@@ -336,7 +385,7 @@ const fr: Translations = {
   study: {
     question: "Question",
     answer: "Réponse",
-    reference: "Référence : ",
+    reference: "Réponse",
     validate: "Valider",
     showAnswer: "Voir la réponse",
     next: "Suivant",
@@ -507,6 +556,28 @@ const fr: Translations = {
     closeButton: "Fermer",
   },
 
+  help: {
+    title: "Aide",
+    welcomeTitle: "Bienvenue sur Memoo",
+    welcomeText: "Memoo est une application de mémorisation par répétition espacée. Elle vous aide à apprendre efficacement en vous présentant les cartes au bon moment, juste avant que vous ne les oubliez.",
+    studyTitle: "Étudier une liste",
+    studyText: "Sélectionnez une liste depuis l'écran principal, puis choisissez un chapitre ou \"Tout étudier\". Pour chaque carte, lisez la question, tapez votre réponse puis validez. L'app vous dira si c'est correct et planifiera la prochaine révision automatiquement.",
+    listsTitle: "Gérer ses listes",
+    listsText: "Depuis le menu principal, appuyez sur \"Explorer les listes disponibles\" pour découvrir les listes publiques et vos listes personnalisées. Ajoutez celles qui vous intéressent à vos études. Vous pouvez réorganiser vos listes avec les flèches et personnaliser leurs icônes.",
+    createTitle: "Créer une liste personnalisée",
+    createText: "Dans l'explorateur de listes, appuyez sur \"Créer une liste\". Donnez-lui un nom, puis importez vos cartes au format JSON ou CSV. Chaque carte doit avoir une question et au moins une réponse. Vous pouvez aussi ajouter des images.",
+    chaptersTitle: "Chapitres",
+    chaptersText: "Les listes avec beaucoup de cartes peuvent être organisées en chapitres. Avant d'étudier, vous voyez les chapitres disponibles et pouvez choisir lequel réviser. Les pastilles colorées indiquent votre progression.",
+    aiTitle: "Organisation par IA",
+    aiText: "Pour les listes sans chapitres, utilisez le bouton \"Organiser en chapitres (IA)\" pour que l'intelligence artificielle regroupe automatiquement vos cartes par thème. Vous pouvez réorganiser à tout moment.",
+    offlineTitle: "Mode hors-ligne",
+    offlineText: "Memoo fonctionne même sans connexion internet. Vos réponses sont enregistrées localement et synchronisées automatiquement dès que la connexion revient. La barre de statut en bas vous indique l'état de la synchronisation.",
+    settingsTitle: "Paramètres",
+    settingsText: "Cliquez sur l'icône d'engrenage pour accéder aux paramètres. Vous pouvez basculer entre le thème clair et sombre. Le bouton drapeau dans l'en-tête permet de changer la langue de l'interface entre français et anglais.",
+    tipsTitle: "Astuces",
+    tipsText: "Révisez un peu chaque jour plutôt que beaucoup d'un coup. La répétition espacée est plus efficace avec des sessions courtes et régulières. Consultez vos statistiques pour suivre votre progression et maintenir votre série de jours consécutifs.",
+  },
+
   chapters: {
     title: "Chapitres",
     studyAll: "Tout étudier",
@@ -517,6 +588,30 @@ const fr: Translations = {
     noChapters: "Pas encore de chapitres. Utilisez l'IA pour organiser automatiquement.",
     errorClassify: "Erreur lors de la classification",
     other: "Autres",
+  },
+
+  profile: {
+    title: "Profil",
+    firstName: "Prénom",
+    lastName: "Nom",
+    email: "Email",
+    memberSince: "Membre depuis",
+    changePassword: "Changer le mot de passe",
+    currentPassword: "Mot de passe actuel",
+    newPassword: "Nouveau mot de passe",
+    confirmPassword: "Confirmer le mot de passe",
+    save: "Enregistrer",
+    saving: "Enregistrement...",
+    saved: "Profil mis à jour",
+    errorUpdate: "Erreur lors de la mise à jour",
+    passwordMismatch: "Les mots de passe ne correspondent pas",
+    currentPasswordRequired: "Mot de passe actuel requis",
+  },
+
+  nav: {
+    home: "Accueil",
+    explore: "Explorer",
+    add: "Ajouter",
   },
 
   plural: {
@@ -592,7 +687,7 @@ const en: Translations = {
   study: {
     question: "Question",
     answer: "Answer",
-    reference: "Reference: ",
+    reference: "Answer",
     validate: "Validate",
     showAnswer: "Show answer",
     next: "Next",
@@ -763,6 +858,28 @@ const en: Translations = {
     closeButton: "Close",
   },
 
+  help: {
+    title: "Help",
+    welcomeTitle: "Welcome to Memoo",
+    welcomeText: "Memoo is a spaced repetition learning app. It helps you memorize effectively by showing you cards at the right time, just before you forget them.",
+    studyTitle: "Study a list",
+    studyText: "Select a list from the main screen, then choose a chapter or \"Study all\". For each card, read the question, type your answer and validate. The app will tell you if it's correct and automatically schedule the next review.",
+    listsTitle: "Manage your lists",
+    listsText: "From the main menu, tap \"Explore available lists\" to discover public lists and your custom lists. Add the ones you're interested in to your studies. You can reorder your lists with arrows and customize their icons.",
+    createTitle: "Create a custom list",
+    createText: "In the list explorer, tap \"Create a list\". Give it a name, then import your cards in JSON or CSV format. Each card must have a question and at least one answer. You can also add images.",
+    chaptersTitle: "Chapters",
+    chaptersText: "Lists with many cards can be organized into chapters. Before studying, you see available chapters and can choose which one to review. Colored dots indicate your progress.",
+    aiTitle: "AI organization",
+    aiText: "For lists without chapters, use the \"Organize into chapters (AI)\" button to let artificial intelligence automatically group your cards by theme. You can reorganize at any time.",
+    offlineTitle: "Offline mode",
+    offlineText: "Memoo works even without an internet connection. Your answers are saved locally and automatically synced when the connection returns. The status bar at the bottom shows the sync state.",
+    settingsTitle: "Settings",
+    settingsText: "Click the gear icon to access settings. You can switch between light and dark themes. The flag button in the header lets you change the interface language between French and English.",
+    tipsTitle: "Tips",
+    tipsText: "Review a little every day rather than a lot at once. Spaced repetition is more effective with short, regular sessions. Check your stats to track your progress and maintain your streak of consecutive days.",
+  },
+
   chapters: {
     title: "Chapters",
     studyAll: "Study all",
@@ -773,6 +890,30 @@ const en: Translations = {
     noChapters: "No chapters yet. Use AI to organize automatically.",
     errorClassify: "Error classifying cards",
     other: "Other",
+  },
+
+  profile: {
+    title: "Profile",
+    firstName: "First Name",
+    lastName: "Last Name",
+    email: "Email",
+    memberSince: "Member since",
+    changePassword: "Change password",
+    currentPassword: "Current password",
+    newPassword: "New password",
+    confirmPassword: "Confirm password",
+    save: "Save",
+    saving: "Saving...",
+    saved: "Profile updated",
+    errorUpdate: "Error updating profile",
+    passwordMismatch: "Passwords do not match",
+    currentPasswordRequired: "Current password required",
+  },
+
+  nav: {
+    home: "Home",
+    explore: "Explore",
+    add: "Add",
   },
 
   plural: {

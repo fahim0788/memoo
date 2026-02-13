@@ -126,7 +126,7 @@ curl -I http://localhost:9000/tts/2_en.mp3
 location /storage/tts/ {
     rewrite ^/storage/tts/(.*)$ /tts/$1 break;
     proxy_pass http://minio:9000;
-    proxy_set_header Host $host;
+    proxy_set_header Host minio:9000;
     proxy_set_header X-Real-IP $remote_addr;
 }
 ```
@@ -167,8 +167,8 @@ docker network connect memoo_default memoo-minio
 # Récupérer l'IP de MinIO
 docker inspect memoo-minio --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
 
-# Utiliser l'IP directe (ex: 172.24.0.7) au lieu du hostname
-docker exec memoo-worker-1 /tmp/mc alias set myminio http://172.24.0.7:9000 ACCESS_KEY SECRET_KEY
+# Utiliser le hostname Docker (ne PAS utiliser d'IP directe, elle change à chaque restart)
+docker exec memoo-worker-1 /tmp/mc alias set myminio http://minio:9000 ACCESS_KEY SECRET_KEY
 ```
 
 ### Les fichiers retournent 403 Forbidden

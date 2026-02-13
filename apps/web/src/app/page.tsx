@@ -10,13 +10,16 @@ import { StudyView } from "../components/StudyView";
 import { CreateDeckView } from "../components/CreateDeckView";
 import { EditDeckView } from "../components/EditDeckView";
 import { ChapterPickerView } from "../components/ChapterPickerView";
+import { HelpView } from "../components/HelpView";
+import { ProfileView } from "../components/ProfileView";
 import { SyncStatus } from "../components/SyncStatus";
+import { BottomNav } from "../components/BottomNav";
 import { useStats } from "../hooks/useStats";
 import type { DeckFromApi, CardFromApi, ChapterFromApi } from "../lib/api";
 import { suggestIcon } from "../lib/icon-suggest";
 import { markChapterStarted, markAllChaptersStarted } from "../lib/chapter-progress";
 
-type View = "menu" | "available" | "studying" | "create" | "editing" | "chapters";
+type View = "menu" | "available" | "studying" | "create" | "editing" | "chapters" | "help" | "profile";
 
 export default function HomePage() {
   const router = useRouter();
@@ -210,6 +213,14 @@ export default function HomePage() {
     setView("menu");
   }
 
+  function handleHelp() {
+    setView("help");
+  }
+
+  function handleProfile() {
+    setView("profile");
+  }
+
   async function handleDeckCreated() {
     // Force refresh from API after creating a deck (bypasses cache)
     await forceRefresh();
@@ -226,11 +237,12 @@ export default function HomePage() {
               userName={user.firstName || user.email}
               onStudy={handleStudy}
               onEdit={handleEdit}
-              onExplore={() => setView("available")}
               onRemove={handleRemove}
               onReorder={handleReorder}
               onChangeIcon={handleChangeIcon}
               onLogout={handleLogout}
+              onHelp={handleHelp}
+              onProfile={handleProfile}
               stats={stats}
             />
           )}
@@ -245,7 +257,8 @@ export default function HomePage() {
               onBack={() => setView("menu")}
               userName={user.firstName || user.email}
               onLogout={handleLogout}
-              onHome={handleHome}
+              onHelp={handleHelp}
+              onProfile={handleProfile}
             />
           )}
 
@@ -263,7 +276,8 @@ export default function HomePage() {
               }}
               userName={user.firstName || user.email}
               onLogout={handleLogout}
-              onHome={handleHome}
+              onHelp={handleHelp}
+              onProfile={handleProfile}
             />
           )}
 
@@ -283,7 +297,8 @@ export default function HomePage() {
               }}
               userName={user.firstName || user.email}
               onLogout={handleLogout}
-              onHome={handleHome}
+              onHelp={handleHelp}
+              onProfile={handleProfile}
             />
           )}
 
@@ -297,7 +312,8 @@ export default function HomePage() {
               }}
               userName={user.firstName || user.email}
               onLogout={handleLogout}
-              onHome={handleHome}
+              onHelp={handleHelp}
+              onProfile={handleProfile}
             />
           )}
 
@@ -307,7 +323,26 @@ export default function HomePage() {
               onCreated={handleDeckCreated}
               userName={user.firstName || user.email}
               onLogout={handleLogout}
-              onHome={handleHome}
+              onHelp={handleHelp}
+              onProfile={handleProfile}
+            />
+          )}
+
+          {view === "help" && (
+            <HelpView
+              onBack={() => setView("menu")}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onProfile={handleProfile}
+            />
+          )}
+
+          {view === "profile" && (
+            <ProfileView
+              onBack={() => setView("menu")}
+              userName={user.firstName || user.email}
+              onLogout={handleLogout}
+              onHelp={handleHelp}
             />
           )}
 
@@ -326,6 +361,15 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      {view !== "studying" && (
+        <BottomNav
+          activeView={view}
+          onHome={handleHome}
+          onExplore={() => setView("available")}
+          onCreate={() => setView("create")}
+        />
+      )}
 
       <SyncStatus />
     </>

@@ -10,6 +10,7 @@ import { updateStreak } from "../lib/streak";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
 import { Header } from "./Header";
+import { IconSpeaker, IconSpeakerPlaying } from "./Icons";
 
 function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null; label: string; autoPlay?: boolean; fullWidth?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -46,8 +47,10 @@ function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null;
     <button
       onClick={play}
       style={{
-        padding: fullWidth ? "0.75rem 1rem" : "0.25rem 0.5rem",
-        fontSize: fullWidth ? "1rem" : "0.85rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: fullWidth ? "0.75rem" : "0.25rem 0.5rem",
         marginLeft: fullWidth ? "0" : "0.5rem",
         opacity: playing ? 0.6 : 1,
         flex: fullWidth ? "1" : "none",
@@ -55,7 +58,7 @@ function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null;
       }}
       disabled={playing}
     >
-      {playing ? "🔊" : "▶"} {label}
+      {playing ? <IconSpeakerPlaying size={fullWidth ? 24 : 18} /> : <IconSpeaker size={fullWidth ? 24 : 18} />}
     </button>
   );
 }
@@ -73,7 +76,8 @@ type StudyViewProps = {
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
-  onHome?: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
 };
 
 function todayKey(d = new Date()) {
@@ -101,7 +105,7 @@ function pickNextDue(cards: CardFromApi[], state: StudyState) {
   return due[Math.floor(Math.random() * due.length)];
 }
 
-export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout, onHome }: StudyViewProps) {
+export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout, onHelp, onProfile }: StudyViewProps) {
   useLanguage();
   const [study, setStudy] = useState<StudyState | null>(null);
   const [answer, setAnswer] = useState("");
@@ -179,24 +183,21 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
       <Header
         userName={userName}
         onLogout={onLogout}
-        onHome={onHome}
+        onHelp={onHelp}
+        onProfile={onProfile}
         title={chapterName ? `${deck.name} › ${chapterName}` : deck.name}
+        onBack={onBack}
         secondaryActions={
-          <>
-            <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-              {t.common.back}
-            </button>
-            <span style={{
-              background: "var(--color-stats-bg)",
-              border: "none",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "8px",
-              fontSize: "0.75rem",
-              color: "var(--color-stats-text)"
-            }}>
-              {t.study.todayLabel}<b>{study.doneToday}</b>
-            </span>
-          </>
+          <span style={{
+            background: "var(--color-stats-bg)",
+            border: "none",
+            padding: "0.25rem 0.5rem",
+            borderRadius: "8px",
+            fontSize: "0.75rem",
+            color: "var(--color-stats-text)"
+          }}>
+            {t.study.todayLabel}<b>{study.doneToday}</b>
+          </span>
         }
       />
 
@@ -278,13 +279,14 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
 
             {showResult && result && (
               <>
-                <span className={`badge ${result.ok ? "ok" : "bad"}`}>
-                  {result.ok ? t.study.correct : t.study.incorrect}
-                </span>
-                <div className="small" style={{ marginTop: "0.5rem" }}>
-                  {t.study.reference}<b>{result.expected}</b>
+                <div style={{ textAlign: "center" }}>
+                  <span className={`badge ${result.ok ? "ok" : "bad"}`}>
+                    {result.ok ? t.study.correct : t.study.incorrect}
+                  </span>
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", marginBottom: "1rem" }}>
+                <div className="small" style={{ marginTop: "1rem" }}>{t.study.reference}</div>
+                <h3 style={{ color: "#76b900" }}>{result.expected}</h3>
+                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
                   <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label={t.study.listenFr} autoPlay fullWidth />
                 </div>
                 <button className="primary" onClick={goNext}>{t.study.next}</button>

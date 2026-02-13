@@ -167,6 +167,49 @@
 
   .container {
     @apply w-full max-w-2xl px-4 py-4 flex flex-col gap-4;
+    padding-bottom: 5rem;
+  }
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-bg) 95%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid var(--color-border);
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .bottom-nav-tab {
+    all: unset;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    padding: 0.5rem 0;
+    font-size: 0.65rem;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.45;
+  }
+
+  .bottom-nav-tab:hover {
+    color: var(--color-text);
+    opacity: 0.65;
+  }
+
+  .bottom-nav-tab.active {
+    color: var(--color-text);
+    opacity: 0.85;
   }
 
   /* Header */
@@ -456,6 +499,77 @@
     background: var(--color-error-light);
     color: var(--color-error);
   }
+}
+
+/* ============================================================================
+   HEADER ACTION BUTTONS (langue, help, settings)
+============================================================================ */
+
+.header-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  min-width: 0 !important;
+  flex: none !important;
+  border-radius: 0 !important;
+  font-weight: normal !important;
+  color: var(--color-text-secondary);
+  transition: color 200ms, transform 200ms;
+}
+
+.header-action-btn:hover {
+  color: var(--color-primary-hover);
+  transform: scale(1.1);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.header-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ============================================================================
+   HELP PAGE
+============================================================================ */
+
+.help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: fadeIn 200ms ease;
+}
+
+.help-section {
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+}
+
+.help-section-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.help-section-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.help-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding: 1rem 0;
 }
 
 /* ============================================================================

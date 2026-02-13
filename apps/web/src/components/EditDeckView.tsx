@@ -15,10 +15,11 @@ type EditDeckViewProps = {
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
-  onHome?: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
 };
 
-export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, onHome }: EditDeckViewProps) {
+export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, onHelp, onProfile }: EditDeckViewProps) {
   useLanguage();
   const [deckName, setDeckName] = useState(deck.name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -123,7 +124,8 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
       <Header
         userName={userName}
         onLogout={onLogout}
-        onHome={onHome}
+        onHelp={onHelp}
+        onProfile={onProfile}
         title={
           isEditingName ? (
             <div style={{ display: "flex", gap: "8px", alignItems: "center", flex: 1 }}>
@@ -153,14 +155,7 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
             </span>
           )
         }
-        secondaryActions={
-          <button
-            onClick={onBack}
-            style={{ minWidth: 0, flex: "none", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-          >
-            {t.common.back}
-          </button>
-        }
+        onBack={onBack}
       />
 
       {error && (

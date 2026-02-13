@@ -18,7 +18,8 @@ type AvailableViewProps = {
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
-  onHome?: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
 };
 
 export function AvailableView({
@@ -30,7 +31,8 @@ export function AvailableView({
   onBack,
   userName,
   onLogout,
-  onHome,
+  onHelp,
+  onProfile,
 }: AvailableViewProps) {
   useLanguage();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -45,13 +47,10 @@ export function AvailableView({
       <Header
         userName={userName}
         onLogout={onLogout}
-        onHome={onHome}
+        onHelp={onHelp}
+        onProfile={onProfile}
         title={t.available.title}
-        secondaryActions={
-          <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-            {t.common.back}
-          </button>
-        }
+        onBack={onBack}
       />
 
       <input

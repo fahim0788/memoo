@@ -12,7 +12,9 @@ import {
   login as authLogin,
   register as authRegister,
   logout as authLogout,
+  updateProfile as authUpdateProfile,
   type User,
+  type UpdateProfileData,
 } from "../lib/auth";
 
 type AuthContextType = {
@@ -25,6 +27,7 @@ type AuthContextType = {
     firstName?: string,
     lastName?: string
   ) => Promise<void>;
+  updateProfile: (data: UpdateProfileData) => Promise<void>;
   logout: () => void;
 };
 
@@ -55,13 +58,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }
 
+  async function updateProfile(data: UpdateProfileData) {
+    const updated = await authUpdateProfile(data);
+    setUser(updated);
+  }
+
   function logout() {
     authLogout();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

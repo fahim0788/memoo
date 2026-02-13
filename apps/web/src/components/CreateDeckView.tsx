@@ -16,7 +16,8 @@ type CreateDeckViewProps = {
   onCreated: () => void;
   userName?: string;
   onLogout?: () => void;
-  onHome?: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
 };
 
 function parseJSON(text: string): { name: string; cards: Card[] } | null {
@@ -62,7 +63,7 @@ function parseCSV(text: string): Card[] | null {
   }
 }
 
-export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHome }: CreateDeckViewProps) {
+export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, onProfile }: CreateDeckViewProps) {
   useLanguage();
   const [name, setName] = useState("");
   const [jsonText, setJsonText] = useState("");
@@ -187,13 +188,10 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHome }
       <Header
         userName={userName}
         onLogout={onLogout}
-        onHome={onHome}
+        onHelp={onHelp}
+        onProfile={onProfile}
         title={t.create.title}
-        secondaryActions={
-          <button onClick={onBack} style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: "none", minWidth: "auto" }}>
-            {t.common.back}
-          </button>
-        }
+        onBack={onBack}
       />
 
       <div className="card">

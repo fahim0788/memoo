@@ -6,6 +6,7 @@ export type User = {
   email: string;
   firstName: string;
   lastName: string;
+  createdAt: string;
 };
 
 export type AuthResponse = {
@@ -101,6 +102,42 @@ export async function getMe(): Promise<User | null> {
 
   const data = await r.json();
   return data.user;
+}
+
+export type UpdateProfileData = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+};
+
+export async function updateProfile(data: UpdateProfileData): Promise<User> {
+  const token = getToken();
+  if (!token) throw new Error("Non authentifié");
+
+  const r = await fetch(`${API_BASE}/auth/me`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    const messages: Record<string, string> = {
+      "current password required": "Mot de passe actuel requis",
+      "invalid password": "Mot de passe actuel incorrect",
+      "email already registered": "Cet email est déjà utilisé",
+      "no changes": "Aucune modification",
+    };
+    throw new Error(messages[err.error] || err.error || "Erreur lors de la mise à jour");
+  }
+
+  const result = await r.json();
+  return result.user;
 }
 
 export function logout(): void {

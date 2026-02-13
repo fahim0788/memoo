@@ -38,7 +38,10 @@
       "Bash(npx tsc:*)",
       "Bash(npx vitest run)",
       "Bash(npm run dev:api:*)",
-      "Bash(npm run dev:web:*)"
+      "Bash(npm run dev:web:*)",
+      "Bash(Start-Process \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(cmd.exe /c \"start \"\"\"\" \"\"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\"\"\")",
+      "Bash(del \"c:\\\\WORK\\\\memolist-mvp\\\\scripts\\\\cleanup-flags.ps1\")"
     ]
   }
 }
