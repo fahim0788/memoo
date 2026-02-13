@@ -9,7 +9,7 @@ import type { Stats } from "../hooks/useStats";
 import { IconFolderPublic, IconUser, IconEdit, IconTrash, IconArrowUp, IconArrowDown, DeckIcon, DECK_ICONS, DECK_COLORS } from "./Icons";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
-import { getStartedChapters } from "../lib/chapter-progress";
+import { chapterStatusColor, type ChapterStatus } from "../lib/chapter-status";
 
 type MenuViewProps = {
   myLists: DeckFromApi[];
@@ -23,6 +23,7 @@ type MenuViewProps = {
   onHelp?: () => void;
   onProfile?: () => void;
   stats: Stats | null;
+  chapterProgress?: Record<string, { statuses: Record<string, ChapterStatus>; orderedIds: string[] }>;
 };
 
 export function MenuView({
@@ -37,6 +38,7 @@ export function MenuView({
   onHelp,
   onProfile,
   stats,
+  chapterProgress,
 }: MenuViewProps) {
   useLanguage();
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
@@ -179,8 +181,15 @@ export function MenuView({
                     </span>
                   </div>
                   {(deck.chapterCount ?? 0) > 0 && (() => {
-                    const started = getStartedChapters(deck.id);
                     const total = deck.chapterCount!;
+                    const progress = chapterProgress?.[deck.id];
+                    // Use ordered chapter IDs (same order as ChapterPickerView)
+                    const segments: ChapterStatus[] = progress
+                      ? progress.orderedIds
+                          .map((id) => progress.statuses[id] || "not-started")
+                          .concat(Array(Math.max(0, total - progress.orderedIds.length)).fill("not-started"))
+                          .slice(0, total)
+                      : Array(total).fill("not-started");
                     return (
                       <div style={{
                         position: "absolute",
@@ -188,19 +197,17 @@ export function MenuView({
                         left: 0,
                         right: 0,
                         display: "flex",
-                        gap: "1px",
+                        gap: "3px",
                         padding: "0 1px",
                         height: "3px",
                       }}>
-                        {Array.from({ length: total }, (_, i) => (
+                        {segments.map((status, i) => (
                           <span
                             key={i}
                             style={{
                               flex: 1,
                               height: "4px",
-                              background: i < started.length
-                                ? "#a3e635"
-                                : "var(--color-chapter-empty)",
+                              background: chapterStatusColor(status),
                             }}
                           />
                         ))}

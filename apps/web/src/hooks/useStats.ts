@@ -3,6 +3,7 @@ import type { DeckFromApi } from "../lib/api";
 import type { CardState } from "../lib/sr-engine";
 import { idbGet } from "../lib/idb";
 import { getStreak } from "../lib/streak";
+import { debugNow, debugDate } from "../lib/debug-date";
 
 type StudyState = {
   cards: Record<string, CardState>;
@@ -31,7 +32,7 @@ export type Stats = {
 };
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return debugDate().toISOString().slice(0, 10);
 }
 
 function daysBetween(from: number, to: number): number {
@@ -42,7 +43,7 @@ export function useStats(decks: DeckFromApi[]) {
   const [stats, setStats] = useState<Stats | null>(null);
 
   const compute = useCallback(async () => {
-    const now = Date.now();
+    const now = debugNow();
     const today = todayKey();
     let todayTotal = 0;
     const perDeck: DeckStats[] = [];

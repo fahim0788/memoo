@@ -139,12 +139,16 @@ SELECT COUNT(*) as total_reviews FROM "Review";
 
 ### 1. Test de base de l'application web
 
-#### 1.1 Accès à l'application
-1. Ouvrir Chrome/Firefox
+#### 1.1 Accès à l'application (non authentifié)
+1. Ouvrir Chrome/Firefox (session vierge ou navigation privée)
 2. Accéder à `http://localhost:3000`
-3. ✅ **Attendu**: Page de connexion s'affiche
+3. ✅ **Attendu**: Redirection immédiate vers `/login` (middleware server-side, pas de flash "Chargement...")
 
-#### 1.2 Inscription
+#### 1.2 Accès à une URL invalide
+1. Accéder à `http://localhost:3000/page-inexistante`
+2. ✅ **Attendu**: Page 404 avec message "Ressource non trouvée" et bouton retour
+
+#### 1.3 Inscription
 1. Cliquer sur "S'inscrire" ou basculer vers le mode inscription
 2. Remplir les champs :
    - Email: `test@memolist.com`
@@ -154,10 +158,15 @@ SELECT COUNT(*) as total_reviews FROM "Review";
 3. Cliquer sur "S'inscrire"
 4. ✅ **Attendu**: Redirection vers la page principale
 
-#### 1.3 Connexion
+#### 1.4 Connexion
 1. Se déconnecter
 2. Se reconnecter avec les identifiants créés
 3. ✅ **Attendu**: Accès à la page principale avec les listes
+
+#### 1.5 Accès à /login quand déjà connecté
+1. Être connecté sur la page principale
+2. Taper manuellement `http://localhost:3000/login` dans la barre d'adresse
+3. ✅ **Attendu**: Redirection immédiate vers `/` (middleware + garde client-side)
 
 ---
 
@@ -473,6 +482,16 @@ const status = {
    - [ ] Rafraîchir la page
    - [ ] ✅ Redirection vers /login
 
+3. **Protection middleware (server-side)**
+   - [ ] Supprimer le cookie `has_token` (DevTools → Application → Cookies)
+   - [ ] Rafraîchir la page
+   - [ ] ✅ Redirection immédiate vers /login sans flash de chargement
+
+4. **Page 404**
+   - [ ] Accéder à une URL inexistante (`/xyz`)
+   - [ ] ✅ Page 404 affichée avec bouton retour
+   - [ ] Cliquer sur "Retour" → Redirection vers `/`
+
 ---
 
 ## Tests de régression
@@ -482,6 +501,9 @@ const status = {
 Après chaque modification, vérifier que :
 
 - [ ] L'authentification fonctionne toujours
+- [ ] Le middleware redirige les non-authentifiés vers /login
+- [ ] Le middleware redirige /login vers / si déjà connecté
+- [ ] La page 404 s'affiche pour les URLs invalides
 - [ ] Les listes se chargent correctement
 - [ ] L'étude de cartes fonctionne
 - [ ] Le système de répétition espacée calcule correctement
@@ -647,6 +669,6 @@ Pour toute question ou amélioration de ce guide, ouvrez une issue sur GitHub.
 
 ---
 
-**Dernière mise à jour**: 2026-02-02
+**Dernière mise à jour**: 2026-02-13
 **Version de l'application**: 1.0.0 (refactorisée)
 **Auteur**: Équipe MemoList

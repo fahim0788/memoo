@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 import { useLists } from "../hooks/useLists";
@@ -15,7 +15,9 @@ import { ProfileView } from "../components/ProfileView";
 import { SyncStatus } from "../components/SyncStatus";
 import { BottomNav } from "../components/BottomNav";
 import { useStats } from "../hooks/useStats";
+import { useChapterProgress } from "../hooks/useChapterProgress";
 import type { DeckFromApi, CardFromApi, ChapterFromApi } from "../lib/api";
+import { idbSet } from "../lib/idb";
 import { suggestIcon } from "../lib/icon-suggest";
 import { markChapterStarted, markAllChaptersStarted } from "../lib/chapter-progress";
 
@@ -26,6 +28,7 @@ export default function HomePage() {
   const { user, loading: authLoading, logout } = useAuth();
   const { myLists, allLists, availablePersonalLists, loading, error, addList, removeList, reorderLists, getCards, reload, forceRefresh } = useLists();
   const { stats, refreshStats } = useStats(myLists);
+  const { progressMap, refreshProgress } = useChapterProgress(myLists.map(d => d.id));
 
   const [view, setView] = useState<View>("menu");
   const [studyDeck, setStudyDeck] = useState<DeckFromApi | null>(null);
@@ -38,8 +41,13 @@ export default function HomePage() {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [authLoading, user, router]);
+
   if (!authLoading && !user) {
-    router.push("/login");
     return null;
   }
 
@@ -143,10 +151,16 @@ export default function HomePage() {
         fetchCards(deck.id), // Direct API call to get fresh chapterId
         fetchChapters(deck.id).catch(() => [] as ChapterFromApi[]),
       ]);
+      // Cache in IDB so useChapterProgress can read them
+      await Promise.all([
+        idbSet(`cache:cards:${deck.id}`, { data: cards, timestamp: Date.now() }),
+        idbSet(`cache:chapters:${deck.id}`, { data: chaps, timestamp: Date.now() }),
+      ]);
       setStudyDeck(deck);
       setStudyCards(cards);
       setChapters(chaps);
       setView("chapters");
+      refreshProgress();
     } catch (err) {
       console.error("Failed to load cards:", err);
     } finally {
@@ -180,8 +194,13 @@ export default function HomePage() {
         fetchChapters(studyDeck.id),
         fetchCards(studyDeck.id), // Direct API call, not cache (chapterId must be fresh)
       ]);
+      await Promise.all([
+        idbSet(`cache:cards:${studyDeck.id}`, { data: cards, timestamp: Date.now() }),
+        idbSet(`cache:chapters:${studyDeck.id}`, { data: chaps, timestamp: Date.now() }),
+      ]);
       setChapters(chaps);
       setStudyCards(cards);
+      refreshProgress();
     } catch (err) {
       console.error("Failed to classify deck:", err);
     } finally {
@@ -244,6 +263,7 @@ export default function HomePage() {
               onHelp={handleHelp}
               onProfile={handleProfile}
               stats={stats}
+              chapterProgress={progressMap}
             />
           )}
 
@@ -268,6 +288,7 @@ export default function HomePage() {
               chapters={chapters}
               totalCardCount={studyCards.length}
               classifying={classifying}
+              chapterStatuses={progressMap[studyDeck.id]?.statuses}
               onStudyAll={handleStudyAll}
               onStudyChapter={handleStudyChapter}
               onClassify={handleClassify}
@@ -288,6 +309,7 @@ export default function HomePage() {
               chapterName={selectedChapterId ? chapters.find(ch => ch.id === selectedChapterId)?.name : null}
               onBack={() => {
                 refreshStats();
+                refreshProgress();
                 setSelectedChapterId(null);
                 if (chapters.length > 0) {
                   setView("chapters");

@@ -39,7 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     getMe()
-      .then(setUser)
+      .then((u) => {
+        setUser(u);
+        // Sync cookie with actual auth state (handles existing tokens without cookie)
+        if (u) {
+          document.cookie = `has_token=1; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+        } else {
+          document.cookie = "has_token=; path=/; max-age=0";
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 

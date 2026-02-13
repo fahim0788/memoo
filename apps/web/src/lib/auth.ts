@@ -22,10 +22,12 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  document.cookie = `has_token=1; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 }
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  document.cookie = "has_token=; path=/; max-age=0";
 }
 
 export async function login(

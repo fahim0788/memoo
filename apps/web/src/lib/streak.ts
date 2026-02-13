@@ -1,4 +1,5 @@
 import { idbGet, idbSet } from "./idb";
+import { debugDate } from "./debug-date";
 
 const GLOBAL_STATS_KEY = "global_stats";
 
@@ -8,11 +9,11 @@ type GlobalStats = {
 };
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return debugDate().toISOString().slice(0, 10);
 }
 
 function yesterdayKey() {
-  const d = new Date();
+  const d = debugDate();
   d.setDate(d.getDate() - 1);
   return d.toISOString().slice(0, 10);
 }

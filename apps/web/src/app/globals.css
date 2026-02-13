@@ -55,8 +55,11 @@
   --color-error-light: #fee2e2;
   --color-error-border: rgba(239, 68, 68, 0.4);
 
-  /* Chapter grid empty square */
+  /* Chapter grid */
   --color-chapter-empty: rgba(0, 0, 0, 0.18);
+  --color-chapter-progress: rgba(0, 0, 0, 0.35);
+  --color-chapter-started: #f59e0b;
+  --color-chapter-done: #a3e635;
 
   /* Globe icon - gray in light mode */
   --color-globe: #888888;
@@ -117,8 +120,11 @@
   --color-error-light: rgba(248, 113, 113, 0.18);
   --color-error-border: rgba(248, 113, 113, 0.45);
 
-  /* Chapter grid empty square */
+  /* Chapter grid */
   --color-chapter-empty: rgba(255, 255, 255, 0.25);
+  --color-chapter-progress: rgba(255, 255, 255, 0.45);
+  --color-chapter-started: #fbbf24;
+  --color-chapter-done: #a3e635;
 
   /* Globe icon - white in dark mode */
   --color-globe: #ffffff;

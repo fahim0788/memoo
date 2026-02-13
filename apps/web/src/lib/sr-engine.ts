@@ -8,7 +8,9 @@ export type CardState = {
   failureCount: number;
 };
 
-export function defaultCardState(now = Date.now()): CardState {
+import { debugNow } from "./debug-date";
+
+export function defaultCardState(now = debugNow()): CardState {
   return {
     reps: 0,
     intervalDays: 0,
@@ -23,7 +25,7 @@ export function defaultCardState(now = Date.now()): CardState {
 function clamp(n: number, a: number, b: number) { return Math.max(a, Math.min(b, n)); }
 function addDaysMs(ms: number, days: number) { const d = new Date(ms); d.setDate(d.getDate() + days); return d.getTime(); }
 
-export function gradeCard(state: CardState, ok: boolean, now = Date.now()): CardState {
+export function gradeCard(state: CardState, ok: boolean, now = debugNow()): CardState {
   const s = { ...state };
   if (ok) {
     s.successCount += 1;

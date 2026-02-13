@@ -80,7 +80,9 @@ type StudyViewProps = {
   onProfile?: () => void;
 };
 
-function todayKey(d = new Date()) {
+import { debugNow, debugDate } from "../lib/debug-date";
+
+function todayKey(d = debugDate()) {
   return d.toISOString().slice(0, 10);
 }
 
@@ -89,14 +91,14 @@ function stateKey(deckId: string) {
 }
 
 function buildStudyState(cards: CardFromApi[]): StudyState {
-  const now = Date.now();
+  const now = debugNow();
   const map: Record<string, CardState> = {};
   for (const c of cards) map[c.id] = defaultCardState(now);
   return { cards: map, doneToday: 0, lastActiveDay: todayKey() };
 }
 
 function pickNextDue(cards: CardFromApi[], state: StudyState) {
-  const now = Date.now();
+  const now = debugNow();
   const due = cards
     .map(c => ({ ...c, cs: state.cards[c.id] ?? defaultCardState(now) }))
     .filter(x => x.cs.nextReviewAt <= now);
@@ -121,7 +123,7 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
 
   const progress = useMemo(() => {
     if (!study) return { done: 0, total: cards.length };
-    const now = Date.now();
+    const now = debugNow();
     const done = cards.filter(c => {
       const cs = study.cards[c.id];
       return cs && cs.nextReviewAt > now;

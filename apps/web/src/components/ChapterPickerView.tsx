@@ -5,13 +5,14 @@ import { Header } from "./Header";
 
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
-import { getStartedChapters } from "../lib/chapter-progress";
+import { chapterStatusColor, type ChapterStatus } from "../lib/chapter-status";
 
 type ChapterPickerViewProps = {
   deck: DeckFromApi;
   chapters: ChapterFromApi[];
   totalCardCount: number;
   classifying: boolean;
+  chapterStatuses?: Record<string, ChapterStatus>;
   onStudyAll: () => void;
   onStudyChapter: (chapterId: string) => void;
   onClassify: () => void;
@@ -27,6 +28,7 @@ export function ChapterPickerView({
   chapters,
   totalCardCount,
   classifying,
+  chapterStatuses,
   onStudyAll,
   onStudyChapter,
   onClassify,
@@ -66,33 +68,30 @@ export function ChapterPickerView({
       </button>
 
       {/* Chapter progress bar */}
-      {hasChapters && (() => {
-        const started = getStartedChapters(deck.id);
-        const startedSet = new Set(started);
-        return (
-          <div style={{
-            display: "flex",
-            gap: "2px",
-            height: "6px",
-            borderRadius: "3px",
-            overflow: "hidden",
-          }}>
-            {chapters.map((ch) => (
+      {hasChapters && (
+        <div style={{
+          display: "flex",
+          gap: "2px",
+          height: "6px",
+          borderRadius: "3px",
+          overflow: "hidden",
+        }}>
+          {chapters.map((ch) => {
+            const status = chapterStatuses?.[ch.id] || "not-started";
+            return (
               <span
                 key={ch.id}
                 style={{
                   flex: 1,
                   height: "100%",
                   borderRadius: "3px",
-                  background: startedSet.has(ch.id)
-                    ? "#a3e635"
-                    : "var(--color-chapter-empty)",
+                  background: chapterStatusColor(status),
                 }}
               />
-            ))}
-          </div>
-        );
-      })()}
+            );
+          })}
+        </div>
+      )}
 
       {/* Chapters list */}
       {hasChapters && (

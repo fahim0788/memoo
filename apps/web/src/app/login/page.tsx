@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import { t } from "../../lib/i18n";
@@ -9,7 +9,7 @@ import { useLanguage } from "../../hooks/useLanguage";
 export default function LoginPage() {
   useLanguage(); // Force re-render on language change
   const router = useRouter();
-  const { login, register } = useAuth();
+  const { user, loading: authLoading, login, register } = useAuth();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -18,6 +18,17 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Already logged in → redirect to home
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/");
+    }
+  }, [authLoading, user, router]);
+
+  if (!authLoading && user) {
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

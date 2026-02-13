@@ -24,6 +24,11 @@ describe("auth", () => {
       setToken("new-token");
       expect(localStorage.getItem("auth_token")).toBe("new-token");
     });
+
+    it("sets has_token cookie", () => {
+      setToken("abc123");
+      expect(document.cookie).toContain("has_token=1");
+    });
   });
 
   describe("clearToken", () => {
@@ -31,6 +36,12 @@ describe("auth", () => {
       setToken("token-to-remove");
       clearToken();
       expect(localStorage.getItem("auth_token")).toBeNull();
+    });
+
+    it("removes has_token cookie", () => {
+      setToken("some-token");
+      clearToken();
+      expect(document.cookie).not.toContain("has_token=1");
     });
 
     it("does not throw if no token exists", () => {
