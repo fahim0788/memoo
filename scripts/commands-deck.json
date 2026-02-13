@@ -1,0 +1,586 @@
+{
+  "name": "Commandes DevOps MemoList",
+  "description": "Toutes les commandes Docker, Git, Nginx, SSL, DB, Prisma, MinIO et debug utilisées dans le projet MemoList",
+  "cards": [
+    {
+      "question": "Construire et démarrer tous les services Docker",
+      "answers": ["docker compose up --build", "docker-compose up --build"]
+    },
+    {
+      "question": "Démarrer les services Docker en arrière-plan (daemon)",
+      "answers": ["docker-compose up -d", "docker compose up -d"]
+    },
+    {
+      "question": "Reconstruire l'image web sans cache",
+      "answers": ["docker-compose build --no-cache web", "docker compose build --no-cache web"]
+    },
+    {
+      "question": "Redémarrer le service nginx",
+      "answers": ["docker-compose restart nginx", "docker compose restart nginx"]
+    },
+    {
+      "question": "Suivre les logs du service web en temps réel",
+      "answers": ["docker-compose logs -f web", "docker compose logs -f web"]
+    },
+    {
+      "question": "Suivre les logs de l'API en temps réel",
+      "answers": ["docker-compose logs -f api", "docker compose logs -f api"]
+    },
+    {
+      "question": "Suivre les logs de tous les services",
+      "answers": ["docker-compose logs -f", "docker compose logs -f"]
+    },
+    {
+      "question": "Lister les conteneurs Docker en cours d'exécution",
+      "answers": ["docker-compose ps", "docker compose ps"]
+    },
+    {
+      "question": "Arrêter et supprimer tous les conteneurs",
+      "answers": ["docker-compose down", "docker compose down"]
+    },
+    {
+      "question": "Arrêter les conteneurs ET supprimer les volumes (DANGEREUX)",
+      "answers": ["docker-compose down -v", "docker compose down -v"]
+    },
+    {
+      "question": "Démarrer les services en production",
+      "answers": ["docker-compose -f docker-compose.prod.yml up -d"]
+    },
+    {
+      "question": "Lister les conteneurs de production",
+      "answers": ["docker-compose -f docker-compose.prod.yml ps"]
+    },
+    {
+      "question": "Suivre les logs API en production",
+      "answers": ["docker-compose -f docker-compose.prod.yml logs -f api"]
+    },
+    {
+      "question": "Redémarrer l'API en production",
+      "answers": ["docker-compose -f docker-compose.prod.yml restart api"]
+    },
+    {
+      "question": "Démarrer uniquement la base de données en dev",
+      "answers": ["docker-compose -f docker-compose.dev.yml up -d"]
+    },
+    {
+      "question": "Ouvrir un shell dans le conteneur web",
+      "answers": ["docker exec -it memoo_web_1 sh"]
+    },
+    {
+      "question": "Tester la configuration nginx dans le conteneur",
+      "answers": ["docker exec memoo-nginx-1 nginx -t"]
+    },
+    {
+      "question": "Vérifier les certificats SSL montés dans nginx",
+      "answers": ["docker exec memoo-nginx-1 ls /etc/letsencrypt/live/memoo.fr/"]
+    },
+    {
+      "question": "Afficher l'utilisation des ressources Docker (snapshot)",
+      "answers": ["docker stats --no-stream"]
+    },
+    {
+      "question": "Monitorer en temps réel les ressources des conteneurs",
+      "answers": ["docker stats"]
+    },
+    {
+      "question": "Supprimer toutes les images Docker inutilisées",
+      "answers": ["docker image prune -a"]
+    },
+    {
+      "question": "Afficher l'espace disque utilisé par Docker",
+      "answers": ["docker system df"]
+    },
+    {
+      "question": "Nettoyer toutes les données Docker inutilisées (DANGEREUX)",
+      "answers": ["docker system prune -a --volumes"]
+    },
+    {
+      "question": "Construire l'image web depuis le contexte racine",
+      "answers": ["docker build -t memoo-web:latest -f apps/web/Dockerfile ."]
+    },
+    {
+      "question": "Construire l'image API depuis le contexte racine",
+      "answers": ["docker build -t memoo-api:latest -f apps/api/Dockerfile ."]
+    },
+    {
+      "question": "Construire l'image de migration",
+      "answers": ["docker build --target migrate -t memoo-migrate:latest -f apps/api/Dockerfile ."]
+    },
+    {
+      "question": "Lister tous les volumes Docker",
+      "answers": ["docker volume ls"]
+    },
+    {
+      "question": "Inspecter un volume Docker spécifique",
+      "answers": ["docker volume inspect memolist-mvp_tts-storage"]
+    },
+    {
+      "question": "Sauvegarder une image Docker en fichier tar",
+      "answers": ["docker save memoo-web:latest -o web.tar"]
+    },
+    {
+      "question": "Charger une image Docker depuis un fichier tar",
+      "answers": ["docker load -i web.tar"]
+    },
+    {
+      "question": "Lancer les migrations via un profil Docker",
+      "answers": ["docker-compose --profile tools run --rm migrate"]
+    },
+    {
+      "question": "Afficher les processus dans le conteneur API",
+      "answers": ["docker top memoo-api-1"]
+    },
+    {
+      "question": "Monitorer les stats Docker toutes les 5 secondes",
+      "answers": ["watch -n 5 'docker stats --no-stream'"]
+    },
+    {
+      "question": "Voir le statut du dépôt Git",
+      "answers": ["git status"]
+    },
+    {
+      "question": "Stager tous les fichiers modifiés pour le commit",
+      "answers": ["git add ."]
+    },
+    {
+      "question": "Créer un commit Git avec un message",
+      "answers": ["git commit -m \"message\""]
+    },
+    {
+      "question": "Pousser les commits vers le dépôt distant",
+      "answers": ["git push"]
+    },
+    {
+      "question": "Pousser et définir la branche upstream",
+      "answers": ["git push -u origin main"]
+    },
+    {
+      "question": "Récupérer les dernières modifications du distant",
+      "answers": ["git pull"]
+    },
+    {
+      "question": "Lister les URLs des dépôts distants",
+      "answers": ["git remote -v"]
+    },
+    {
+      "question": "Se connecter à la base PostgreSQL en production",
+      "answers": ["docker-compose -f docker-compose.prod.yml exec db psql -U memolist -d memolist"]
+    },
+    {
+      "question": "Lister toutes les tables PostgreSQL",
+      "answers": ["docker-compose exec db psql -U memolist -d memolist -c \"\\dt\""]
+    },
+    {
+      "question": "Créer un backup de la base de données",
+      "answers": ["docker-compose exec -T db pg_dump -U memolist memolist > backup.sql"]
+    },
+    {
+      "question": "Restaurer la base depuis un fichier backup",
+      "answers": ["cat backup.sql | docker-compose exec -T db psql -U memolist -d memolist"]
+    },
+    {
+      "question": "Vérifier si PostgreSQL est prêt",
+      "answers": ["docker-compose exec postgres pg_isready", "docker-compose exec postgres pg_isready -U memolist"]
+    },
+    {
+      "question": "Créer un backup horodaté de la base",
+      "answers": ["docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U memolist memolist > backup-$(date +%Y%m%d).sql"]
+    },
+    {
+      "question": "Compresser un fichier backup SQL",
+      "answers": ["gzip backup-$(date +%Y%m%d).sql"]
+    },
+    {
+      "question": "Restaurer un backup compressé (.gz)",
+      "answers": ["gunzip -c backup.sql.gz | docker-compose -f docker-compose.prod.yml exec -T db psql -U memolist -d memolist"]
+    },
+    {
+      "question": "Afficher la taille de la base de données",
+      "answers": ["docker-compose exec postgres psql -U postgres memolist -c \"SELECT pg_size_pretty(pg_database_size('memolist'))\""]
+    },
+    {
+      "question": "Rendre un deck public en SQL (ownerId = NULL)",
+      "answers": ["docker-compose exec db psql -U memolist -c \"UPDATE \\\"Deck\\\" SET \\\"ownerId\\\" = NULL WHERE name = 'Drapeaux du Monde';\""]
+    },
+    {
+      "question": "Compter le nombre total de reviews en base",
+      "answers": ["docker-compose exec db psql -U memolist -c \"SELECT COUNT(*) FROM \\\"Review\\\";\""]
+    },
+    {
+      "question": "Lister les emails des utilisateurs",
+      "answers": ["docker-compose exec db psql -U memolist -c \"SELECT email FROM \\\"User\\\";\""]
+    },
+    {
+      "question": "Analyser les statistiques de la base PostgreSQL",
+      "answers": ["docker-compose exec postgres psql -U postgres memolist -c \"ANALYZE;\""]
+    },
+    {
+      "question": "Vérifier si le port PostgreSQL (5432) écoute",
+      "answers": ["ss -tulpn | grep 5432", "netstat -tlnp | grep 5432"]
+    },
+    {
+      "question": "Créer et appliquer une migration Prisma en dev",
+      "answers": ["npx prisma migrate dev --name nom-migration"]
+    },
+    {
+      "question": "Appliquer les migrations Prisma en production",
+      "answers": ["npx prisma migrate deploy"]
+    },
+    {
+      "question": "Générer le client Prisma",
+      "answers": ["npx prisma generate"]
+    },
+    {
+      "question": "Pousser le schéma Prisma sans créer de migration",
+      "answers": ["npx prisma db push"]
+    },
+    {
+      "question": "Récupérer le schéma depuis la base existante",
+      "answers": ["npx prisma db pull"]
+    },
+    {
+      "question": "Appliquer les migrations Prisma dans Docker",
+      "answers": ["docker-compose exec api npx prisma migrate deploy"]
+    },
+    {
+      "question": "Lister les certificats SSL Let's Encrypt",
+      "answers": ["sudo certbot certificates"]
+    },
+    {
+      "question": "Tester le renouvellement SSL sans l'appliquer",
+      "answers": ["sudo certbot renew --dry-run"]
+    },
+    {
+      "question": "Renouveler les certificats SSL",
+      "answers": ["sudo certbot renew"]
+    },
+    {
+      "question": "Forcer le renouvellement du certificat SSL",
+      "answers": ["sudo certbot renew --force-renewal"]
+    },
+    {
+      "question": "Vérifier le statut du timer certbot (renouvellement auto)",
+      "answers": ["sudo systemctl status certbot.timer"]
+    },
+    {
+      "question": "Lister les planifications du timer certbot",
+      "answers": ["sudo systemctl list-timers certbot.timer"]
+    },
+    {
+      "question": "Voir les logs de certbot",
+      "answers": ["sudo journalctl -u certbot.service", "sudo journalctl -u certbot.service -n 50"]
+    },
+    {
+      "question": "Afficher les détails d'un certificat SSL (dates, domaine)",
+      "answers": ["openssl x509 -in /etc/letsencrypt/live/memoo.fr/cert.pem -text -noout"]
+    },
+    {
+      "question": "Voir les logs nginx",
+      "answers": ["docker-compose logs nginx"]
+    },
+    {
+      "question": "Vérifier si le port HTTPS (443) écoute dans nginx",
+      "answers": ["docker exec memoo-nginx-1 netstat -tlnp | grep 443"]
+    },
+    {
+      "question": "Démarrer nginx en tant que service système",
+      "answers": ["sudo systemctl start nginx"]
+    },
+    {
+      "question": "Arrêter nginx en tant que service système",
+      "answers": ["sudo systemctl stop nginx"]
+    },
+    {
+      "question": "Activer nginx au démarrage du système",
+      "answers": ["sudo systemctl enable nginx"]
+    },
+    {
+      "question": "Vérifier le statut du service nginx",
+      "answers": ["sudo systemctl status nginx"]
+    },
+    {
+      "question": "Tester le serveur web local (HTTP)",
+      "answers": ["curl http://localhost"]
+    },
+    {
+      "question": "Tester le domaine en HTTPS",
+      "answers": ["curl https://memoo.fr"]
+    },
+    {
+      "question": "Tester HTTPS avec output verbose",
+      "answers": ["curl -v https://memoo.fr"]
+    },
+    {
+      "question": "Tester le health check de l'API",
+      "answers": ["curl http://localhost:3001/api/health"]
+    },
+    {
+      "question": "Tester le health check API en production",
+      "answers": ["curl https://memoo.fr/api/health"]
+    },
+    {
+      "question": "Tester avec un header Host spécifique (debug DNS)",
+      "answers": ["curl -H \"Host: memoo.fr\" http://localhost"]
+    },
+    {
+      "question": "Vérifier les headers CORS de l'API",
+      "answers": ["curl -v -H \"Origin: https://memoo.fr\" https://memoo.fr/api/health 2>&1 | grep access-control-allow-origin"]
+    },
+    {
+      "question": "Récupérer uniquement les headers HTTP",
+      "answers": ["curl -I http://localhost:3000"]
+    },
+    {
+      "question": "Vérifier le code HTTP d'un fichier statique",
+      "answers": ["curl -s -o /dev/null -w \"%{http_code}\" https://memoo.fr/storage/flags/france.svg"]
+    },
+    {
+      "question": "Vider le cache DNS sur Windows",
+      "answers": ["ipconfig /flushdns"]
+    },
+    {
+      "question": "Scanner tous les ports d'un serveur",
+      "answers": ["nmap -Pn -p- <IP_PUBLIQUE>"]
+    },
+    {
+      "question": "Compter les connexions actives",
+      "answers": ["netstat -an | grep ESTABLISHED | wc -l"]
+    },
+    {
+      "question": "Afficher l'espace disque disponible",
+      "answers": ["df -h"]
+    },
+    {
+      "question": "Afficher la taille des répertoires",
+      "answers": ["du -sh /var/www/memoo/*"]
+    },
+    {
+      "question": "Afficher l'utilisation mémoire",
+      "answers": ["free -h"]
+    },
+    {
+      "question": "Mettre à jour la liste des paquets (Debian/Ubuntu)",
+      "answers": ["sudo apt update"]
+    },
+    {
+      "question": "Mettre à jour tous les paquets installés",
+      "answers": ["sudo apt upgrade -y"]
+    },
+    {
+      "question": "Ajouter un utilisateur au groupe Docker",
+      "answers": ["sudo usermod -aG docker $USER"]
+    },
+    {
+      "question": "Vérifier les groupes de l'utilisateur courant",
+      "answers": ["groups"]
+    },
+    {
+      "question": "Vérifier la température du Raspberry Pi",
+      "answers": ["vcgencmd measure_temp"]
+    },
+    {
+      "question": "Trouver les processus Node.js en cours",
+      "answers": ["ps aux | grep node"]
+    },
+    {
+      "question": "Lancer le script de setup initial sur le Pi",
+      "answers": ["bash ./scripts/initial-setup.sh"]
+    },
+    {
+      "question": "Déployer les mises à jour en production",
+      "answers": ["bash ./scripts/deploy.sh"]
+    },
+    {
+      "question": "Déployer sans faire de backup",
+      "answers": ["bash ./scripts/deploy.sh --skip-backup"]
+    },
+    {
+      "question": "Déployer sans reconstruire les images",
+      "answers": ["bash ./scripts/deploy.sh --skip-build"]
+    },
+    {
+      "question": "Déployer sans lancer les migrations",
+      "answers": ["bash ./scripts/deploy.sh --skip-migrate"]
+    },
+    {
+      "question": "Lancer uniquement le health check",
+      "answers": ["bash ./scripts/deploy.sh --only=health"]
+    },
+    {
+      "question": "Générer des secrets sécurisés",
+      "answers": ["bash ./scripts/generate-secrets.sh"]
+    },
+    {
+      "question": "Configurer un alias MinIO dans le conteneur",
+      "answers": ["sudo docker exec memoo-minio mc alias set myminio http://localhost:9000 <KEY> <SECRET>"]
+    },
+    {
+      "question": "Créer un bucket MinIO pour les drapeaux",
+      "answers": ["sudo docker exec memoo-minio mc mb myminio/memolist-flags --ignore-existing"]
+    },
+    {
+      "question": "Créer un bucket MinIO pour le TTS",
+      "answers": ["sudo docker exec memoo-minio mc mb myminio/memolist-tts --ignore-existing"]
+    },
+    {
+      "question": "Rendre un bucket MinIO accessible publiquement",
+      "answers": ["sudo docker exec memoo-minio mc anonymous set download myminio/memolist-flags"]
+    },
+    {
+      "question": "Lister tous les buckets MinIO",
+      "answers": ["sudo docker exec memoo-minio mc ls myminio/"]
+    },
+    {
+      "question": "Compter les fichiers dans un bucket MinIO",
+      "answers": ["sudo docker exec memoo-minio mc ls myminio/memolist-tts/ | wc -l"]
+    },
+    {
+      "question": "Uploader des fichiers récursivement dans MinIO",
+      "answers": ["sudo docker exec memoo-minio mc cp --recursive /tmp/flags/ myminio/memolist-flags/"]
+    },
+    {
+      "question": "Afficher l'utilisation du stockage MinIO",
+      "answers": ["sudo docker exec memoo-minio mc du myminio/"]
+    },
+    {
+      "question": "Copier des fichiers dans un conteneur Docker",
+      "answers": ["sudo docker cp /tmp/flags/. memoo-minio:/tmp/flags/"]
+    },
+    {
+      "question": "Transférer des fichiers vers le Pi via SCP",
+      "answers": ["scp -r apps/worker/storage/drapeaux/* fahim@<IP>:/tmp/flags/"]
+    },
+    {
+      "question": "Installer les dépendances NPM",
+      "answers": ["npm install", "npm i"]
+    },
+    {
+      "question": "Installation propre depuis le lockfile (CI)",
+      "answers": ["npm ci"]
+    },
+    {
+      "question": "Démarrer le serveur de développement",
+      "answers": ["npm run dev"]
+    },
+    {
+      "question": "Construire l'application pour la production",
+      "answers": ["npm run build"]
+    },
+    {
+      "question": "Vérifier les vulnérabilités des dépendances",
+      "answers": ["npm audit"]
+    },
+    {
+      "question": "Installer les dépendances d'un workspace spécifique",
+      "answers": ["npm ci --workspace=apps/web"]
+    },
+    {
+      "question": "Voir les logs du worker TTS",
+      "answers": ["docker-compose logs -f worker"]
+    },
+    {
+      "question": "Redémarrer le worker TTS",
+      "answers": ["docker-compose restart worker"]
+    },
+    {
+      "question": "Vérifier la clé API OpenAI dans le conteneur worker",
+      "answers": ["docker-compose exec worker env | grep OPENAI"]
+    },
+    {
+      "question": "Importer le deck de drapeaux via script",
+      "answers": ["node scripts/import-flags-deck.js https://memoo.fr $TOKEN"]
+    },
+    {
+      "question": "Voir le statut du firewall UFW",
+      "answers": ["sudo ufw status", "sudo ufw status verbose"]
+    },
+    {
+      "question": "Autoriser le trafic HTTP dans le firewall",
+      "answers": ["sudo ufw allow 80/tcp"]
+    },
+    {
+      "question": "Autoriser le trafic HTTPS dans le firewall",
+      "answers": ["sudo ufw allow 443/tcp"]
+    },
+    {
+      "question": "Bloquer tout le trafic entrant par défaut (UFW)",
+      "answers": ["sudo ufw default deny incoming"]
+    },
+    {
+      "question": "Autoriser tout le trafic sortant par défaut (UFW)",
+      "answers": ["sudo ufw default allow outgoing"]
+    },
+    {
+      "question": "Activer le firewall UFW",
+      "answers": ["sudo ufw enable"]
+    },
+    {
+      "question": "Générer les clés WireGuard (privée + publique)",
+      "answers": ["wg genkey | tee server.key | wg pubkey > server.pub"]
+    },
+    {
+      "question": "Afficher le statut de WireGuard",
+      "answers": ["sudo wg"]
+    },
+    {
+      "question": "Activer WireGuard au démarrage",
+      "answers": ["sudo systemctl enable wg-quick@wg0"]
+    },
+    {
+      "question": "Démarrer le tunnel WireGuard",
+      "answers": ["sudo systemctl start wg-quick@wg0"]
+    },
+    {
+      "question": "Vérifier si le port WireGuard (51820) écoute",
+      "answers": ["sudo ss -lunp | grep 51820"]
+    },
+    {
+      "question": "Voir les logs API des 10 dernières minutes",
+      "answers": ["docker-compose logs -f --since 10m api"]
+    },
+    {
+      "question": "Chercher les erreurs dans les logs API des dernières 24h",
+      "answers": ["docker-compose logs -f --since 24h api | grep -iE \"error|warn\""]
+    },
+    {
+      "question": "Voir les logs du service Docker système",
+      "answers": ["sudo journalctl -u docker"]
+    },
+    {
+      "question": "Suivre les logs du fichier certbot",
+      "answers": ["sudo tail -f /var/log/letsencrypt/letsencrypt.log"]
+    },
+    {
+      "question": "Trouver les requêtes API lentes dans les logs",
+      "answers": ["docker-compose logs api | grep \"duration:\""]
+    },
+    {
+      "question": "Tester la santé de l'API avec formatage JSON",
+      "answers": ["curl -s http://localhost:3001/api/health | jq"]
+    },
+    {
+      "question": "Tester la connexion Redis",
+      "answers": ["docker-compose exec redis redis-cli ping"]
+    },
+    {
+      "question": "Tester la santé de MinIO",
+      "answers": ["curl -s http://localhost:9000/minio/health/live"]
+    },
+    {
+      "question": "Pinger l'IP du tunnel VPN",
+      "answers": ["ping 10.8.0.1"]
+    },
+    {
+      "question": "Vérifier la variable CORS dans le conteneur API",
+      "answers": ["docker-compose exec api env | grep CORS"]
+    },
+    {
+      "question": "Mirroriser un répertoire local vers un bucket MinIO",
+      "answers": ["sudo docker exec memoo-minio mc mirror /tmp/flags/ myminio/memolist-flags/"]
+    },
+    {
+      "question": "Fallback d'installation NPM (avec ou sans lockfile)",
+      "answers": ["npm ci || npm install"]
+    }
+  ]
+}
