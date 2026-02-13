@@ -145,12 +145,12 @@ export function MenuView({
                         <DeckIcon icon="star:#6b7280" size={16} />
                       )}
                     </span>
+                    <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", wordBreak: "break-word" }}>{deck.name}</span>
                     {deck.isOwned ? (
                       <IconUser size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
                     ) : (
                       <IconFolderPublic size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
                     )}
-                    <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deck.name}</span>
                     <span
                       style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", width: "50px", justifyContent: "flex-end" }}
                       onClick={e => e.stopPropagation()}

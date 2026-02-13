@@ -187,18 +187,6 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
         onProfile={onProfile}
         title={chapterName ? `${deck.name} › ${chapterName}` : deck.name}
         onBack={onBack}
-        secondaryActions={
-          <span style={{
-            background: "var(--color-stats-bg)",
-            border: "none",
-            padding: "0.25rem 0.5rem",
-            borderRadius: "8px",
-            fontSize: "0.75rem",
-            color: "var(--color-stats-text)"
-          }}>
-            {t.study.todayLabel}<b>{study.doneToday}</b>
-          </span>
-        }
       />
 
       {cards.length > 0 && (
@@ -225,6 +213,9 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
           </div>
           <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600, whiteSpace: "nowrap" }}>
             {progress.done}/{progress.total}
+          </span>
+          <span style={{ fontSize: "0.7rem", color: "var(--color-stats-text)", whiteSpace: "nowrap", opacity: 0.7 }}>
+            · {t.study.todayLabel}{study.doneToday}
           </span>
         </div>
       )}

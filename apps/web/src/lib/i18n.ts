@@ -144,6 +144,18 @@ export interface Translations {
     exampleCsv: string;
     noteTitle: string;
     noteText: string;
+    // Mode simple
+    questionLabel: string;
+    answerLabel: string;
+    addCard: string;
+    addAltAnswer: string;
+    cardsCount: (n: number) => string;
+    noCardsYet: string;
+    advancedImport: string;
+    createWithCount: (n: number) => string;
+    removeCard: string;
+    questionRequired: string;
+    answerRequired: string;
   };
 
   // Vue des listes disponibles (AvailableView)
@@ -458,6 +470,18 @@ const fr: Translations = {
 "Quelle est la capitale de la France ?","Paris","https://exemple.com/image.jpg"`,
     noteTitle: "Note",
     noteText: "Vous pouvez importer un fichier JSON ou CSV en le déposant ici.",
+    // Mode simple
+    questionLabel: "Question",
+    answerLabel: "Réponse",
+    addCard: "Ajouter la carte",
+    addAltAnswer: "+ réponse alternative",
+    cardsCount: (n: number) => `Cartes (${n})`,
+    noCardsYet: "Aucune carte ajoutée",
+    advancedImport: "Import avancé (JSON / CSV)",
+    createWithCount: (n: number) => `Créer la liste (${n} carte${n > 1 ? "s" : ""})`,
+    removeCard: "Supprimer",
+    questionRequired: "La question est requise",
+    answerRequired: "Au moins une réponse est requise",
   },
 
   available: {
@@ -760,6 +784,18 @@ const en: Translations = {
 "What is the capital of France?","Paris","https://example.com/image.jpg"`,
     noteTitle: "Note",
     noteText: "You can import a JSON or CSV file by dropping it here.",
+    // Simple mode
+    questionLabel: "Question",
+    answerLabel: "Answer",
+    addCard: "Add card",
+    addAltAnswer: "+ alternative answer",
+    cardsCount: (n: number) => `Cards (${n})`,
+    noCardsYet: "No cards added yet",
+    advancedImport: "Advanced import (JSON / CSV)",
+    createWithCount: (n: number) => `Create list (${n} card${n > 1 ? "s" : ""})`,
+    removeCard: "Remove",
+    questionRequired: "Question is required",
+    answerRequired: "At least one answer is required",
   },
 
   available: {

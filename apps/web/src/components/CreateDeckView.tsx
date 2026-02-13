@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { IconAlert } from "./Icons";
+import { IconAlert, IconPlus, IconTrash } from "./Icons";
 import { Header } from "./Header";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
@@ -35,19 +35,15 @@ function parseJSON(text: string): { name: string; cards: Card[] } | null {
 function parseCSV(text: string): Card[] | null {
   try {
     const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l);
-    if (lines.length < 2) return null; // Need header + at least one card
+    if (lines.length < 2) return null;
 
     const header = lines[0].toLowerCase();
-
-    // Check if first column is "question"
     if (!header.startsWith('question')) return null;
 
     const cards: Card[] = [];
     for (let i = 1; i < lines.length; i++) {
-      // Split by comma, but respect quoted fields
       const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g, ''));
-
-      if (parts.length < 2) continue; // Need at least question and one answer
+      if (parts.length < 2) continue;
 
       const question = parts[0];
       const answers = parts.slice(1).filter(a => a.length > 0);
@@ -66,10 +62,47 @@ function parseCSV(text: string): Card[] | null {
 export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, onProfile }: CreateDeckViewProps) {
   useLanguage();
   const [name, setName] = useState("");
-  const [jsonText, setJsonText] = useState("");
+  const [cards, setCards] = useState<Card[]>([]);
+  const [question, setQuestion] = useState("");
+  const [answers, setAnswers] = useState<string[]>([""]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [jsonText, setJsonText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const questionRef = useRef<HTMLInputElement>(null);
+
+  function handleAddCard() {
+    setError(null);
+    const q = question.trim();
+    const a = answers.map(s => s.trim()).filter(s => s.length > 0);
+
+    if (!q) {
+      setError(t.create.questionRequired);
+      return;
+    }
+    if (a.length === 0) {
+      setError(t.create.answerRequired);
+      return;
+    }
+
+    setCards(prev => [...prev, { question: q, answers: a }]);
+    setQuestion("");
+    setAnswers([""]);
+    questionRef.current?.focus();
+  }
+
+  function handleRemoveCard(index: number) {
+    setCards(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleAddAltAnswer() {
+    setAnswers(prev => [...prev, ""]);
+  }
+
+  function handleAnswerChange(index: number, value: string) {
+    setAnswers(prev => prev.map((a, i) => i === index ? value : a));
+  }
 
   async function handleCreate() {
     setError(null);
@@ -79,29 +112,9 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
       return;
     }
 
-    if (!jsonText.trim()) {
-      setError(t.create.jsonRequiredError);
-      return;
-    }
-
-    // Try parsing as JSON first
-    const parsed = parseJSON(jsonText);
-    if (!parsed) {
-      setError(t.create.jsonInvalidError);
-      return;
-    }
-
-    if (parsed.cards.length === 0) {
+    if (cards.length === 0) {
       setError(t.create.minOneCardError);
       return;
-    }
-
-    // Validate cards
-    for (const card of parsed.cards) {
-      if (!card.question || !Array.isArray(card.answers) || card.answers.length === 0) {
-        setError(t.create.cardFormatError);
-        return;
-      }
     }
 
     setLoading(true);
@@ -114,10 +127,7 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: parsed.name || name.trim(),
-          cards: parsed.cards,
-        }),
+        body: JSON.stringify({ name: name.trim(), cards }),
       });
 
       if (!res.ok) {
@@ -133,6 +143,29 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
     }
   }
 
+  function handleImportJSON() {
+    setError(null);
+    const parsed = parseJSON(jsonText);
+    if (!parsed) {
+      setError(t.create.jsonInvalidError);
+      return;
+    }
+    if (parsed.cards.length === 0) {
+      setError(t.create.minOneCardError);
+      return;
+    }
+    for (const card of parsed.cards) {
+      if (!card.question || !Array.isArray(card.answers) || card.answers.length === 0) {
+        setError(t.create.cardFormatError);
+        return;
+      }
+    }
+    setCards(prev => [...prev, ...parsed.cards]);
+    if (!name.trim() && parsed.name) setName(parsed.name);
+    setJsonText("");
+    setShowAdvanced(false);
+  }
+
   function handleFileImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -145,30 +178,22 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
       const ext = file.name.toLowerCase().split('.').pop();
 
       if (ext === 'json') {
-        // Validate JSON
         const parsed = parseJSON(text);
         if (parsed) {
-          setJsonText(text);
-          if (!name.trim() && parsed.name) {
-            setName(parsed.name);
-          }
+          setCards(prev => [...prev, ...parsed.cards]);
+          if (!name.trim() && parsed.name) setName(parsed.name);
           setError(null);
+          setShowAdvanced(false);
         } else {
           setError(t.create.formatInvalid);
         }
       } else if (ext === 'csv') {
-        // Parse CSV and convert to JSON format
-        const cards = parseCSV(text);
-        if (cards) {
-          const jsonData = {
-            name: name.trim() || file.name.replace(/\.[^/.]+$/, ""),
-            cards,
-          };
-          setJsonText(JSON.stringify(jsonData, null, 2));
-          if (!name.trim()) {
-            setName(jsonData.name);
-          }
+        const csvCards = parseCSV(text);
+        if (csvCards) {
+          setCards(prev => [...prev, ...csvCards]);
+          if (!name.trim()) setName(file.name.replace(/\.[^/.]+$/, ""));
           setError(null);
+          setShowAdvanced(false);
         } else {
           setError(t.create.csvInvalid);
         }
@@ -178,8 +203,6 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
     };
 
     reader.readAsText(file);
-
-    // Reset input so the same file can be selected again
     e.target.value = '';
   }
 
@@ -194,6 +217,7 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
         onBack={onBack}
       />
 
+      {/* Nom de la liste */}
       <div className="card">
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
@@ -210,35 +234,96 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
             />
           </div>
 
-          <div>
-            <label htmlFor="deck-json" className="small" style={{ display: "block", marginBottom: "0.25rem" }}>
-              {t.create.jsonContent}
-            </label>
-            <textarea
-              id="deck-json"
-              value={jsonText}
-              onChange={e => setJsonText(e.target.value)}
-              placeholder='{"name": "Ma liste", "cards": [{"question": "Q1?", "answers": ["R1", "R2"]}]}'
-              rows={10}
-              style={{ width: "100%", fontFamily: "monospace", fontSize: "0.875rem" }}
+          {/* Formulaire ajout carte */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            padding: "0.75rem",
+            borderRadius: "8px",
+            background: "var(--color-stats-bg)",
+          }}>
+            <input
+              ref={questionRef}
+              type="text"
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              placeholder={t.create.questionLabel}
+              onKeyDown={e => { if (e.key === "Enter" && answers[0]) handleAddCard(); }}
+              style={{ width: "100%" }}
             />
+            {answers.map((ans, i) => (
+              <input
+                key={i}
+                type="text"
+                value={ans}
+                onChange={e => handleAnswerChange(i, e.target.value)}
+                placeholder={`${t.create.answerLabel}${answers.length > 1 ? ` ${i + 1}` : ""}`}
+                onKeyDown={e => { if (e.key === "Enter") handleAddCard(); }}
+                style={{ width: "100%" }}
+              />
+            ))}
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                onClick={handleAddAltAnswer}
+                style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem", opacity: 0.7 }}
+              >
+                {t.create.addAltAnswer}
+              </button>
+              <button
+                onClick={handleAddCard}
+                className="primary"
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.25rem" }}
+              >
+                <IconPlus size={14} /> {t.create.addCard}
+              </button>
+            </div>
           </div>
 
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,.csv"
-              onChange={handleFileImport}
-              style={{ display: "none" }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{ width: "100%" }}
-            >
-              📁 {t.create.noteText}
-            </button>
-          </div>
+          {/* Liste des cartes ajoutées */}
+          {cards.length > 0 && (
+            <div>
+              <div className="small" style={{ marginBottom: "0.5rem", fontWeight: 600 }}>
+                {t.create.cardsCount(cards.length)}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                {cards.map((card, i) => (
+                  <div key={i} style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.4rem 0.5rem",
+                    borderRadius: "6px",
+                    background: "var(--color-bg-secondary)",
+                    fontSize: "0.85rem",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {card.question}
+                      </div>
+                      <div style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {card.answers.join(", ")}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveCard(i)}
+                      className="action-icon delete"
+                      title={t.create.removeCard}
+                      style={{ padding: "0.25rem", flexShrink: 0 }}
+                    >
+                      <IconTrash size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {cards.length === 0 && (
+            <div className="small" style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "0.5rem 0" }}>
+              {t.create.noCardsYet}
+            </div>
+          )}
 
           {error && (
             <div style={{ color: "#c43a31", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -250,33 +335,83 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
           <button
             className="primary"
             onClick={handleCreate}
-            disabled={loading}
+            disabled={loading || cards.length === 0}
             style={{ width: "100%" }}
           >
-            {loading ? t.create.creating : t.create.create}
+            {loading ? t.create.creating : cards.length > 0 ? t.create.createWithCount(cards.length) : t.create.create}
           </button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="small" style={{ color: "#666" }}>
-          <h3 style={{ marginTop: 0 }}>{t.create.formatTitle}</h3>
-          <p>{t.create.formatDesc}</p>
+      {/* Mode avancé replié */}
+      <div className="card" style={{ marginTop: "0.5rem" }}>
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          style={{
+            width: "100%",
+            background: "none",
+            border: "none",
+            padding: "0.25rem 0",
+            fontSize: "0.8rem",
+            color: "var(--color-text-muted)",
+            cursor: "pointer",
+            textAlign: "left",
+          }}
+        >
+          {showAdvanced ? "▾" : "▸"} {t.create.advancedImport}
+        </button>
 
-          <h4 style={{ marginTop: "1rem" }}>{t.create.exampleTitle} JSON:</h4>
-          <pre style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "4px", overflow: "auto" }}>
+        {showAdvanced && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.75rem" }}>
+            <div>
+              <label htmlFor="deck-json" className="small" style={{ display: "block", marginBottom: "0.25rem" }}>
+                {t.create.jsonContent}
+              </label>
+              <textarea
+                id="deck-json"
+                value={jsonText}
+                onChange={e => setJsonText(e.target.value)}
+                placeholder='{"name": "Ma liste", "cards": [{"question": "Q1?", "answers": ["R1", "R2"]}]}'
+                rows={8}
+                style={{ width: "100%", fontFamily: "monospace", fontSize: "0.8rem" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,.csv"
+                onChange={handleFileImport}
+                style={{ display: "none" }}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={{ flex: 1 }}
+              >
+                {t.create.noteText}
+              </button>
+              <button
+                className="primary"
+                onClick={handleImportJSON}
+                disabled={!jsonText.trim()}
+                style={{ flex: 1 }}
+              >
+                {t.create.addCard}
+              </button>
+            </div>
+
+            <div className="small" style={{ color: "var(--color-text-muted)", fontSize: "0.7rem" }}>
+              <p style={{ margin: "0 0 0.5rem" }}>{t.create.formatDesc}</p>
+              <pre style={{ background: "var(--color-stats-bg)", padding: "0.5rem", borderRadius: "4px", overflow: "auto", margin: "0 0 0.5rem" }}>
 {t.create.exampleJson}
-          </pre>
-
-          <h4 style={{ marginTop: "1rem" }}>{t.create.exampleTitle} CSV:</h4>
-          <pre style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "4px", overflow: "auto" }}>
+              </pre>
+              <pre style={{ background: "var(--color-stats-bg)", padding: "0.5rem", borderRadius: "4px", overflow: "auto", margin: 0 }}>
 {t.create.exampleCsv}
-          </pre>
-
-          <p style={{ marginTop: "0.5rem", fontSize: "0.75rem" }}>
-            <strong>{t.create.noteTitle}:</strong> {t.create.noteText}
-          </p>
-        </div>
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
