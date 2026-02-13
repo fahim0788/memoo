@@ -59,9 +59,13 @@ export function useStats(decks: DeckFromApi[]) {
       let totalFailure = 0;
 
       for (const cardState of Object.values(state.cards)) {
-        totalSuccess += cardState.successCount;
-        totalFailure += cardState.failureCount;
-        allNextReviews.push(cardState.nextReviewAt);
+        const sc = cardState.successCount || 0;
+        const fc = cardState.failureCount || 0;
+        totalSuccess += sc;
+        totalFailure += fc;
+        if (Number.isFinite(cardState.nextReviewAt)) {
+          allNextReviews.push(cardState.nextReviewAt);
+        }
       }
 
       const totalReviews = totalSuccess + totalFailure;

@@ -151,7 +151,7 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
       doneToday: next0.doneToday + 1,
       cards: {
         ...next0.cards,
-        [current.id]: gradeCard(next0.cards[current.id], ok),
+        [current.id]: gradeCard(next0.cards[current.id] ?? defaultCardState(), ok),
       },
     };
 
