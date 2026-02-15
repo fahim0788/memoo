@@ -6,7 +6,8 @@ import { Header } from "./Header";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { StatsCard } from "./StatsCard";
 import type { Stats } from "../hooks/useStats";
-import { IconFolderPublic, IconUser, IconEdit, IconTrash, IconArrowUp, IconArrowDown, DeckIcon, DECK_ICONS, DECK_COLORS } from "./Icons";
+import { IconFolderPublic, IconLockPrivate, IconEdit, IconTrash, IconArrowUp, IconArrowDown, IconTrophy, DeckIcon, DECK_ICONS, DECK_COLORS } from "./Icons";
+import { LeaderboardView } from "./LeaderboardView";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
 import { chapterStatusColor, type ChapterStatus } from "../lib/chapter-status";
@@ -45,6 +46,7 @@ export function MenuView({
   const [search, setSearch] = useState("");
   const [animating, setAnimating] = useState<string | null>(null);
   const [iconPicker, setIconPicker] = useState<string | null>(null);
+  const [leaderboardDeck, setLeaderboardDeck] = useState<{ id: string; name: string } | null>(null);
 
   const q = search.toLowerCase().trim();
   const filteredLists = q ? myLists.filter(d => d.name.toLowerCase().includes(q)) : myLists;
@@ -87,6 +89,7 @@ export function MenuView({
           {filteredLists.map((deck) => {
             const originalIndex = myLists.findIndex(d => d.id === deck.id);
             const isAnimating = animating === deck.id;
+            const hasDue = (stats?.duePerDeck?.[deck.id] ?? 0) > 0;
             return (
               <div key={deck.id} style={{ position: "relative", width: "100%" }}>
                 <button
@@ -97,6 +100,7 @@ export function MenuView({
                     overflow: "hidden",
                     transition: isAnimating ? "transform 0.3s ease-in-out" : "none",
                     transform: isAnimating ? "scale(1.02)" : "scale(1)",
+                    opacity: hasDue ? 1 : 0.5,
                   }}
                   onClick={() => onStudy(deck)}
                 >
@@ -148,13 +152,8 @@ export function MenuView({
                       )}
                     </span>
                     <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", wordBreak: "break-word" }}>{deck.name}</span>
-                    {deck.isOwned ? (
-                      <IconUser size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
-                    ) : (
-                      <IconFolderPublic size={14} style={{ flexShrink: 0, opacity: 0.5 }} />
-                    )}
                     <span
-                      style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", width: "50px", justifyContent: "flex-end" }}
+                      style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", justifyContent: "flex-end" }}
                       onClick={e => e.stopPropagation()}
                     >
                       {deck.isOwned && (
@@ -173,12 +172,35 @@ export function MenuView({
                       >
                         <IconTrash size={14} />
                       </span>
+                      {!deck.isOwned && (
+                        <span
+                          onClick={() => setLeaderboardDeck({ id: deck.id, name: deck.name })}
+                          className="action-icon"
+                          title={t.leaderboard.title}
+                        >
+                          <IconTrophy size={14} />
+                        </span>
+                      )}
+                      <span style={{ width: "1px", height: "14px", background: "var(--color-border)", opacity: 0.6 }} />
+                      {deck.isOwned ? (
+                        <IconLockPrivate size={14} style={{ opacity: 0.5 }} />
+                      ) : (
+                        <IconFolderPublic size={14} style={{ opacity: 0.5 }} />
+                      )}
                     </span>
                   </div>
-                  <div style={{ marginTop: "2px" }}>
+                  <div style={{ marginTop: "2px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span className="small" style={{ fontWeight: 400 }}>
-                      {deck.cardCount} {t.plural.cards(deck.cardCount)}
+                      {(() => {
+                        const dueCount = stats?.duePerDeck?.[deck.id] ?? 0;
+                        return <>{dueCount} {t.chapters.dueLabel} <span style={{ color: "var(--color-text-muted)" }}>/ {deck.cardCount} {t.plural.cards(deck.cardCount)}</span></>;
+                      })()}
                     </span>
+                    {(deck.chapterCount ?? 0) > 0 && (
+                      <span className="small" style={{ fontWeight: 400, flexShrink: 0, marginLeft: "8px" }}>
+                        {deck.chapterCount} {t.plural.chapters(deck.chapterCount!)}
+                      </span>
+                    )}
                   </div>
                   {(deck.chapterCount ?? 0) > 0 && (() => {
                     const total = deck.chapterCount!;
@@ -271,10 +293,33 @@ export function MenuView({
         </div>
       )}
 
+      {myLists.length > 0 && myLists.some(d => (d.chapterCount ?? 0) > 0) && (
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+          {([
+            ["not-started", t.menuView.legendNotStarted],
+            ["in-progress", t.menuView.legendInProgress],
+            ["studied", t.menuView.legendStudied],
+          ] as [ChapterStatus, string][]).map(([status, label]) => (
+            <span key={status} className="small" style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--color-text-muted)" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "2px", background: chapterStatusColor(status), flexShrink: 0 }} />
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
       {myLists.length === 0 && (
         <div className="card">
           <p className="small">{t.menuView.noDecksCta}</p>
         </div>
+      )}
+
+      {leaderboardDeck && (
+        <LeaderboardView
+          deckId={leaderboardDeck.id}
+          deckName={leaderboardDeck.name}
+          onClose={() => setLeaderboardDeck(null)}
+        />
       )}
 
       <ConfirmDialog

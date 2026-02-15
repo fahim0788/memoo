@@ -38,7 +38,7 @@
   /* Primary - Gris neutre */
   --color-primary: #52525b;
   --color-primary-hover: #3f3f46;
-  --color-primary-light: #f4f4f5;
+  --color-primary-light: rgba(0, 0, 0, 0.04);
 
   /* Accent - Orange */
   --color-accent: #f59e0b;
@@ -56,10 +56,9 @@
   --color-error-border: rgba(239, 68, 68, 0.4);
 
   /* Chapter grid */
-  --color-chapter-empty: rgba(0, 0, 0, 0.18);
+  --color-chapter-empty: rgba(0, 0, 0, 0.12);
   --color-chapter-progress: rgba(0, 0, 0, 0.35);
-  --color-chapter-started: #f59e0b;
-  --color-chapter-done: #a3e635;
+  --color-chapter-studied: rgba(0, 0, 0, 0.65);
 
   /* Globe icon - gray in light mode */
   --color-globe: #888888;
@@ -103,7 +102,7 @@
   /* Primary (neutral) */
   --color-primary: #e5e7eb;
   --color-primary-hover: #ffffff;
-  --color-primary-light: rgba(229, 231, 235, 0.18);
+  --color-primary-light: rgba(229, 231, 235, 0.10);
 
   /* Accent (neutral gray, higher contrast) */
   --color-accent: #52525b;
@@ -121,10 +120,9 @@
   --color-error-border: rgba(248, 113, 113, 0.45);
 
   /* Chapter grid */
-  --color-chapter-empty: rgba(255, 255, 255, 0.25);
-  --color-chapter-progress: rgba(255, 255, 255, 0.45);
-  --color-chapter-started: #fbbf24;
-  --color-chapter-done: #a3e635;
+  --color-chapter-empty: rgba(255, 255, 255, 0.15);
+  --color-chapter-progress: rgba(255, 255, 255, 0.40);
+  --color-chapter-studied: rgba(255, 255, 255, 0.75);
 
   /* Globe icon - white in dark mode */
   --color-globe: #ffffff;

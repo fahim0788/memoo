@@ -198,6 +198,9 @@ export interface Translations {
     moveUp: string;
     moveDown: string;
     removeConfirmMessage: string;
+    legendNotStarted: string;
+    legendInProgress: string;
+    legendStudied: string;
   };
 
   // Statistiques (StatsCard)
@@ -295,6 +298,7 @@ export interface Translations {
     noChapters: string;
     errorClassify: string;
     other: string;
+    dueLabel: string;
   };
 
   // Profil utilisateur
@@ -316,6 +320,19 @@ export interface Translations {
     currentPasswordRequired: string;
   };
 
+  // Classement (Leaderboard)
+  leaderboard: {
+    title: string;
+    rank: string;
+    name: string;
+    score: string;
+    successRate: string;
+    noData: string;
+    loading: string;
+    you: string;
+    reviews: string;
+  };
+
   // Navigation bottom bar
   nav: {
     home: string;
@@ -326,6 +343,7 @@ export interface Translations {
   // Pluralisation
   plural: {
     cards: (count: number) => string;
+    chapters: (count: number) => string;
     days: (count: number) => string;
     operations: (count: number) => string;
     revisions: (count: number) => string;
@@ -522,6 +540,9 @@ const fr: Translations = {
     moveUp: "Déplacer vers le haut",
     moveDown: "Déplacer vers le bas",
     removeConfirmMessage: "Retirer \"{name}\" de vos listes ? Vous pourrez la rajouter plus tard.",
+    legendNotStarted: "Non commencé",
+    legendInProgress: "En cours",
+    legendStudied: "Étudié",
   },
 
   stats: {
@@ -612,6 +633,7 @@ const fr: Translations = {
     noChapters: "Pas encore de chapitres. Utilisez l'IA pour organiser automatiquement.",
     errorClassify: "Erreur lors de la classification",
     other: "Autres",
+    dueLabel: "à réviser",
   },
 
   profile: {
@@ -632,6 +654,18 @@ const fr: Translations = {
     currentPasswordRequired: "Mot de passe actuel requis",
   },
 
+  leaderboard: {
+    title: "Classement",
+    rank: "#",
+    name: "Nom",
+    score: "Score",
+    successRate: "Réussite",
+    noData: "Personne n'a encore étudié cette liste.",
+    loading: "Chargement du classement...",
+    you: "(vous)",
+    reviews: "révisions",
+  },
+
   nav: {
     home: "Accueil",
     explore: "Explorer",
@@ -640,6 +674,7 @@ const fr: Translations = {
 
   plural: {
     cards: (count: number) => count === 1 ? "carte" : "cartes",
+    chapters: (count: number) => count === 1 ? "chapitre" : "chapitres",
     days: (count: number) => count === 1 ? "jour" : "jours",
     operations: (count: number) => count === 1 ? "opération" : "opérations",
     revisions: (count: number) => count === 1 ? "révision" : "révisions",
@@ -836,6 +871,9 @@ const en: Translations = {
     moveUp: "Move up",
     moveDown: "Move down",
     removeConfirmMessage: "Remove \"{name}\" from your lists? You can add it back later.",
+    legendNotStarted: "Not started",
+    legendInProgress: "In progress",
+    legendStudied: "Studied",
   },
 
   stats: {
@@ -926,6 +964,7 @@ const en: Translations = {
     noChapters: "No chapters yet. Use AI to organize automatically.",
     errorClassify: "Error classifying cards",
     other: "Other",
+    dueLabel: "due",
   },
 
   profile: {
@@ -946,6 +985,18 @@ const en: Translations = {
     currentPasswordRequired: "Current password required",
   },
 
+  leaderboard: {
+    title: "Leaderboard",
+    rank: "#",
+    name: "Name",
+    score: "Score",
+    successRate: "Success",
+    noData: "No one has studied this list yet.",
+    loading: "Loading leaderboard...",
+    you: "(you)",
+    reviews: "reviews",
+  },
+
   nav: {
     home: "Home",
     explore: "Explore",
@@ -954,6 +1005,7 @@ const en: Translations = {
 
   plural: {
     cards: (count: number) => count === 1 ? "card" : "cards",
+    chapters: (count: number) => count === 1 ? "chapter" : "chapters",
     days: (count: number) => count === 1 ? "day" : "days",
     operations: (count: number) => count === 1 ? "operation" : "operations",
     revisions: (count: number) => count === 1 ? "review" : "reviews",

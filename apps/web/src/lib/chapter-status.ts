@@ -1,13 +1,12 @@
 import type { CardState } from "./sr-engine";
 
-export type ChapterStatus = "not-started" | "in-progress" | "needs-review" | "mastered";
+export type ChapterStatus = "not-started" | "in-progress" | "studied";
 
 export function chapterStatusColor(status: ChapterStatus): string {
   switch (status) {
     case "not-started":  return "var(--color-chapter-empty)";
     case "in-progress":  return "var(--color-chapter-progress)";
-    case "needs-review": return "var(--color-chapter-started)";
-    case "mastered":     return "var(--color-chapter-done)";
+    case "studied":      return "var(--color-chapter-studied)";
   }
 }
 
@@ -18,24 +17,17 @@ export function computeChapterStatus(
   if (cardIds.length === 0) return "not-started";
 
   let reviewed = 0;
-  let totalSuccess = 0;
-  let totalFailure = 0;
 
   for (const id of cardIds) {
     const cs = studyCards[id];
     if (cs && (cs.successCount > 0 || cs.failureCount > 0)) {
       reviewed++;
-      totalSuccess += cs.successCount;
-      totalFailure += cs.failureCount;
     }
   }
 
   if (reviewed === 0) return "not-started";
   if (reviewed < cardIds.length) return "in-progress";
-
-  const total = totalSuccess + totalFailure;
-  const successRate = total > 0 ? totalSuccess / total : 0;
-  return successRate > 0.8 ? "mastered" : "needs-review";
+  return "studied";
 }
 
 export function computeAllChapterStatuses(

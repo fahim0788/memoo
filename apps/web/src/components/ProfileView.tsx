@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import { Header } from "./Header";
+import { StatsDetail } from "./StatsCard";
 
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
 import { useAuth } from "../contexts/AuthContext";
+import type { Stats } from "../hooks/useStats";
 
 type ProfileViewProps = {
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
   onHelp?: () => void;
+  stats?: Stats | null;
 };
 
-export function ProfileView({ onBack, userName, onLogout, onHelp }: ProfileViewProps) {
+export function ProfileView({ onBack, userName, onLogout, onHelp, stats }: ProfileViewProps) {
   useLanguage();
   const { user, updateProfile } = useAuth();
 
@@ -96,6 +99,8 @@ export function ProfileView({ onBack, userName, onLogout, onHelp }: ProfileViewP
         title={t.profile.title}
         onBack={onBack}
       />
+
+      {stats && <StatsDetail stats={stats} />}
 
       <form
         onSubmit={handleSave}

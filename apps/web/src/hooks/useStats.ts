@@ -29,6 +29,7 @@ export type Stats = {
   streak: number;
   perDeck: DeckStats[];
   upcoming: UpcomingBucket[];
+  duePerDeck: Record<string, number>;
 };
 
 function todayKey() {
@@ -48,16 +49,23 @@ export function useStats(decks: DeckFromApi[]) {
     let todayTotal = 0;
     const perDeck: DeckStats[] = [];
     const allNextReviews: number[] = [];
+    const duePerDeck: Record<string, number> = {};
 
     for (const deck of decks) {
       const state = await idbGet<StudyState>(`state:${deck.id}`);
-      if (!state) continue;
+      if (!state) {
+        // No study state = all cards are due
+        duePerDeck[deck.id] = deck.cardCount;
+        continue;
+      }
 
       const reviewedToday = state.lastActiveDay === today ? state.doneToday : 0;
       todayTotal += reviewedToday;
 
       let totalSuccess = 0;
       let totalFailure = 0;
+      let dueNow = 0;
+      const studiedCount = Object.keys(state.cards).length;
 
       for (const cardState of Object.values(state.cards)) {
         const sc = cardState.successCount || 0;
@@ -66,9 +74,13 @@ export function useStats(decks: DeckFromApi[]) {
         totalFailure += fc;
         if (Number.isFinite(cardState.nextReviewAt)) {
           allNextReviews.push(cardState.nextReviewAt);
+          if (cardState.nextReviewAt <= now) dueNow++;
         }
       }
+      // Cards never studied are also due
+      dueNow += Math.max(0, deck.cardCount - studiedCount);
 
+      duePerDeck[deck.id] = dueNow;
       const totalReviews = totalSuccess + totalFailure;
       perDeck.push({
         deckId: deck.id,
@@ -107,6 +119,7 @@ export function useStats(decks: DeckFromApi[]) {
       streak,
       perDeck: perDeck.filter(d => d.totalReviews > 0),
       upcoming,
+      duePerDeck,
     });
   }, [decks]);
 

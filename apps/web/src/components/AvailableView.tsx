@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import type { DeckFromApi } from "../lib/api";
-import { extractEmoji } from "../lib/api";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { IconPlus, IconTrash, IconFolderPublic, IconUser } from "./Icons";
+import { IconPlus, IconTrash, IconEdit, IconFolderPublic, IconLockPrivate, DeckIcon } from "./Icons";
 import { Header } from "./Header";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
@@ -14,6 +13,7 @@ type AvailableViewProps = {
   personalLists: DeckFromApi[];
   onAdd: (deckId: string) => void;
   onDelete: (deckId: string) => void;
+  onEdit: (deck: DeckFromApi) => void;
   onCreateDeck: () => void;
   onBack: () => void;
   userName?: string;
@@ -27,6 +27,7 @@ export function AvailableView({
   personalLists,
   onAdd,
   onDelete,
+  onEdit,
   onCreateDeck,
   onBack,
   userName,
@@ -61,116 +62,102 @@ export function AvailableView({
       />
 
       {/* Public Lists Section */}
-      <div className="card" style={{ position: "relative" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-          <div className="small" style={{ fontWeight: 700 }}>
-            {t.available.publicLists} ({filteredPublic.length})
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.7rem", color: "#999", textTransform: "lowercase", fontWeight: 500 }}>
-            <IconFolderPublic size={12} />
-            public
-          </div>
-        </div>
+      <div className="card">
+        <div className="small" style={{ marginBottom: "0.25rem" }}>{t.available.publicLists} ({filteredPublic.length})</div>
 
         {filteredPublic.length === 0 && (
-          <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
+          <p className="small" style={{ color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
             {t.available.allPublicActivated}
           </p>
         )}
 
-        {filteredPublic.map((deck, index) => {
-          const { emoji, name } = extractEmoji(deck.name);
-          return (
-            <div
-              key={deck.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "8px",
-                padding: "0.75rem 0",
-                borderTop: index > 0 ? "1px solid var(--color-border, rgba(0,0,0,0.08))" : "none",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
-                {emoji && <span style={{ fontSize: "1.2rem" }}>{emoji}</span>}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{name}</div>
-                  <div className="small" style={{ color: "#666" }}>
-                    {deck.cardCount} {t.plural.cards(deck.cardCount)}
-                  </div>
-                </div>
-              </div>
-              <button
-                className="primary"
-                onClick={() => onAdd(deck.id)}
-                style={{ flex: "none", minWidth: 0, padding: "8px 16px" }}
+        {filteredPublic.map((deck) => (
+          <div key={deck.id} className="primary card-button" style={{ width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ display: "flex", alignItems: "center", flex: "none" }}>
+                {deck.icon ? (
+                  <DeckIcon icon={deck.icon} size={16} />
+                ) : (
+                  <DeckIcon icon="star:#6b7280" size={16} />
+                )}
+              </span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", wordBreak: "break-word" }}>{deck.name}</span>
+              <span
+                style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", justifyContent: "flex-end" }}
               >
-                {t.available.addButton}
-              </button>
+                <span
+                  onClick={() => onAdd(deck.id)}
+                  className="action-icon"
+                  title={t.available.addButton}
+                >
+                  <IconPlus size={14} />
+                </span>
+                <span style={{ width: "1px", height: "14px", background: "var(--color-border)", opacity: 0.6 }} />
+                <IconFolderPublic size={14} style={{ opacity: 0.5 }} />
+              </span>
             </div>
-          );
-        })}
+            <div style={{ marginTop: "2px" }}>
+              <span className="small" style={{ fontWeight: 400 }}>
+                {deck.cardCount} {t.plural.cards(deck.cardCount)}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Personal Lists Section */}
-      <div className="card" style={{ position: "relative" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-          <div className="small" style={{ fontWeight: 700 }}>
-            {t.available.personalLists} ({filteredPersonal.length})
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.7rem", color: "#999", textTransform: "lowercase", fontWeight: 500 }}>
-            <IconUser size={12} />
-            {t.available.privateBadge || "privé"}
-          </div>
-        </div>
+      <div className="card">
+        <div className="small" style={{ marginBottom: "0.25rem" }}>{t.available.personalLists} ({filteredPersonal.length})</div>
 
         {filteredPersonal.length === 0 && (
-          <p className="small" style={{ color: "#666", marginTop: "0.5rem" }}>
+          <p className="small" style={{ color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
             {t.available.noPersonalLists}
           </p>
         )}
 
-        {filteredPersonal.map((deck, index) => (
-          <div
-            key={deck.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "8px",
-              padding: "0.75rem 0",
-              borderTop: index > 0 ? "1px solid var(--color-border, rgba(0,0,0,0.08))" : "none",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600 }}>{deck.name}</div>
-              <div className="small" style={{ color: "#666" }}>
-                {deck.cardCount} {t.plural.cards(deck.cardCount)}
-              </div>
+        {filteredPersonal.map((deck) => (
+          <div key={deck.id} className="primary card-button" style={{ width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ display: "flex", alignItems: "center", flex: "none" }}>
+                {deck.icon ? (
+                  <DeckIcon icon={deck.icon} size={16} />
+                ) : (
+                  <DeckIcon icon="star:#6b7280" size={16} />
+                )}
+              </span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", wordBreak: "break-word" }}>{deck.name}</span>
+              <span
+                style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", justifyContent: "flex-end" }}
+              >
+                <span
+                  onClick={() => onAdd(deck.id)}
+                  className="action-icon"
+                  title={t.available.addButton}
+                >
+                  <IconPlus size={14} />
+                </span>
+                <span
+                  onClick={() => onEdit(deck)}
+                  className="action-icon"
+                  title={t.common.edit}
+                >
+                  <IconEdit size={14} />
+                </span>
+                <span
+                  onClick={() => setDeleteTarget({ id: deck.id, name: deck.name })}
+                  className="action-icon delete"
+                  title={t.common.delete}
+                >
+                  <IconTrash size={14} />
+                </span>
+                <span style={{ width: "1px", height: "14px", background: "var(--color-border)", opacity: 0.6 }} />
+                <IconLockPrivate size={14} style={{ opacity: 0.5 }} />
+              </span>
             </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                className="primary"
-                onClick={() => onAdd(deck.id)}
-                style={{ flex: "none", minWidth: 0, padding: "8px 16px" }}
-              >
-                {t.available.addButton}
-              </button>
-              <button
-                onClick={() => setDeleteTarget({ id: deck.id, name: deck.name })}
-                style={{
-                  flex: "none",
-                  minWidth: 0,
-                  padding: "8px 12px",
-                  background: "#fee",
-                  color: "#c00",
-                  border: "none",
-                }}
-                title={t.common.delete}
-              >
-                <IconTrash size={16} />
-              </button>
+            <div style={{ marginTop: "2px" }}>
+              <span className="small" style={{ fontWeight: 400 }}>
+                {deck.cardCount} {t.plural.cards(deck.cardCount)}
+              </span>
             </div>
           </div>
         ))}

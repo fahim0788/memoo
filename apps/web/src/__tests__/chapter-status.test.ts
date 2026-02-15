@@ -38,44 +38,31 @@ describe("chapter-status", () => {
       expect(computeChapterStatus(["c1", "c2", "c3"], study)).toBe("in-progress");
     });
 
-    it("returns needs-review when 100% coverage but success <= 80%", () => {
+    it("returns studied when all cards have been reviewed", () => {
       const study = {
-        c1: makeCardState(3, 2), // 60%
-        c2: makeCardState(4, 1), // 80%
+        c1: makeCardState(3, 2),
+        c2: makeCardState(4, 1),
       };
-      // Total: 7/12 = 58.3%... wait let's recalc: 7 success, 3 failure = 70%
-      expect(computeChapterStatus(["c1", "c2"], study)).toBe("needs-review");
+      expect(computeChapterStatus(["c1", "c2"], study)).toBe("studied");
     });
 
-    it("returns needs-review at exactly 80% success rate", () => {
+    it("returns studied regardless of success rate", () => {
       const study = {
-        c1: makeCardState(4, 1), // 80%
-        c2: makeCardState(4, 1), // 80%
+        c1: makeCardState(1, 5), // low success
+        c2: makeCardState(1, 5),
       };
-      // Total: 8 success, 2 failure = 80% (not > 80%)
-      expect(computeChapterStatus(["c1", "c2"], study)).toBe("needs-review");
+      expect(computeChapterStatus(["c1", "c2"], study)).toBe("studied");
     });
 
-    it("returns mastered when 100% coverage and success > 80%", () => {
-      const study = {
-        c1: makeCardState(9, 1), // 90%
-        c2: makeCardState(8, 1), // 88.9%
-      };
-      // Total: 17 success, 2 failure = 89.5%
-      expect(computeChapterStatus(["c1", "c2"], study)).toBe("mastered");
-    });
-
-    it("returns mastered with 100% success rate", () => {
+    it("returns studied with 100% success rate", () => {
       const study = {
         c1: makeCardState(5, 0),
         c2: makeCardState(3, 0),
       };
-      expect(computeChapterStatus(["c1", "c2"], study)).toBe("mastered");
+      expect(computeChapterStatus(["c1", "c2"], study)).toBe("studied");
     });
 
-    it("returns needs-review when coverage 100% but 0 total attempts", () => {
-      // Edge case: cards exist in study state but with 0 success and 0 failure
-      // This shouldn't happen normally, but guard against it
+    it("returns not-started when coverage 100% but 0 total attempts", () => {
       const study = {
         c1: makeCardState(0, 0),
         c2: makeCardState(0, 0),
@@ -97,7 +84,7 @@ describe("chapter-status", () => {
         // c3 not studied
       };
       const result = computeAllChapterStatuses(cards, study);
-      expect(result["ch1"]).toBe("mastered");
+      expect(result["ch1"]).toBe("studied");
       expect(result["ch2"]).toBe("not-started");
     });
 
@@ -125,12 +112,8 @@ describe("chapter-status", () => {
       expect(chapterStatusColor("in-progress")).toBe("var(--color-chapter-progress)");
     });
 
-    it("maps needs-review to chapter-started", () => {
-      expect(chapterStatusColor("needs-review")).toBe("var(--color-chapter-started)");
-    });
-
-    it("maps mastered to chapter-done", () => {
-      expect(chapterStatusColor("mastered")).toBe("var(--color-chapter-done)");
+    it("maps studied to chapter-studied", () => {
+      expect(chapterStatusColor("studied")).toBe("var(--color-chapter-studied)");
     });
   });
 });

@@ -73,6 +73,7 @@ type StudyViewProps = {
   deck: DeckFromApi;
   cards: CardFromApi[];
   chapterName?: string | null;
+  chapterColor?: string | null;
   onBack: () => void;
   userName?: string;
   onLogout?: () => void;
@@ -107,7 +108,7 @@ function pickNextDue(cards: CardFromApi[], state: StudyState) {
   return due[Math.floor(Math.random() * due.length)];
 }
 
-export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout, onHelp, onProfile }: StudyViewProps) {
+export function StudyView({ deck, cards, chapterName, chapterColor, onBack, userName, onLogout, onHelp, onProfile }: StudyViewProps) {
   useLanguage();
   const [study, setStudy] = useState<StudyState | null>(null);
   const [answer, setAnswer] = useState("");
@@ -209,7 +210,7 @@ export function StudyView({ deck, cards, chapterName, onBack, userName, onLogout
               width: `${progress.total > 0 ? (progress.done / progress.total) * 100 : 0}%`,
               height: "100%",
               borderRadius: "3px",
-              background: "#a3e635",
+              background: chapterColor || "#a3e635",
               transition: "width 0.4s ease",
             }} />
           </div>

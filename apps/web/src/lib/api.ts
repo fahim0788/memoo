@@ -79,6 +79,20 @@ export type PullResponse = {
   serverTime: number;
 };
 
+// Types – Leaderboard
+export type LeaderboardEntry = {
+  rank: number;
+  firstName: string;
+  score: number;
+  successRate: number;
+  totalReviews: number;
+};
+
+export type LeaderboardResponse = {
+  leaderboard: LeaderboardEntry[];
+  currentUser: { rank: number; score: number; successRate: number } | null;
+};
+
 // Error helper – user-friendly French messages
 async function apiError(r: Response, action: string): Promise<never> {
   let detail = "";
@@ -241,6 +255,11 @@ export async function classifyDeck(deckId: string): Promise<ChapterFromApi[]> {
     cache: "no-store",
   }, "classifier les cartes");
   return r.json().then((d: any) => d.chapters);
+}
+
+export async function fetchLeaderboard(deckId: string): Promise<LeaderboardResponse> {
+  const r = await safeFetch(`${API_BASE}/lists/${deckId}/leaderboard`, { headers: authHeaders(), cache: "no-store" }, "charger le classement");
+  return r.json();
 }
 
 export async function updateDeckIcon(deckId: string, icon: string): Promise<void> {

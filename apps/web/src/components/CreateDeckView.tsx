@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { IconAlert, IconPlus, IconTrash } from "./Icons";
+import { IconAlert, IconPlus, IconTrash, IconEdit } from "./Icons";
 import { Header } from "./Header";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
@@ -94,6 +94,31 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
 
   function handleRemoveCard(index: number) {
     setCards(prev => prev.filter((_, i) => i !== index));
+    if (editingIndex === index) setEditingIndex(null);
+    else if (editingIndex !== null && editingIndex > index) setEditingIndex(editingIndex - 1);
+  }
+
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editQuestion, setEditQuestion] = useState("");
+  const [editAnswersList, setEditAnswersList] = useState<string[]>([""]);
+
+  function startEditCard(index: number) {
+    setEditingIndex(index);
+    setEditQuestion(cards[index].question);
+    setEditAnswersList(cards[index].answers.length > 0 ? [...cards[index].answers] : [""]);
+  }
+
+  function handleEditAnswerChange(index: number, value: string) {
+    setEditAnswersList(prev => prev.map((a, i) => i === index ? value : a));
+  }
+
+  function handleSaveEdit() {
+    if (editingIndex === null) return;
+    const q = editQuestion.trim();
+    const a = editAnswersList.map(s => s.trim()).filter(s => s.length > 0);
+    if (!q || a.length === 0) return;
+    setCards(prev => prev.map((c, i) => i === editingIndex ? { question: q, answers: a } : c));
+    setEditingIndex(null);
   }
 
   function handleAddAltAnswer() {
@@ -288,31 +313,91 @@ export function CreateDeckView({ onBack, onCreated, userName, onLogout, onHelp, 
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                 {cards.map((card, i) => (
-                  <div key={i} style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.4rem 0.5rem",
-                    borderRadius: "6px",
-                    background: "var(--color-bg-secondary)",
-                    fontSize: "0.85rem",
-                  }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {card.question}
+                  <div key={i}>
+                    {editingIndex === i ? (
+                      <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                        padding: "0.75rem",
+                        borderRadius: "8px",
+                        background: "var(--color-stats-bg)",
+                      }}>
+                        <input
+                          value={editQuestion}
+                          onChange={e => setEditQuestion(e.target.value)}
+                          placeholder={t.create.questionLabel}
+                          autoFocus
+                          style={{ width: "100%" }}
+                        />
+                        {editAnswersList.map((ans, ai) => (
+                          <input
+                            key={ai}
+                            value={ans}
+                            onChange={e => handleEditAnswerChange(ai, e.target.value)}
+                            placeholder={`${t.create.answerLabel}${editAnswersList.length > 1 ? ` ${ai + 1}` : ""}`}
+                            onKeyDown={e => { if (e.key === "Enter") handleSaveEdit(); }}
+                            style={{ width: "100%" }}
+                          />
+                        ))}
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button
+                            onClick={() => setEditAnswersList(prev => [...prev, ""])}
+                            style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem", opacity: 0.7 }}
+                          >
+                            {t.create.addAltAnswer}
+                          </button>
+                          <button
+                            className="primary"
+                            onClick={handleSaveEdit}
+                            style={{ flex: 1 }}
+                          >
+                            {t.common.save}
+                          </button>
+                          <button
+                            onClick={() => setEditingIndex(null)}
+                            style={{ flex: 1 }}
+                          >
+                            {t.common.cancel}
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {card.answers.join(", ")}
+                    ) : (
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        padding: "0.4rem 0.5rem",
+                        borderRadius: "6px",
+                        background: "var(--color-bg-secondary)",
+                        fontSize: "0.85rem",
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {card.question}
+                          </div>
+                          <div style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {card.answers.join(", ")}
+                          </div>
+                        </div>
+                        <span
+                          onClick={() => startEditCard(i)}
+                          className="action-icon"
+                          title={t.common.edit}
+                          style={{ padding: "0.25rem", flexShrink: 0 }}
+                        >
+                          <IconEdit size={14} />
+                        </span>
+                        <span
+                          onClick={() => handleRemoveCard(i)}
+                          className="action-icon delete"
+                          title={t.create.removeCard}
+                          style={{ padding: "0.25rem", flexShrink: 0 }}
+                        >
+                          <IconTrash size={14} />
+                        </span>
                       </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveCard(i)}
-                      className="action-icon delete"
-                      title={t.create.removeCard}
-                      style={{ padding: "0.25rem", flexShrink: 0 }}
-                    >
-                      <IconTrash size={14} />
-                    </button>
+                    )}
                   </div>
                 ))}
               </div>

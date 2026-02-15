@@ -17,7 +17,10 @@ import { BottomNav } from "../components/BottomNav";
 import { useStats } from "../hooks/useStats";
 import { useChapterProgress } from "../hooks/useChapterProgress";
 import type { DeckFromApi, CardFromApi, ChapterFromApi } from "../lib/api";
-import { idbSet } from "../lib/idb";
+import { idbGet, idbSet } from "../lib/idb";
+import { chapterStatusColor } from "../lib/chapter-status";
+import { debugNow } from "../lib/debug-date";
+import type { CardState } from "../lib/sr-engine";
 import { suggestIcon } from "../lib/icon-suggest";
 import { markChapterStarted, markAllChaptersStarted } from "../lib/chapter-progress";
 
@@ -39,6 +42,7 @@ export default function HomePage() {
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [classifying, setClassifying] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [duePerChapter, setDuePerChapter] = useState<Record<string, number>>({});
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -142,6 +146,22 @@ export default function HomePage() {
     }
   }
 
+  async function computeDuePerChapter(deckId: string, cards: CardFromApi[]) {
+    const now = debugNow();
+    const studyState = await idbGet<{ cards: Record<string, CardState> }>(`state:${deckId}`);
+    const due: Record<string, number> = {};
+    for (const card of cards) {
+      const chId = card.chapterId;
+      if (!chId) continue;
+      const cs = studyState?.cards[card.id];
+      const nextReview = cs ? cs.nextReviewAt : now; // new card = due now
+      if (nextReview <= now) {
+        due[chId] = (due[chId] || 0) + 1;
+      }
+    }
+    return due;
+  }
+
   async function handleStudy(deck: DeckFromApi) {
     if (actionLoading) return;
     try {
@@ -156,6 +176,8 @@ export default function HomePage() {
         idbSet(`cache:cards:${deck.id}`, { data: cards, timestamp: Date.now() }),
         idbSet(`cache:chapters:${deck.id}`, { data: chaps, timestamp: Date.now() }),
       ]);
+      const due = await computeDuePerChapter(deck.id, cards);
+      setDuePerChapter(due);
       setStudyDeck(deck);
       setStudyCards(cards);
       setChapters(chaps);
@@ -273,6 +295,7 @@ export default function HomePage() {
               personalLists={availablePersonalLists}
               onAdd={handleAdd}
               onDelete={handleDelete}
+              onEdit={handleEdit}
               onCreateDeck={() => setView("create")}
               onBack={() => setView("menu")}
               userName={user.firstName || user.email}
@@ -289,6 +312,7 @@ export default function HomePage() {
               totalCardCount={studyCards.length}
               classifying={classifying}
               chapterStatuses={progressMap[studyDeck.id]?.statuses}
+              duePerChapter={duePerChapter}
               onStudyAll={handleStudyAll}
               onStudyChapter={handleStudyChapter}
               onClassify={handleClassify}
@@ -307,9 +331,14 @@ export default function HomePage() {
               deck={studyDeck}
               cards={selectedChapterId ? studyCards.filter(c => c.chapterId === selectedChapterId) : studyCards}
               chapterName={selectedChapterId ? chapters.find(ch => ch.id === selectedChapterId)?.name : null}
-              onBack={() => {
+              chapterColor={selectedChapterId && progressMap[studyDeck.id]?.statuses?.[selectedChapterId] ? chapterStatusColor(progressMap[studyDeck.id].statuses[selectedChapterId]) : null}
+              onBack={async () => {
                 refreshStats();
                 refreshProgress();
+                if (studyDeck) {
+                  const due = await computeDuePerChapter(studyDeck.id, studyCards);
+                  setDuePerChapter(due);
+                }
                 setSelectedChapterId(null);
                 if (chapters.length > 0) {
                   setView("chapters");
@@ -365,6 +394,7 @@ export default function HomePage() {
               userName={user.firstName || user.email}
               onLogout={handleLogout}
               onHelp={handleHelp}
+              stats={stats}
             />
           )}
 

@@ -13,6 +13,7 @@ type ChapterPickerViewProps = {
   totalCardCount: number;
   classifying: boolean;
   chapterStatuses?: Record<string, ChapterStatus>;
+  duePerChapter?: Record<string, number>;
   onStudyAll: () => void;
   onStudyChapter: (chapterId: string) => void;
   onClassify: () => void;
@@ -29,6 +30,7 @@ export function ChapterPickerView({
   totalCardCount,
   classifying,
   chapterStatuses,
+  duePerChapter,
   onStudyAll,
   onStudyChapter,
   onClassify,
@@ -72,8 +74,8 @@ export function ChapterPickerView({
         <div style={{
           display: "flex",
           gap: "2px",
-          height: "6px",
-          borderRadius: "3px",
+          height: "2px",
+          borderRadius: "1px",
           overflow: "hidden",
         }}>
           {chapters.map((ch) => {
@@ -100,37 +102,48 @@ export function ChapterPickerView({
             {t.chapters.title} ({chapters.length})
           </div>
 
-          {chapters.map((chapter, index) => (
-            <button
-              key={chapter.id}
-              className="card-button"
-              onClick={() => onStudyChapter(chapter.id)}
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "0.75rem 0.5rem",
-                background: "transparent",
-                border: "none",
-                borderTop: index >= 0 ? "1px solid var(--color-border)" : "none",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{chapter.name}</div>
+          {chapters.map((chapter) => {
+            const status = chapterStatuses?.[chapter.id] || "not-started";
+            const dueCount = duePerChapter?.[chapter.id] || 0;
+            const hasDue = dueCount > 0;
+            return (
+              <button
+                key={chapter.id}
+                className="primary card-button"
+                onClick={() => onStudyChapter(chapter.id)}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  overflow: "hidden",
+                  opacity: hasDue ? 1 : 0.5,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ flex: 1, minWidth: 0, textAlign: "left", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", wordBreak: "break-word" }}>
+                    {chapter.name}
+                  </span>
+                </div>
                 {chapter.description && (
-                  <div className="small" style={{ color: "var(--color-text-secondary)", marginTop: "2px" }}>
+                  <div className="small" style={{ color: "var(--color-text-secondary)", marginTop: "2px", textAlign: "left" }}>
                     {chapter.description}
                   </div>
                 )}
-              </div>
-              <div className="small" style={{ color: "var(--color-text-secondary)", flexShrink: 0, marginLeft: "0.5rem" }}>
-                {chapter.cardCount} {t.plural.cards(chapter.cardCount)}
-              </div>
-            </button>
-          ))}
+                <div style={{ marginTop: "2px" }}>
+                  <span className="small" style={{ fontWeight: 400 }}>
+                    {dueCount} {t.chapters.dueLabel} <span style={{ color: "var(--color-text-muted)" }}>/ {chapter.cardCount} {t.plural.cards(chapter.cardCount)}</span>
+                  </span>
+                </div>
+                <span style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: chapterStatusColor(status),
+                }} />
+              </button>
+            );
+          })}
         </div>
       )}
 
