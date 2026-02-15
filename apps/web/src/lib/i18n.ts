@@ -59,6 +59,29 @@ export interface Translations {
     lastNamePlaceholder: string;
     emailPlaceholder: string;
     passwordPlaceholder: string;
+    // Email verification
+    verifyEmailTitle: string;
+    verifyEmailSubtitle: string;
+    enterCode: string;
+    verifyButton: string;
+    resendCode: string;
+    resendIn: (s: number) => string;
+    codeSent: string;
+    invalidCode: string;
+    codeExpired: string;
+    emailNotVerified: string;
+    // Forgot / Reset password
+    forgotPassword: string;
+    forgotPasswordTitle: string;
+    forgotPasswordSubtitle: string;
+    sendCode: string;
+    resetPasswordTitle: string;
+    newPasswordLabel: string;
+    confirmPasswordLabel: string;
+    resetButton: string;
+    resetSuccess: string;
+    passwordMismatch: string;
+    backToLogin: string;
   };
 
   // Menu principal / Navigation
@@ -402,6 +425,29 @@ const fr: Translations = {
     lastNamePlaceholder: "Dupont",
     emailPlaceholder: "jean@exemple.fr",
     passwordPlaceholder: "••••••••",
+    // Email verification
+    verifyEmailTitle: "Vérifiez votre email",
+    verifyEmailSubtitle: "Un code à 6 chiffres a été envoyé à",
+    enterCode: "Code de vérification",
+    verifyButton: "Vérifier",
+    resendCode: "Renvoyer le code",
+    resendIn: (s: number) => `Renvoyer dans ${s}s`,
+    codeSent: "Nouveau code envoyé",
+    invalidCode: "Code invalide ou expiré",
+    codeExpired: "Le code a expiré. Demandez-en un nouveau.",
+    emailNotVerified: "Veuillez vérifier votre email. Un nouveau code a été envoyé.",
+    // Forgot / Reset password
+    forgotPassword: "Mot de passe oublié ?",
+    forgotPasswordTitle: "Mot de passe oublié",
+    forgotPasswordSubtitle: "Entrez votre email pour recevoir un code de réinitialisation",
+    sendCode: "Envoyer le code",
+    resetPasswordTitle: "Nouveau mot de passe",
+    newPasswordLabel: "Nouveau mot de passe",
+    confirmPasswordLabel: "Confirmer le mot de passe",
+    resetButton: "Réinitialiser",
+    resetSuccess: "Mot de passe réinitialisé. Vous pouvez vous connecter.",
+    passwordMismatch: "Les mots de passe ne correspondent pas",
+    backToLogin: "Retour à la connexion",
   },
 
   menu: {
@@ -735,6 +781,29 @@ const en: Translations = {
     lastNamePlaceholder: "Doe",
     emailPlaceholder: "john@example.com",
     passwordPlaceholder: "••••••••",
+    // Email verification
+    verifyEmailTitle: "Verify your email",
+    verifyEmailSubtitle: "A 6-digit code has been sent to",
+    enterCode: "Verification code",
+    verifyButton: "Verify",
+    resendCode: "Resend code",
+    resendIn: (s: number) => `Resend in ${s}s`,
+    codeSent: "New code sent",
+    invalidCode: "Invalid or expired code",
+    codeExpired: "Code has expired. Request a new one.",
+    emailNotVerified: "Please verify your email. A new code has been sent.",
+    // Forgot / Reset password
+    forgotPassword: "Forgot password?",
+    forgotPasswordTitle: "Forgot password",
+    forgotPasswordSubtitle: "Enter your email to receive a reset code",
+    sendCode: "Send code",
+    resetPasswordTitle: "New password",
+    newPasswordLabel: "New password",
+    confirmPasswordLabel: "Confirm password",
+    resetButton: "Reset",
+    resetSuccess: "Password reset successfully. You can now sign in.",
+    passwordMismatch: "Passwords do not match",
+    backToLogin: "Back to login",
   },
 
   menu: {

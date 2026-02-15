@@ -13,7 +13,9 @@ import {
   register as authRegister,
   logout as authLogout,
   updateProfile as authUpdateProfile,
+  verifyEmail as authVerifyEmail,
   type User,
+  type AuthResponse,
   type UpdateProfileData,
 } from "../lib/auth";
 
@@ -26,7 +28,8 @@ type AuthContextType = {
     password: string,
     firstName?: string,
     lastName?: string
-  ) => Promise<void>;
+  ) => Promise<{ requiresVerification?: boolean }>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
   updateProfile: (data: UpdateProfileData) => Promise<void>;
   logout: () => void;
 };
@@ -62,7 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     firstName?: string,
     lastName?: string
   ) {
-    const result = await authRegister(email, password, firstName, lastName);
+    return authRegister(email, password, firstName, lastName);
+  }
+
+  async function verifyEmail(email: string, code: string) {
+    const result = await authVerifyEmail(email, code);
     setUser(result.user);
   }
 
@@ -77,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, updateProfile, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, verifyEmail, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

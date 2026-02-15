@@ -117,22 +117,33 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
   const [showResult, setShowResult] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [pendingStudy, setPendingStudy] = useState<StudyState | null>(null);
+  const [initialDue, setInitialDue] = useState<number | null>(null);
 
   useEffect(() => {
-    idbGet<StudyState>(stateKey(deck.id)).then(s => setStudy(s ?? buildStudyState(cards)));
+    idbGet<StudyState>(stateKey(deck.id)).then(s => {
+      const studyState = s ?? buildStudyState(cards);
+      setStudy(studyState);
+      const now = debugNow();
+      const dueCount = cards.filter(c => {
+        const cs = studyState.cards[c.id];
+        return !cs || cs.nextReviewAt <= now;
+      }).length;
+      setInitialDue(dueCount);
+    });
   }, [deck.id, cards]);
 
   const current = useMemo(() => (study ? pickNextDue(cards, study) : null), [study, cards]);
 
   const progress = useMemo(() => {
-    if (!study) return { done: 0, total: cards.length };
+    if (!study || initialDue === null) return { done: 0, total: 0 };
     const now = debugNow();
-    const done = cards.filter(c => {
+    const stillDue = cards.filter(c => {
       const cs = study.cards[c.id];
-      return cs && cs.nextReviewAt > now;
+      return !cs || cs.nextReviewAt <= now;
     }).length;
-    return { done, total: cards.length };
-  }, [study, cards]);
+    const done = Math.max(0, initialDue - stillDue);
+    return { done, total: initialDue };
+  }, [study, cards, initialDue]);
 
   useEffect(() => {
     if (!showResult) {

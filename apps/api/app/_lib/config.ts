@@ -19,6 +19,8 @@ export const JWT_EXPIRES_IN = "7d";
 
 export const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3000";
 
+export const BREVO_API_KEY = process.env.BREVO_API_KEY ?? "";
+
 // Validate DATABASE_URL at import time so the app fails fast
 if (isProd) {
   requireEnv("DATABASE_URL");

@@ -100,6 +100,25 @@ export const GenerateDistractorsSchema = z.object({
   answer: z.string().min(1, "answer required"),
 });
 
+export const VerifyEmailSchema = z.object({
+  email: z.string().email().max(255),
+  code: z.string().length(6, "code must be 6 digits"),
+});
+
+export const ResendCodeSchema = z.object({
+  email: z.string().email().max(255),
+});
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email().max(255),
+});
+
+export const ResetPasswordSchema = z.object({
+  email: z.string().email().max(255),
+  code: z.string().length(6, "code must be 6 digits"),
+  newPassword: z.string().min(6, "password must be at least 6 characters"),
+});
+
 export const GenerateTtsSchema = z.object({
   deckId: z.string().min(1, "deckId required"),
   phrases: z.array(

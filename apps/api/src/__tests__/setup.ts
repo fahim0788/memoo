@@ -15,6 +15,8 @@ vi.mock("bcryptjs", () => ({
   compare: vi.fn(async (pw: string, hash: string) => hash === `hashed:${pw}`),
 }));
 
+// No BREVO_API_KEY in test env → email.ts will console.log instead of calling Brevo API
+
 // Mock openai
 vi.mock("openai", () => {
   return {

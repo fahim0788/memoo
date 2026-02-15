@@ -110,20 +110,19 @@ describe("auth", () => {
       vi.restoreAllMocks();
     });
 
-    it("stores token on successful registration", async () => {
+    it("returns requiresVerification on successful registration", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({
           ok: true,
-          token: "new-user-token",
-          user: { id: "u2", email: "new@test.com", firstName: "Jane", lastName: "Doe" },
+          requiresVerification: true,
         }),
       }));
 
       const { register } = await import("../lib/auth");
       const result = await register("new@test.com", "password", "Jane", "Doe");
-      expect(result.token).toBe("new-user-token");
-      expect(localStorage.getItem("auth_token")).toBe("new-user-token");
+      expect(result.requiresVerification).toBe(true);
+      expect(localStorage.getItem("auth_token")).toBeNull();
     });
 
     it("throws on duplicate email", async () => {

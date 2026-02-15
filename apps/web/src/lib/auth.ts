@@ -33,7 +33,7 @@ export function clearToken(): void {
 export async function login(
   email: string,
   password: string
-): Promise<AuthResponse> {
+): Promise<AuthResponse & { error?: string }> {
   const r = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -45,6 +45,10 @@ export async function login(
       throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
     }
     const data = await r.json().catch(() => ({}));
+    // Special case: email not verified — caller handles the redirect
+    if (data.error === "email_not_verified") {
+      throw Object.assign(new Error("email_not_verified"), { code: "EMAIL_NOT_VERIFIED" });
+    }
     const messages: Record<string, string> = {
       "invalid credentials": "Email ou mot de passe incorrect",
       "account disabled": "Ce compte a été désactivé",
@@ -63,7 +67,7 @@ export async function register(
   password: string,
   firstName?: string,
   lastName?: string
-): Promise<AuthResponse> {
+): Promise<{ ok: boolean; requiresVerification?: boolean }> {
   const r = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -82,9 +86,7 @@ export async function register(
     throw new Error(messages[data.error] || data.error || "Impossible de créer le compte");
   }
 
-  const data = await r.json();
-  setToken(data.token);
-  return data;
+  return r.json();
 }
 
 export async function getMe(): Promise<User | null> {
@@ -144,4 +146,50 @@ export async function updateProfile(data: UpdateProfileData): Promise<User> {
 
 export function logout(): void {
   clearToken();
+}
+
+export async function verifyEmail(email: string, code: string): Promise<AuthResponse> {
+  const r = await fetch(`${API_BASE}/auth/verify-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error(data.error || "Code invalide");
+  }
+
+  const data = await r.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function resendCode(email: string): Promise<void> {
+  await fetch(`${API_BASE}/auth/resend-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  const r = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code, newPassword }),
+  });
+
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error(data.error || "Code invalide");
+  }
 }

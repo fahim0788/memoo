@@ -42,7 +42,7 @@ export async function PUT(req: NextRequest) {
 
   const updateData: Record<string, string> = {};
 
-  if (firstName !== undefined) updateData.firstName = firstName;
+  if (firstName !== undefined) updateData.firstName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase() : firstName;
   if (lastName !== undefined) updateData.lastName = lastName;
 
   // Email or password change requires current password verification

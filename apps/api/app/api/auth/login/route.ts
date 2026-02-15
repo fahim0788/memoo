@@ -5,6 +5,7 @@ import { json, OPTIONS } from "../../../_lib/cors";
 import { signToken } from "../../../_lib/auth";
 import { rateLimit } from "../../../_lib/rate-limit";
 import { validateBody, LoginSchema } from "../../../_lib/validation";
+import { generateCode, codeExpiresAt, sendVerificationEmail } from "../../../_lib/email";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -25,6 +26,17 @@ export async function POST(req: NextRequest) {
 
   if (!user.isActive) {
     return json({ error: "account disabled" }, req, 403);
+  }
+
+  if (!user.emailVerified) {
+    // Resend a fresh verification code
+    const code = generateCode();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verificationCode: code, verificationCodeExpiresAt: codeExpiresAt(15) },
+    });
+    await sendVerificationEmail(email, code);
+    return json({ error: "email_not_verified" }, req, 403);
   }
 
   const token = signToken({ userId: user.id, email: user.email });
