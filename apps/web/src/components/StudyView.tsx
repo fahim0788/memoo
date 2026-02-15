@@ -5,13 +5,13 @@ import { idbGet, idbSet } from "../lib/idb";
 import { defaultCardState, gradeCard, type CardState } from "../lib/sr-engine";
 import { isCorrect } from "../lib/text";
 import { queueReview } from "../lib/sync";
-import { STORAGE_BASE, type DeckFromApi, type CardFromApi } from "../lib/api";
+import { STORAGE_BASE, evaluateAnswer, type DeckFromApi, type CardFromApi } from "../lib/api";
 import { updateStreak } from "../lib/streak";
 import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
 import { Header } from "./Header";
 import { IconSpeaker, IconSpeakerPlaying } from "./Icons";
-import { AnswerInput } from "./AnswerInput";
+import { AnswerInput, type AnswerMode } from "./AnswerInput";
 
 function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null; label: string; autoPlay?: boolean; fullWidth?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -114,6 +114,7 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
   const [study, setStudy] = useState<StudyState | null>(null);
   const [result, setResult] = useState<{ ok: boolean; expected: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
   const [pendingStudy, setPendingStudy] = useState<StudyState | null>(null);
 
   useEffect(() => {
@@ -143,10 +144,29 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
     return s.lastActiveDay !== t ? { ...s, doneToday: 0, lastActiveDay: t } : s;
   }
 
-  async function handleAnswer(userAnswer: string) {
-    if (!study || !current || showResult) return;
+  async function handleAnswer(userAnswer: string, mode?: AnswerMode) {
+    if (!study || !current || showResult || evaluating) return;
 
-    const ok = isCorrect(userAnswer, current.answers);
+    let ok = isCorrect(userAnswer, current.answers);
+
+    // AI evaluation: only for text mode, when wrong, and when online
+    if (!ok && mode === "text" && typeof navigator !== "undefined" && navigator.onLine) {
+      setEvaluating(true);
+      try {
+        const res = await evaluateAnswer(current.id, userAnswer, current.question, current.answers as string[]);
+        if (res.acceptable) {
+          ok = true;
+          // Update local card answers so future matches skip the API
+          if (!current.answers.includes(userAnswer.trim())) {
+            current.answers.push(userAnswer.trim());
+          }
+        }
+      } catch {
+        // Timeout or network error → keep ok = false
+      }
+      setEvaluating(false);
+    }
+
     const next0 = bumpDailyCounters(study);
     const next: StudyState = {
       ...next0,
@@ -193,7 +213,14 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
         onLogout={onLogout}
         onHelp={onHelp}
         onProfile={onProfile}
-        title={chapterName ? `${deck.name} › ${chapterName}` : deck.name}
+        title={
+          chapterName ? (
+            <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
+              <span>{deck.name}</span>
+              <span style={{ fontSize: "0.7rem", fontWeight: 400, color: "var(--color-text-muted)" }}>{chapterName}</span>
+            </span>
+          ) : deck.name
+        }
         onBack={onBack}
       />
 
@@ -252,7 +279,7 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
               <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label={t.study.listenEn} autoPlay fullWidth />
             </div>
 
-            {!showResult && (
+            {!showResult && !evaluating && (
               <AnswerInput
                 key={current.id}
                 card={current}
@@ -260,6 +287,14 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
                 onAnswer={handleAnswer}
                 onShowAnswer={handleShowAnswer}
               />
+            )}
+
+            {evaluating && (
+              <div style={{ textAlign: "center", padding: "2rem 0" }}>
+                <div style={{ fontSize: "1.1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>
+                  {t.study.evaluating}
+                </div>
+              </div>
             )}
 
             {showResult && result && (

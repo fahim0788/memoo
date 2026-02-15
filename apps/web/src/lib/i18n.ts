@@ -89,6 +89,7 @@ export interface Translations {
     scramblePlaceholder: string;
     listenEn: string;
     listenFr: string;
+    evaluating: string;
   };
 
   // Vue d'édition de deck (EditDeckView)
@@ -429,6 +430,7 @@ const fr: Translations = {
     scramblePlaceholder: "Touche les mots dans l'ordre…",
     listenEn: "Écouter EN",
     listenFr: "Écouter FR",
+    evaluating: "Vérification...",
   },
 
   edit: {
@@ -761,6 +763,7 @@ const en: Translations = {
     scramblePlaceholder: "Tap the words in order…",
     listenEn: "Listen EN",
     listenFr: "Listen FR",
+    evaluating: "Checking...",
   },
 
   edit: {

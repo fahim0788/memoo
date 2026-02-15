@@ -7,12 +7,12 @@ import { t } from "../lib/i18n";
 
 // ─── Types ────────────────────────────────────────────────────
 
-type AnswerMode = "text" | "yesno" | "number" | "scramble" | "mcq";
+export type AnswerMode = "text" | "yesno" | "number" | "scramble" | "mcq";
 
 type AnswerInputProps = {
   card: CardFromApi;
   allCards: CardFromApi[];
-  onAnswer: (answer: string) => void;
+  onAnswer: (answer: string, mode: AnswerMode) => void;
   onShowAnswer: () => void;
 };
 
@@ -133,14 +133,30 @@ function NumberInput({ card, onAnswer, onShowAnswer }: {
   const num = parseFloat(answer.replace(",", "."));
   const hash = hashCode(card.id);
 
+  // Detect if the answer looks like a year (4 digits, 1000–current year)
+  const currentYear = new Date().getFullYear();
+  const isYear = Number.isInteger(num) && num >= 1000 && num <= currentYear;
+
   // Generate 2 noise numbers near the correct one
-  const range = Math.max(Math.ceil(Math.abs(num) * 0.3), 2);
+  const range = isYear
+    ? Math.max((hash % 15) + 3, 3)   // years: ±3 to ±17 years
+    : Math.max(Math.ceil(Math.abs(num) * 0.3), 2);
   let n1 = num + ((hash % range) + 1);
   let n2 = num - (((hash >> 4) % range) + 1);
   if (n1 === num) n1 = num + range + 1;
   if (n2 === num) n2 = num - range - 1;
   if (n1 === n2) n2 = n2 - 1;
   if (Number.isInteger(num)) { n1 = Math.round(n1); n2 = Math.round(n2); }
+
+  // Never propose a year in the future
+  if (isYear) {
+    if (n1 > currentYear) n1 = num - ((hash % range) + range + 1);
+    if (n2 > currentYear) n2 = num - ((hash >> 8) % range + range + 2);
+    // Ensure all three are distinct
+    if (n1 === num) n1 = num - range - 1;
+    if (n2 === num) n2 = num - range - 2;
+    if (n1 === n2) n2 = n2 - 1;
+  }
 
   const options = useMemo(
     () => seededShuffle([answer, String(n1), String(n2)], hash),
@@ -376,16 +392,18 @@ function TextInputMode({ onAnswer, onShowAnswer }: {
 export function AnswerInput({ card, allCards, onAnswer, onShowAnswer }: AnswerInputProps) {
   const mode = useMemo(() => detectMode(card, allCards), [card.id, allCards.length]);
 
+  const handleAnswer = (answer: string) => onAnswer(answer, mode);
+
   switch (mode) {
     case "yesno":
-      return <YesNoInput card={card} onAnswer={onAnswer} onShowAnswer={onShowAnswer} />;
+      return <YesNoInput card={card} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     case "number":
-      return <NumberInput card={card} onAnswer={onAnswer} onShowAnswer={onShowAnswer} />;
+      return <NumberInput card={card} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     case "scramble":
-      return <ScrambleInput card={card} onAnswer={onAnswer} onShowAnswer={onShowAnswer} />;
+      return <ScrambleInput card={card} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     case "mcq":
-      return <McqInput card={card} allCards={allCards} onAnswer={onAnswer} onShowAnswer={onShowAnswer} />;
+      return <McqInput card={card} allCards={allCards} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     default:
-      return <TextInputMode onAnswer={onAnswer} onShowAnswer={onShowAnswer} />;
+      return <TextInputMode onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
   }
 }
