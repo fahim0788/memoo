@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import type { CardFromApi } from "../lib/api";
+import { generateDistractors } from "../lib/api";
 import { normalizeText } from "../lib/text";
 import { t } from "../lib/i18n";
 
@@ -314,7 +315,20 @@ function ScrambleInput({ card, onAnswer, onShowAnswer }: {
   );
 }
 
-// ─── MCQ (distractors from other cards in the deck) ──────────
+// ─── MCQ (AI distractors with fallback to deck) ──────────────
+
+/** Fallback: distractors from other cards in the deck */
+function deckDistractors(card: CardFromApi, allCards: CardFromApi[]): string[] {
+  const answer = card.answers[0] ?? "";
+  const normAnswer = normalizeText(answer);
+  const others = [...new Set(
+    allCards
+      .filter(c => c.id !== card.id)
+      .map(c => c.answers[0] ?? "")
+      .filter(a => a && normalizeText(a) !== normAnswer),
+  )];
+  return seededShuffle(others, hashCode(card.id)).slice(0, 3);
+}
 
 function McqInput({ card, allCards, onAnswer, onShowAnswer }: {
   card: CardFromApi;
@@ -324,18 +338,50 @@ function McqInput({ card, allCards, onAnswer, onShowAnswer }: {
 }) {
   const answer = card.answers[0] ?? "";
   const hash = hashCode(card.id);
+  const hasStoredDistractors = card.distractors && card.distractors.length > 0;
+
+  const [aiDistractors, setAiDistractors] = useState<string[] | null>(
+    hasStoredDistractors ? card.distractors : null,
+  );
+  const [loading, setLoading] = useState(false);
+
+  // Ask AI for distractors on first encounter (no stored distractors)
+  useEffect(() => {
+    if (hasStoredDistractors || aiDistractors !== null) return;
+    if (typeof navigator === "undefined" || !navigator.onLine) return;
+
+    let cancelled = false;
+    setLoading(true);
+    generateDistractors(card.id, card.question, answer)
+      .then(res => {
+        if (!cancelled && res.distractors.length > 0) {
+          setAiDistractors(res.distractors);
+          // Update local card data so it's cached for the session
+          card.distractors = res.distractors;
+        }
+      })
+      .catch(() => { /* fallback to deck distractors */ })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [card.id]);
 
   const options = useMemo(() => {
-    const normAnswer = normalizeText(answer);
-    const others = [...new Set(
-      allCards
-        .filter(c => c.id !== card.id)
-        .map(c => c.answers[0] ?? "")
-        .filter(a => a && normalizeText(a) !== normAnswer),
-    )];
-    const distractors = seededShuffle(others, hash).slice(0, 3);
+    const distractors = (aiDistractors && aiDistractors.length > 0)
+      ? aiDistractors.slice(0, 3)
+      : deckDistractors(card, allCards);
     return seededShuffle([answer, ...distractors], hash + 7);
-  }, [card.id, allCards.length]);
+  }, [card.id, aiDistractors, allCards.length]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        <div style={{ fontSize: "1.1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>
+          {t.study.evaluating}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

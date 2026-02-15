@@ -149,7 +149,31 @@ services:
       "
     restart: "no"
 
+  # ===========================================================================
+  # Database Backups (daily at 03:00)
+  # ===========================================================================
+  db-backup:
+    image: postgres:16-alpine
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      echo '0 3 * * * /backup/pg-backup.sh >> /var/log/backup.log 2>&1' | crontab - &&
+      crond -f -l 2
+      "
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-memolist}
+      - POSTGRES_USER=${POSTGRES_USER:-memolist}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-memolist}
+    volumes:
+      - ./infra/backup/pg-backup.sh:/backup/pg-backup.sh:ro
+      - pgbackups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
   tts-storage:
   minio-data:
+  pgbackups:

@@ -3,11 +3,16 @@ import { prisma } from "@memolist/db";
 import * as bcrypt from "bcryptjs";
 import { json, OPTIONS } from "../../../_lib/cors";
 import { signToken } from "../../../_lib/auth";
+import { rateLimit } from "../../../_lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
 
 export async function POST(req: NextRequest) {
+  // 10 attempts per IP per 15 minutes
+  const limited = rateLimit(req, { maxRequests: 10, windowMs: 15 * 60_000, prefix: "login" });
+  if (limited) return limited;
+
   const { email, password } = await req.json();
 
   if (!email || !password) {

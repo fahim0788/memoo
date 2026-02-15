@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CORS_ORIGIN } from "./config";
 
+const isProd = process.env.NODE_ENV === "production";
+
 export function withCors(res: NextResponse, origin?: string | null) {
-  if (origin === CORS_ORIGIN || origin?.includes("localhost") || origin?.includes("127.0.0.1")) {
+  const isAllowed =
+    origin === CORS_ORIGIN ||
+    (!isProd && (origin?.includes("localhost") || origin?.includes("127.0.0.1")));
+
+  if (isAllowed) {
     res.headers.set("Access-Control-Allow-Origin", origin || CORS_ORIGIN);
   }
 

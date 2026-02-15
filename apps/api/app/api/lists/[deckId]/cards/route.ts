@@ -15,9 +15,9 @@ export async function GET(
 
   const cards = await prisma.card.findMany({
     where: { deckId: params.deckId },
-    select: { id: true, question: true, answers: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true, chapterId: true },
+    select: { id: true, question: true, answers: true, distractors: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true, chapterId: true },
     orderBy: { createdAt: "asc" },
   });
 
-  return json({ cards: cards.map(c => ({ ...c, answers: c.answers as string[] })) }, req);
+  return json({ cards: cards.map(c => ({ ...c, answers: c.answers as string[], distractors: c.distractors as string[] })) }, req);
 }

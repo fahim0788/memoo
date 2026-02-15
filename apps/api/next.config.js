@@ -2,14 +2,16 @@
 const nextConfig = {
   output: "standalone",
 
-  // Désactiver la télémétrie Next.js
-  typescript: {
-    ignoreBuildErrors: false,
+  // Strip console.log/info/debug in production builds (keep error & warn)
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
   },
 
-  // Configuration pour API-only (pas de pages statiques)
-  experimental: {
-    // Optimisation pour API routes
+  typescript: {
+    ignoreBuildErrors: false,
   },
 };
 

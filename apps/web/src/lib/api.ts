@@ -38,6 +38,7 @@ export type CardFromApi = {
   id: string;
   question: string;
   answers: string[];
+  distractors: string[];
   audioUrlEn?: string | null;
   audioUrlFr?: string | null;
   imageUrl?: string | null;
@@ -278,6 +279,27 @@ export async function evaluateAnswer(
       signal: controller.signal,
       cache: "no-store",
     }, "évaluer la réponse");
+    return r.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function generateDistractors(
+  cardId: string,
+  question: string,
+  answer: string,
+): Promise<{ distractors: string[] }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const r = await safeFetch(`${API_BASE}/cards/${cardId}/distractors`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ question, answer }),
+      signal: controller.signal,
+      cache: "no-store",
+    }, "générer les pièges");
     return r.json();
   } finally {
     clearTimeout(timeout);

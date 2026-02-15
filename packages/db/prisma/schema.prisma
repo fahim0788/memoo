@@ -38,16 +38,17 @@ model Deck {
 }
 
 model Card {
-  id         String   @id @default(cuid())
-  deckId     String
-  chapterId  String?
-  question   String
-  answers    Json     @default("[]")
-  audioUrlEn String?
-  audioUrlFr String?
-  imageUrl   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(cuid())
+  deckId      String
+  chapterId   String?
+  question    String
+  answers     Json     @default("[]")
+  distractors Json     @default("[]")
+  audioUrlEn  String?
+  audioUrlFr  String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
   chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
