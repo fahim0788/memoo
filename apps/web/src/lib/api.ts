@@ -262,6 +262,28 @@ export async function fetchLeaderboard(deckId: string): Promise<LeaderboardRespo
   return r.json();
 }
 
+export async function evaluateAnswer(
+  cardId: string,
+  userAnswer: string,
+  question: string,
+  referenceAnswers: string[],
+): Promise<{ acceptable: boolean }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const r = await safeFetch(`${API_BASE}/cards/${cardId}/evaluate`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ userAnswer, question, referenceAnswers }),
+      signal: controller.signal,
+      cache: "no-store",
+    }, "évaluer la réponse");
+    return r.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function updateDeckIcon(deckId: string, icon: string): Promise<void> {
   await safeFetch(`${API_BASE}/my-lists/${deckId}/icon`, {
     method: "PUT",
