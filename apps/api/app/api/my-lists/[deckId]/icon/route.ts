@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@memolist/db";
 import { json, OPTIONS } from "../../../../_lib/cors";
 import { requireAuth } from "../../../../_lib/auth";
+import { validateBody, UpdateIconSchema } from "../../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -14,10 +15,9 @@ export async function PUT(
   if ("error" in auth) return auth.error;
 
   try {
-    const { icon } = await req.json();
-    if (!icon || typeof icon !== "string") {
-      return json({ error: "icon string required" }, req, 400);
-    }
+    const parsed = await validateBody(req, UpdateIconSchema);
+    if (parsed.error) return parsed.error;
+    const { icon } = parsed.data;
 
     await prisma.userDeck.updateMany({
       where: { userId: auth.user.userId, deckId: params.deckId },

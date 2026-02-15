@@ -44,7 +44,12 @@ export function LeaderboardView({ deckId, deckName, onClose }: LeaderboardViewPr
   }, [deckId]);
 
   return (
-    <>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="leaderboard-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    >
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -84,7 +89,7 @@ export function LeaderboardView({ deckId, deckName, onClose }: LeaderboardViewPr
         }}>
           <IconTrophy size={18} style={{ color: "#f59e0b" }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: "1rem" }}>{t.leaderboard.title}</div>
+            <div id="leaderboard-title" style={{ fontWeight: 700, fontSize: "1rem" }}>{t.leaderboard.title}</div>
             <div style={{
               fontSize: "0.75rem",
               color: "var(--color-text-secondary)",
@@ -95,6 +100,7 @@ export function LeaderboardView({ deckId, deckName, onClose }: LeaderboardViewPr
           </div>
           <button
             onClick={onClose}
+            aria-label={t.common.close}
             style={{
               background: "none",
               border: "none",
@@ -207,6 +213,6 @@ export function LeaderboardView({ deckId, deckName, onClose }: LeaderboardViewPr
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

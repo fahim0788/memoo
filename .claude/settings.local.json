@@ -43,7 +43,9 @@
       "Bash(cmd.exe /c \"start \"\"\"\" \"\"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\"\"\")",
       "Bash(del \"c:\\\\WORK\\\\memolist-mvp\\\\scripts\\\\cleanup-flags.ps1\")",
       "Bash(npm test:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@memolist/db";
 import { json, OPTIONS } from "../../../../_lib/cors";
 import { requireAuth } from "../../../../_lib/auth";
+import { validateBody, CreateCardSchema } from "../../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -17,10 +18,9 @@ export async function POST(
   if (!deck) return json({ error: "deck not found" }, req, 404);
   if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
 
-  const { question, answers, imageUrl } = await req.json();
-  if (!question || !Array.isArray(answers) || answers.length === 0) {
-    return json({ error: "question and answers array required" }, req, 400);
-  }
+  const parsed = await validateBody(req, CreateCardSchema);
+  if (parsed.error) return parsed.error;
+  const { question, answers, imageUrl } = parsed.data;
 
   const card = await prisma.card.create({
     data: { deckId: params.deckId, question, answers, imageUrl: imageUrl || null },

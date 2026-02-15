@@ -83,6 +83,7 @@ export function MenuView({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t.menuView.searchPlaceholder}
+              aria-label={t.menuView.searchPlaceholder}
               style={{ marginBottom: "0.25rem" }}
             />
           )}
@@ -111,32 +112,42 @@ export function MenuView({
                         style={{ display: "flex", flexDirection: "column", gap: "2px", flex: "none" }}
                         onClick={e => e.stopPropagation()}
                       >
-                        <span
+                        <button
                           onClick={() => handleMoveUp(originalIndex)}
                           className="reorder-btn"
+                          aria-label={t.menuView.moveUp}
+                          disabled={originalIndex === 0}
                           style={{
                             padding: "2px",
                             display: "flex",
                             alignItems: "center",
                             opacity: originalIndex === 0 ? 0.3 : 1,
+                            background: "none",
+                            border: "none",
+                            cursor: originalIndex === 0 ? "default" : "pointer",
+                            minWidth: 0,
                           }}
-                          title={t.menuView.moveUp}
                         >
                           <IconArrowUp size={12} />
-                        </span>
-                        <span
+                        </button>
+                        <button
                           onClick={() => handleMoveDown(originalIndex)}
                           className="reorder-btn"
+                          aria-label={t.menuView.moveDown}
+                          disabled={originalIndex === myLists.length - 1}
                           style={{
                             padding: "2px",
                             display: "flex",
                             alignItems: "center",
                             opacity: originalIndex === myLists.length - 1 ? 0.3 : 1,
+                            background: "none",
+                            border: "none",
+                            cursor: originalIndex === myLists.length - 1 ? "default" : "pointer",
+                            minWidth: 0,
                           }}
-                          title={t.menuView.moveDown}
                         >
                           <IconArrowDown size={12} />
-                        </span>
+                        </button>
                       </span>
                     )}
 
@@ -157,29 +168,32 @@ export function MenuView({
                       onClick={e => e.stopPropagation()}
                     >
                       {deck.isOwned && (
-                        <span
+                        <button
                           onClick={() => onEdit(deck)}
                           className="action-icon"
+                          aria-label={t.common.edit}
                           title={t.common.edit}
                         >
                           <IconEdit size={14} />
-                        </span>
+                        </button>
                       )}
-                      <span
+                      <button
                         onClick={() => setRemoveTarget({ id: deck.id, name: deck.name })}
                         className="action-icon delete"
+                        aria-label={t.common.remove}
                         title={t.common.remove}
                       >
                         <IconTrash size={14} />
-                      </span>
+                      </button>
                       {!deck.isOwned && (
-                        <span
+                        <button
                           onClick={() => setLeaderboardDeck({ id: deck.id, name: deck.name })}
                           className="action-icon"
+                          aria-label={t.leaderboard.title}
                           title={t.leaderboard.title}
                         >
                           <IconTrophy size={14} />
-                        </span>
+                        </button>
                       )}
                       <span style={{ width: "1px", height: "14px", background: "var(--color-border)", opacity: 0.6 }} />
                       {deck.isOwned ? (

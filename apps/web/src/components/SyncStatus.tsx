@@ -20,7 +20,7 @@ export function SyncStatus() {
   // Syncing in progress
   if (isSyncing) {
     return (
-      <div style={{
+      <div role="status" style={{
         position: "fixed",
         bottom: "16px",
         right: "16px",
@@ -44,7 +44,7 @@ export function SyncStatus() {
   // Offline with pending operations
   if (!isOnline && pendingCount > 0) {
     return (
-      <div style={{
+      <div role="status" style={{
         position: "fixed",
         bottom: "16px",
         right: "16px",
@@ -66,7 +66,7 @@ export function SyncStatus() {
   // Offline without pending
   if (!isOnline) {
     return (
-      <div style={{
+      <div role="status" style={{
         position: "fixed",
         bottom: "16px",
         right: "16px",
@@ -88,7 +88,7 @@ export function SyncStatus() {
   // Error state (sync failed after retries)
   if (hasError && pendingCount > 0) {
     return (
-      <div style={{
+      <div role="status" style={{
         position: "fixed",
         bottom: "16px",
         right: "16px",
@@ -118,7 +118,7 @@ export function SyncStatus() {
     }
 
     return (
-      <div style={{
+      <div role="status" style={{
         position: "fixed",
         bottom: "16px",
         right: "16px",
@@ -140,7 +140,7 @@ export function SyncStatus() {
   // Just synced successfully
   if (lastSyncCount !== null && lastSyncCount > 0) {
     return (
-      <div style={{
+      <div role="status" style={{
         position: "fixed",
         bottom: "16px",
         right: "16px",

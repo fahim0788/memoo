@@ -45,6 +45,7 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
             <button
               onClick={onBack}
               className="header-action-btn icon-clickable"
+              aria-label={t.common.back}
               title={t.common.back}
             >
               <IconArrowBack size={20} />
@@ -68,23 +69,30 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
 
       {/* Right: Profile + Language + Help + Settings */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "0 0 auto" }}>
-        {userName && (
-          <div
+        {userName && onProfile ? (
+          <button
             onClick={onProfile}
-            className={onProfile ? "icon-clickable" : ""}
+            className="header-action-btn icon-clickable"
+            aria-label={t.profile?.title ?? "Profil"}
             style={{
               display: "flex",
               alignItems: "center",
               gap: "0.25rem",
-              cursor: onProfile ? "pointer" : "default",
             }}
           >
             <IconProfile size={16} style={{ color: "var(--color-text-secondary)" }} />
             <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
               {userName}
             </span>
-          </div>
-        )}
+          </button>
+        ) : userName ? (
+          <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            <IconProfile size={16} style={{ color: "var(--color-text-secondary)" }} />
+            <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
+              {userName}
+            </span>
+          </span>
+        ) : null}
         <LanguageToggle />
         {onHelp && (
           <button onClick={onHelp} className="header-action-btn" title={t.help.title}>

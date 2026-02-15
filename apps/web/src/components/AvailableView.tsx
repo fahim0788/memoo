@@ -58,6 +58,7 @@ export function AvailableView({
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder={t.available.searchPlaceholder}
+        aria-label={t.available.searchPlaceholder}
         style={{ marginBottom: "-0.25rem" }}
       />
 
@@ -85,13 +86,14 @@ export function AvailableView({
               <span
                 style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", justifyContent: "flex-end" }}
               >
-                <span
+                <button
                   onClick={() => onAdd(deck.id)}
                   className="action-icon"
+                  aria-label={t.available.addButton}
                   title={t.available.addButton}
                 >
                   <IconPlus size={14} />
-                </span>
+                </button>
                 <span style={{ width: "1px", height: "14px", background: "var(--color-border)", opacity: 0.6 }} />
                 <IconFolderPublic size={14} style={{ opacity: 0.5 }} />
               </span>
@@ -129,27 +131,30 @@ export function AvailableView({
               <span
                 style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", marginLeft: "10px", justifyContent: "flex-end" }}
               >
-                <span
+                <button
                   onClick={() => onAdd(deck.id)}
                   className="action-icon"
+                  aria-label={t.available.addButton}
                   title={t.available.addButton}
                 >
                   <IconPlus size={14} />
-                </span>
-                <span
+                </button>
+                <button
                   onClick={() => onEdit(deck)}
                   className="action-icon"
+                  aria-label={t.common.edit}
                   title={t.common.edit}
                 >
                   <IconEdit size={14} />
-                </span>
-                <span
+                </button>
+                <button
                   onClick={() => setDeleteTarget({ id: deck.id, name: deck.name })}
                   className="action-icon delete"
+                  aria-label={t.common.delete}
                   title={t.common.delete}
                 >
                   <IconTrash size={14} />
-                </span>
+                </button>
                 <span style={{ width: "1px", height: "14px", background: "var(--color-border)", opacity: 0.6 }} />
                 <IconLockPrivate size={14} style={{ opacity: 0.5 }} />
               </span>

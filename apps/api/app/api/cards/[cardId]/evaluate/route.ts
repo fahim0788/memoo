@@ -3,6 +3,7 @@ import { prisma } from "@memolist/db";
 import OpenAI from "openai";
 import { json, OPTIONS } from "../../../../_lib/cors";
 import { requireAuth } from "../../../../_lib/auth";
+import { validateBody, EvaluateAnswerSchema } from "../../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -24,11 +25,9 @@ export async function POST(
     return json({ error: "OPENAI_API_KEY not configured" }, req, 500);
   }
 
-  const { userAnswer, question, referenceAnswers } = await req.json();
-
-  if (!userAnswer || !question || !Array.isArray(referenceAnswers) || referenceAnswers.length === 0) {
-    return json({ error: "missing fields" }, req, 400);
-  }
+  const parsed = await validateBody(req, EvaluateAnswerSchema);
+  if (parsed.error) return parsed.error;
+  const { userAnswer, question, referenceAnswers } = parsed.data;
 
   const { cardId } = params;
 

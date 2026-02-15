@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { t } from "../lib/i18n";
 
 type ConfirmDialogProps = {
@@ -25,6 +26,13 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const confirm = confirmLabel ?? t.dialog.confirm;
   const cancel = cancelLabel ?? t.dialog.cancel;
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus cancel button on open & handle Escape
+  useEffect(() => {
+    if (isOpen) cancelRef.current?.focus();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const confirmStyles = {
@@ -44,6 +52,9 @@ export function ConfirmDialog({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
       style={{
         position: "fixed",
         top: 0,
@@ -58,6 +69,7 @@ export function ConfirmDialog({
         padding: "1rem",
       }}
       onClick={onCancel}
+      onKeyDown={(e) => { if (e.key === "Escape") onCancel(); }}
     >
       <div
         className="card"
@@ -67,10 +79,10 @@ export function ConfirmDialog({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: 0, fontSize: "1.125rem" }}>{title}</h3>
+        <h3 id="confirm-dialog-title" style={{ margin: 0, fontSize: "1.125rem" }}>{title}</h3>
         <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>{message}</p>
         <div style={{ display: "flex", gap: "8px", marginTop: "0.5rem" }}>
-          <button onClick={onCancel} style={{ flex: 1 }}>
+          <button ref={cancelRef} onClick={onCancel} style={{ flex: 1 }}>
             {cancel}
           </button>
           <button

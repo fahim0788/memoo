@@ -47,6 +47,7 @@ function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null;
   return (
     <button
       onClick={play}
+      aria-label={label}
       style={{
         display: "flex",
         alignItems: "center",

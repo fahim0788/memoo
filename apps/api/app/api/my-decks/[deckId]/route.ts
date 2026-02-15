@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@memolist/db";
 import { json, OPTIONS } from "../../../_lib/cors";
 import { requireAuth } from "../../../_lib/auth";
+import { validateBody, UpdateDeckSchema } from "../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -17,8 +18,9 @@ export async function PUT(
   if (!deck) return json({ error: "deck not found" }, req, 404);
   if (deck.ownerId !== auth.user.userId) return json({ error: "unauthorized" }, req, 403);
 
-  const { name } = await req.json();
-  if (!name) return json({ error: "name required" }, req, 400);
+  const parsed = await validateBody(req, UpdateDeckSchema);
+  if (parsed.error) return parsed.error;
+  const { name } = parsed.data;
 
   await prisma.deck.update({ where: { id: params.deckId }, data: { name } });
 

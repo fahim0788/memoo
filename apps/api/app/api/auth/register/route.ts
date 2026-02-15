@@ -4,6 +4,7 @@ import * as bcrypt from "bcryptjs";
 import { json, OPTIONS } from "../../../_lib/cors";
 import { signToken } from "../../../_lib/auth";
 import { rateLimit } from "../../../_lib/rate-limit";
+import { validateBody, RegisterSchema } from "../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -13,11 +14,9 @@ export async function POST(req: NextRequest) {
   const limited = rateLimit(req, { maxRequests: 5, windowMs: 60 * 60_000, prefix: "register" });
   if (limited) return limited;
 
-  const { email, password, firstName, lastName } = await req.json();
-
-  if (!email || !password) {
-    return json({ error: "email and password required" }, req, 400);
-  }
+  const parsed = await validateBody(req, RegisterSchema);
+  if (parsed.error) return parsed.error;
+  const { email, password, firstName, lastName } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {

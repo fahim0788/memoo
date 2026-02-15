@@ -3,6 +3,7 @@ import { prisma } from "@memolist/db";
 import * as bcrypt from "bcryptjs";
 import { json, OPTIONS } from "../../../_lib/cors";
 import { requireAuth } from "../../../_lib/auth";
+import { validateBody, UpdateProfileSchema } from "../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -27,8 +28,9 @@ export async function PUT(req: NextRequest) {
   const auth = requireAuth(req);
   if ("error" in auth) return auth.error;
 
-  const body = await req.json();
-  const { firstName, lastName, email, currentPassword, newPassword } = body;
+  const parsed = await validateBody(req, UpdateProfileSchema);
+  if (parsed.error) return parsed.error;
+  const { firstName, lastName, email, currentPassword, newPassword } = parsed.data;
 
   const user = await prisma.user.findUnique({
     where: { id: auth.user.userId },

@@ -1,19 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 import { useLists } from "../hooks/useLists";
 import { MenuView } from "../components/MenuView";
-import { AvailableView } from "../components/AvailableView";
-import { StudyView } from "../components/StudyView";
-import { CreateDeckView } from "../components/CreateDeckView";
-import { EditDeckView } from "../components/EditDeckView";
-import { ChapterPickerView } from "../components/ChapterPickerView";
-import { HelpView } from "../components/HelpView";
-import { ProfileView } from "../components/ProfileView";
 import { SyncStatus } from "../components/SyncStatus";
 import { BottomNav } from "../components/BottomNav";
+
+// Lazy-loaded views — only downloaded when the user navigates to them
+const AvailableView = dynamic(() => import("../components/AvailableView").then(m => ({ default: m.AvailableView })), { ssr: false });
+const StudyView = dynamic(() => import("../components/StudyView").then(m => ({ default: m.StudyView })), { ssr: false });
+const CreateDeckView = dynamic(() => import("../components/CreateDeckView").then(m => ({ default: m.CreateDeckView })), { ssr: false });
+const EditDeckView = dynamic(() => import("../components/EditDeckView").then(m => ({ default: m.EditDeckView })), { ssr: false });
+const ChapterPickerView = dynamic(() => import("../components/ChapterPickerView").then(m => ({ default: m.ChapterPickerView })), { ssr: false });
+const HelpView = dynamic(() => import("../components/HelpView").then(m => ({ default: m.HelpView })), { ssr: false });
+const ProfileView = dynamic(() => import("../components/ProfileView").then(m => ({ default: m.ProfileView })), { ssr: false });
 import { useStats } from "../hooks/useStats";
 import { useChapterProgress } from "../hooks/useChapterProgress";
 import type { DeckFromApi, CardFromApi, ChapterFromApi } from "../lib/api";

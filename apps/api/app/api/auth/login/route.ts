@@ -4,6 +4,7 @@ import * as bcrypt from "bcryptjs";
 import { json, OPTIONS } from "../../../_lib/cors";
 import { signToken } from "../../../_lib/auth";
 import { rateLimit } from "../../../_lib/rate-limit";
+import { validateBody, LoginSchema } from "../../../_lib/validation";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -13,11 +14,9 @@ export async function POST(req: NextRequest) {
   const limited = rateLimit(req, { maxRequests: 10, windowMs: 15 * 60_000, prefix: "login" });
   if (limited) return limited;
 
-  const { email, password } = await req.json();
-
-  if (!email || !password) {
-    return json({ error: "email and password required" }, req, 400);
-  }
+  const parsed = await validateBody(req, LoginSchema);
+  if (parsed.error) return parsed.error;
+  const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(password, user.password))) {

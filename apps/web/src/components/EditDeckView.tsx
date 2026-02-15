@@ -237,6 +237,7 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
                 value={searchCards}
                 onChange={e => setSearchCards(e.target.value)}
                 placeholder={t.edit.searchCards}
+                aria-label={t.edit.searchCards}
                 style={{ marginBottom: "0.25rem", width: "100%" }}
               />
             )}
@@ -328,22 +329,24 @@ export function EditDeckView({ deck, initialCards, onBack, userName, onLogout, o
                             {card.answers.join(", ")}
                           </div>
                         </div>
-                        <span
+                        <button
                           onClick={() => startEditCard(card)}
                           className="action-icon"
+                          aria-label={t.common.edit}
                           title={t.common.edit}
                           style={{ padding: "0.25rem", flexShrink: 0 }}
                         >
                           <IconEdit size={14} />
-                        </span>
-                        <span
+                        </button>
+                        <button
                           onClick={() => setDeleteTarget({ id: card.id, question: card.question })}
                           className="action-icon delete"
+                          aria-label={t.common.delete}
                           title={t.common.delete}
                           style={{ padding: "0.25rem", flexShrink: 0 }}
                         >
                           <IconTrash size={14} />
-                        </span>
+                        </button>
                       </div>
                     )}
                   </div>
