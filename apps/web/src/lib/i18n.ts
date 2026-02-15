@@ -86,6 +86,7 @@ export interface Translations {
     noDueCards: string;
     todayLabel: string;
     typeYourAnswer: string;
+    scramblePlaceholder: string;
     listenEn: string;
     listenFr: string;
   };
@@ -425,6 +426,7 @@ const fr: Translations = {
     noDueCards: "Aucune carte en attente pour le moment.",
     todayLabel: "Aujourd'hui : ",
     typeYourAnswer: "Tape ta réponse…",
+    scramblePlaceholder: "Touche les mots dans l'ordre…",
     listenEn: "Écouter EN",
     listenFr: "Écouter FR",
   },
@@ -756,6 +758,7 @@ const en: Translations = {
     noDueCards: "No cards due at the moment.",
     todayLabel: "Today: ",
     typeYourAnswer: "Type your answer…",
+    scramblePlaceholder: "Tap the words in order…",
     listenEn: "Listen EN",
     listenFr: "Listen FR",
   },

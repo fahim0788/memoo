@@ -11,6 +11,7 @@ import { t } from "../lib/i18n";
 import { useLanguage } from "../hooks/useLanguage";
 import { Header } from "./Header";
 import { IconSpeaker, IconSpeakerPlaying } from "./Icons";
+import { AnswerInput } from "./AnswerInput";
 
 function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null; label: string; autoPlay?: boolean; fullWidth?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -111,7 +112,6 @@ function pickNextDue(cards: CardFromApi[], state: StudyState) {
 export function StudyView({ deck, cards, chapterName, chapterColor, onBack, userName, onLogout, onHelp, onProfile }: StudyViewProps) {
   useLanguage();
   const [study, setStudy] = useState<StudyState | null>(null);
-  const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<{ ok: boolean; expected: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [pendingStudy, setPendingStudy] = useState<StudyState | null>(null);
@@ -134,7 +134,6 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
 
   useEffect(() => {
     if (!showResult) {
-      setAnswer("");
       setResult(null);
     }
   }, [current?.id, showResult]);
@@ -144,10 +143,10 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
     return s.lastActiveDay !== t ? { ...s, doneToday: 0, lastActiveDay: t } : s;
   }
 
-  async function onValidate() {
+  async function handleAnswer(userAnswer: string) {
     if (!study || !current || showResult) return;
 
-    const ok = isCorrect(answer, current.answers);
+    const ok = isCorrect(userAnswer, current.answers);
     const next0 = bumpDailyCounters(study);
     const next: StudyState = {
       ...next0,
@@ -164,7 +163,13 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
     await idbSet(stateKey(deck.id), next);
     updateStreak();
 
-    queueReview({ cardId: current.id, ok, userAnswer: answer });
+    queueReview({ cardId: current.id, ok, userAnswer });
+  }
+
+  function handleShowAnswer() {
+    if (!current) return;
+    setResult({ ok: false, expected: current.answers[0] ?? "" });
+    setShowResult(true);
   }
 
   function goNext() {
@@ -248,27 +253,13 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
             </div>
 
             {!showResult && (
-              <>
-                <div className="input-wrapper">
-                  <input
-                    value={answer}
-                    onChange={e => setAnswer(e.target.value)}
-                    placeholder={t.study.typeYourAnswer}
-                    onKeyDown={e => e.key === "Enter" && onValidate()}
-                  />
-                </div>
-                <div className="actions">
-                  <button className="primary" onClick={onValidate}>{t.study.validate}</button>
-                  <button
-                    onClick={() => {
-                      setResult({ ok: false, expected: current.answers[0] ?? "" });
-                      setShowResult(true);
-                    }}
-                  >
-                    {t.study.showAnswer}
-                  </button>
-                </div>
-              </>
+              <AnswerInput
+                key={current.id}
+                card={current}
+                allCards={cards}
+                onAnswer={handleAnswer}
+                onShowAnswer={handleShowAnswer}
+              />
             )}
 
             {showResult && result && (
