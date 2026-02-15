@@ -20,6 +20,17 @@ const STOP_WORDS = new Set([
   "the", "a", "an", "of",
 ]);
 
+/** Check that words appear in order (as substrings) within text */
+function wordsInOrder(text: string, words: string[]): boolean {
+  let pos = 0;
+  for (const w of words) {
+    const idx = text.indexOf(w, pos);
+    if (idx === -1) return false;
+    pos = idx + w.length;
+  }
+  return true;
+}
+
 export function isCorrect(userAnswer: string, expectedAnswers: readonly string[]): boolean {
   const u = normalizeText(userAnswer);
   if (!u) return false;
@@ -33,7 +44,13 @@ export function isCorrect(userAnswer: string, expectedAnswers: readonly string[]
       const content = words.filter(w => !STOP_WORDS.has(w));
       // If all words are stop words, require them all
       const required = content.length > 0 ? content : words;
-      if (required.every(w => u.includes(w))) return true;
+      // Enumerations (comma, semicolon, slash in original): order doesn't matter
+      if (/[,;/]/.test(exp)) {
+        if (required.every(w => u.includes(w))) return true;
+      } else {
+        // Phrases: words must appear in correct order
+        if (wordsInOrder(u, required)) return true;
+      }
     }
   }
   return false;
