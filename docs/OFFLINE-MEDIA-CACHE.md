@@ -57,7 +57,7 @@ SyncStatus.tsx — Toast bottom-right
 
 ## Stockage
 
-- Les media sont caches dans le **SW Cache API** (cache `memolist-v2`), le meme cache que les assets statiques
+- Les media sont caches dans le **SW Cache API** (cache `memolist-v3`), le meme cache que les assets statiques
 - Le statut de cache par deck est stocke dans **IndexedDB** sous la cle `media-cache:<deckId>`
 - Les fichiers audio TTS ont des headers `Cache-Control: public, max-age=31536000, immutable` (1 an)
 

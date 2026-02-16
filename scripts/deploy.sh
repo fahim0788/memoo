@@ -412,7 +412,7 @@ if should_run "build" && [ "$SKIP_BUILD" = false ]; then
 
         BUILD_ARGS=""
         if [ "$LABEL" = "WEB" ]; then
-            BUILD_ARGS="--build-arg NEXT_PUBLIC_API_BASE=/api --build-arg NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-MemoList}"
+            BUILD_ARGS="--build-arg NEXT_PUBLIC_API_BASE=/api --build-arg NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Memoo}"
         fi
 
         # Lancer le build en background pour suivre la progression
