@@ -93,7 +93,9 @@ export function MenuView({
             const hasDue = (stats?.duePerDeck?.[deck.id] ?? 0) > 0;
             return (
               <div key={deck.id} style={{ position: "relative", width: "100%" }}>
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   className="primary card-button"
                   style={{
                     position: "relative",
@@ -102,8 +104,10 @@ export function MenuView({
                     transition: isAnimating ? "transform 0.3s ease-in-out" : "none",
                     transform: isAnimating ? "scale(1.02)" : "scale(1)",
                     opacity: hasDue ? 1 : 0.5,
+                    cursor: "pointer",
                   }}
                   onClick={() => onStudy(deck)}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onStudy(deck); } }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     {/* Reorder buttons (only show in non-filtered view) */}
@@ -203,7 +207,7 @@ export function MenuView({
                       )}
                     </span>
                   </div>
-                  <div style={{ marginTop: "2px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ marginTop: "2px", paddingBottom: (deck.chapterCount ?? 0) > 0 ? "6px" : 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span className="small" style={{ fontWeight: 400 }}>
                       {(() => {
                         const dueCount = stats?.duePerDeck?.[deck.id] ?? 0;
@@ -250,7 +254,7 @@ export function MenuView({
                       </div>
                     );
                   })()}
-                </button>
+                </div>
                 {iconPicker === deck.id && (
                   <>
                     {/* Backdrop transparent pour fermer au clic extérieur */}

@@ -346,17 +346,33 @@ if should_run "build" && [ "$SKIP_BUILD" = false ]; then
     STEP=$((STEP + 1))
     section $STEP $TOTAL "Construction des images Docker"
 
+    # Builds en parallèle (web + worker indépendants, migrate réutilise le cache API)
     retry "$MAX_RETRIES" "Build WEB" \
-        docker build --no-cache -t memoo-web:latest -f apps/web/Dockerfile \
+        docker build -t memoo-web:latest -f apps/web/Dockerfile \
         --build-arg NEXT_PUBLIC_API_BASE=/api \
-        --build-arg NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME:-MemoList}" .
+        --build-arg NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME:-MemoList}" . &
+    PID_WEB=$!
 
     retry "$MAX_RETRIES" "Build API" \
-        docker build --no-cache -t memoo-api:latest -f apps/api/Dockerfile .
+        docker build -t memoo-api:latest -f apps/api/Dockerfile . &
+    PID_API=$!
 
     retry "$MAX_RETRIES" "Build WORKER" \
-        docker build --no-cache -t memoo-worker:latest -f apps/worker/Dockerfile .
+        docker build -t memoo-worker:latest -f apps/worker/Dockerfile . &
+    PID_WORKER=$!
 
+    # Attendre les 3 builds parallèles
+    FAIL=0
+    wait $PID_WEB   || FAIL=1
+    wait $PID_API   || FAIL=1
+    wait $PID_WORKER || FAIL=1
+
+    if [ $FAIL -ne 0 ]; then
+        log_error "Un ou plusieurs builds ont échoué"
+        exit 1
+    fi
+
+    # MIGRATE réutilise le cache du build API (quasi-instantané)
     retry "$MAX_RETRIES" "Build MIGRATE" \
         docker build --target migrate -t memoo-migrate:latest -f apps/api/Dockerfile .
 

@@ -7,14 +7,18 @@ WORKDIR /app
 # Contournement certificat SSL (proxy entreprise)
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# Copy workspace root
+# 1) Copy only package files (cached tant que les deps ne changent pas)
 COPY package.json package-lock.json* ./
-COPY packages ./packages
-COPY apps/api ./apps/api
+COPY packages/db/package.json ./packages/db/
+COPY apps/api/package.json ./apps/api/
 
-# Install all workspace dependencies from root
+# 2) Install dependencies (layer cachée si package.json inchangé)
 RUN npm ci --workspace=apps/api --workspace=packages/db --no-audit --no-fund || \
     npm install --workspace=apps/api --workspace=packages/db --no-audit --no-fund
+
+# 3) Copy source code (changements fréquents -> layer séparée)
+COPY packages ./packages
+COPY apps/api ./apps/api
 
 # =============================================================================
 # Stage 2: Build

@@ -4,13 +4,16 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Copy workspace root (package-lock.json* makes it optional)
+# 1) Copy only package files (cached tant que les deps ne changent pas)
 COPY package.json package-lock.json* ./
-COPY apps/web ./apps/web
+COPY apps/web/package.json ./apps/web/
 
-# Install workspace dependencies from root (with fallback like API)
+# 2) Install dependencies (layer cachée si package.json inchangé)
 RUN npm ci --workspace=apps/web --no-audit --no-fund || \
     npm install --workspace=apps/web --no-audit --no-fund
+
+# 3) Copy source code (changements fréquents -> layer séparée)
+COPY apps/web ./apps/web
 
 # =============================================================================
 # Stage 2: Build

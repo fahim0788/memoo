@@ -49,7 +49,11 @@ export async function sendVerificationEmail(to: string, code: string) {
     return;
   }
 
-  await sendEmail(to, subject, html);
+  try {
+    await sendEmail(to, subject, html);
+  } catch (err) {
+    console.error(`[Email] Failed to send verification to ${to}:`, err);
+  }
 }
 
 export async function sendPasswordResetEmail(to: string, code: string) {
@@ -70,5 +74,9 @@ export async function sendPasswordResetEmail(to: string, code: string) {
     return;
   }
 
-  await sendEmail(to, subject, html);
+  try {
+    await sendEmail(to, subject, html);
+  } catch (err) {
+    console.error(`[Email] Failed to send password reset to ${to}:`, err);
+  }
 }
