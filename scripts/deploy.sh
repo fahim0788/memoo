@@ -208,10 +208,16 @@ ensure_image() {
     return 0
 }
 
-# Parse "Step X/Y" depuis un log docker build → retourne "current/total"
+# Parse la progression depuis un log docker build → retourne "current/total"
+# Supporte le format classique (Step X/Y) et BuildKit ([stage X/Y])
 build_step() {
     local result
+    # Format classique : "Step 3/15"
     result=$(grep -o 'Step [0-9]*/[0-9]*' "$1" 2>/dev/null | tail -1 | sed 's/Step //')
+    if [ -z "$result" ]; then
+        # Format BuildKit : "[build 3/7]" ou "[stage-0 3/7]"
+        result=$(grep -o '\[[^ ]* [0-9]*/[0-9]*\]' "$1" 2>/dev/null | tail -1 | sed 's/.*\[.* //;s/\]//')
+    fi
     echo "${result:-0/1}"
 }
 
@@ -383,81 +389,71 @@ if should_run "build" && [ "$SKIP_BUILD" = false ]; then
     STEP=$((STEP + 1))
     section $STEP $TOTAL "Construction des images Docker"
 
-    # Builds en parallèle avec barres de progression
+    # Builds séquentiels avec barres de progression
+    # (parallèle impossible sur Pi ARM — pas assez de RAM)
     BUILD_LOG_DIR="/tmp/deploy-build-$$"
     mkdir -p "$BUILD_LOG_DIR"
 
-    export DOCKER_BUILDKIT=0
-
-    docker build -t memoo-web:latest -f apps/web/Dockerfile \
-        --build-arg NEXT_PUBLIC_API_BASE=/api \
-        --build-arg NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME:-MemoList}" . \
-        > "$BUILD_LOG_DIR/web.log" 2>&1 &
-    PID_WEB=$!
-
-    docker build -t memoo-api:latest -f apps/api/Dockerfile . \
-        > "$BUILD_LOG_DIR/api.log" 2>&1 &
-    PID_API=$!
-
-    docker build -t memoo-worker:latest -f apps/worker/Dockerfile . \
-        > "$BUILD_LOG_DIR/worker.log" 2>&1 &
-    PID_WORKER=$!
-
-    RC_WEB=-1; RC_API=-1; RC_WORKER=-1
+    BUILDS="API:memoo-api:latest:apps/api/Dockerfile WORKER:memoo-worker:latest:apps/worker/Dockerfile WEB:memoo-web:latest:apps/web/Dockerfile"
     BUILD_START=$(date +%s)
+    BUILD_COUNT=0
+    BUILD_TOTAL=3
 
-    if [ "$INTERACTIVE" = true ]; then
-        tput civis 2>/dev/null || true
-        echo ""; echo ""; echo ""
+    for entry in $BUILDS; do
+        LABEL="${entry%%:*}"
+        REST="${entry#*:}"
+        IMAGE="${REST%%:*}"
+        REST2="${REST#*:}"
+        TAG="${REST2%%:*}"
+        DOCKERFILE="${REST2#*:}"
 
-        while [ $RC_WEB -lt 0 ] || [ $RC_API -lt 0 ] || [ $RC_WORKER -lt 0 ]; do
+        BUILD_COUNT=$((BUILD_COUNT + 1))
+        LOGFILE="$BUILD_LOG_DIR/${LABEL,,}.log"
+
+        BUILD_ARGS=""
+        if [ "$LABEL" = "WEB" ]; then
+            BUILD_ARGS="--build-arg NEXT_PUBLIC_API_BASE=/api --build-arg NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-MemoList}"
+        fi
+
+        # Lancer le build en background pour suivre la progression
+        docker build -t "${IMAGE}:${TAG}" -f "$DOCKERFILE" $BUILD_ARGS . \
+            > "$LOGFILE" 2>&1 &
+        BUILD_PID=$!
+
+        if [ "$INTERACTIVE" = true ]; then
+            tput civis 2>/dev/null || true
+            echo ""
+
+            while kill -0 "$BUILD_PID" 2>/dev/null; do
+                BUILD_ELAPSED=$(( $(date +%s) - BUILD_START ))
+                STEP_PROG=$(build_step "$LOGFILE")
+
+                printf "\033[1A"
+                render_bar "$LABEL" "${STEP_PROG%/*}" "${STEP_PROG#*/}" "-1" "$BUILD_ELAPSED"
+
+                sleep 0.5
+            done
+
+            wait "$BUILD_PID" 2>/dev/null && BUILD_RC=0 || BUILD_RC=$?
             BUILD_ELAPSED=$(( $(date +%s) - BUILD_START ))
+            STEP_PROG=$(build_step "$LOGFILE")
 
-            # Collecter les exit codes quand un build finit
-            if [ $RC_WEB -lt 0 ] && ! kill -0 "$PID_WEB" 2>/dev/null; then
-                wait "$PID_WEB" 2>/dev/null && RC_WEB=0 || RC_WEB=$?
-            fi
-            if [ $RC_API -lt 0 ] && ! kill -0 "$PID_API" 2>/dev/null; then
-                wait "$PID_API" 2>/dev/null && RC_API=0 || RC_API=$?
-            fi
-            if [ $RC_WORKER -lt 0 ] && ! kill -0 "$PID_WORKER" 2>/dev/null; then
-                wait "$PID_WORKER" 2>/dev/null && RC_WORKER=0 || RC_WORKER=$?
-            fi
+            printf "\033[1A"
+            render_bar "$LABEL" "${STEP_PROG%/*}" "${STEP_PROG#*/}" "$BUILD_RC" "$BUILD_ELAPSED"
+            tput cnorm 2>/dev/null || true
+        else
+            echo "  ... Build $LABEL ($BUILD_COUNT/$BUILD_TOTAL)"
+            wait "$BUILD_PID" 2>/dev/null && BUILD_RC=0 || BUILD_RC=$?
+        fi
 
-            # Parser la progression
-            STEP_WEB=$(build_step "$BUILD_LOG_DIR/web.log")
-            STEP_API=$(build_step "$BUILD_LOG_DIR/api.log")
-            STEP_WORKER=$(build_step "$BUILD_LOG_DIR/worker.log")
+        if [ $BUILD_RC -ne 0 ]; then
+            log_error "Build $LABEL échoué (voir $LOGFILE)"
+            exit 1
+        fi
+    done
 
-            # Remonter 3 lignes et redessiner
-            printf "\033[3A"
-            render_bar "WEB"    "${STEP_WEB%/*}" "${STEP_WEB#*/}" "$RC_WEB" "$BUILD_ELAPSED"
-            render_bar "API"    "${STEP_API%/*}" "${STEP_API#*/}" "$RC_API" "$BUILD_ELAPSED"
-            render_bar "WORKER" "${STEP_WORKER%/*}" "${STEP_WORKER#*/}" "$RC_WORKER" "$BUILD_ELAPSED"
-
-            sleep 0.5
-        done
-
-        tput cnorm 2>/dev/null || true
-    else
-        echo "  ... Build WEB + API + WORKER en parallèle"
-        wait "$PID_WEB" 2>/dev/null && RC_WEB=0 || RC_WEB=$?
-        wait "$PID_API" 2>/dev/null && RC_API=0 || RC_API=$?
-        wait "$PID_WORKER" 2>/dev/null && RC_WORKER=0 || RC_WORKER=$?
-        BUILD_ELAPSED=$(( $(date +%s) - BUILD_START ))
-    fi
-
-    FAIL=0
-    [ $RC_WEB -ne 0 ]    && { log_error "Build WEB échoué (voir $BUILD_LOG_DIR/web.log)"; FAIL=1; }
-    [ $RC_API -ne 0 ]    && { log_error "Build API échoué (voir $BUILD_LOG_DIR/api.log)"; FAIL=1; }
-    [ $RC_WORKER -ne 0 ] && { log_error "Build WORKER échoué (voir $BUILD_LOG_DIR/worker.log)"; FAIL=1; }
-
-    if [ $FAIL -ne 0 ]; then
-        log_error "Un ou plusieurs builds ont échoué. Logs dans $BUILD_LOG_DIR/"
-        exit 1
-    fi
-
-    log_ok "Builds parallèles terminés ($(format_time $BUILD_ELAPSED))"
+    BUILD_ELAPSED=$(( $(date +%s) - BUILD_START ))
+    log_ok "Tous les builds terminés ($(format_time $BUILD_ELAPSED))"
     rm -rf "$BUILD_LOG_DIR"
 
     # MIGRATE réutilise le cache du build API (quasi-instantané)
