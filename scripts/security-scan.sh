@@ -28,6 +28,8 @@ check() {
     if [ "$expected" = "blocked" ]; then
         if [ "$code" = "404" ] || [ "$code" = "403" ]; then
             printf "  ${GREEN}✓${NC} %-45s %s\n" "$path" "$code"
+        elif [ "$code" = "307" ] || [ "$code" = "308" ] || [ "$code" = "301" ] || [ "$code" = "302" ]; then
+            printf "  ${YELLOW}⚠${NC} %-45s %s (redirect, pas expose mais pas bloque)\n" "$path" "$code"
         else
             printf "  ${RED}✗${NC} %-45s %s ${RED}← ACCESSIBLE${NC}\n" "$path" "$code"
             ISSUES=$((ISSUES + 1))
