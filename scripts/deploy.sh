@@ -208,6 +208,43 @@ ensure_image() {
     return 0
 }
 
+# Parse "Step X/Y" depuis un log docker build → retourne "current/total"
+build_step() {
+    local result
+    result=$(grep -o 'Step [0-9]*/[0-9]*' "$1" 2>/dev/null | tail -1 | sed 's/Step //')
+    echo "${result:-0/1}"
+}
+
+# Affiche une barre de progression
+# Usage: render_bar "LABEL" current total status elapsed_secs
+# status: -1=en cours, 0=ok, 1+=échoué
+render_bar() {
+    local label=$1 cur=$2 tot=$3 status=$4 elapsed=$5
+    local w=20
+
+    [ "$tot" -le 0 ] && tot=1
+    [ "$cur" -gt "$tot" ] && cur=$tot
+
+    local filled=$((cur * w / tot))
+    local empty=$((w - filled))
+
+    local bar="" rest=""
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do rest+="░"; done
+
+    local icon=" " clr="${CYAN}"
+    if [ "$status" -eq 0 ]; then
+        icon="${GREEN}✓${NC}"; clr="${GREEN}"
+        bar=""; for ((i=0; i<w; i++)); do bar+="█"; done; rest=""
+        cur=$tot
+    elif [ "$status" -gt 0 ]; then
+        icon="${RED}✗${NC}"; clr="${RED}"
+    fi
+
+    printf "  %-8s %b%s${DIM}%s${NC} %2d/%-2d %b ${DIM}%s${NC}\n" \
+        "$label" "$clr" "$bar" "$rest" "$cur" "$tot" "$icon" "$(format_time "$elapsed")"
+}
+
 # =============================================================================
 # Arguments
 # =============================================================================
@@ -346,31 +383,82 @@ if should_run "build" && [ "$SKIP_BUILD" = false ]; then
     STEP=$((STEP + 1))
     section $STEP $TOTAL "Construction des images Docker"
 
-    # Builds en parallèle (web + worker indépendants, migrate réutilise le cache API)
-    retry "$MAX_RETRIES" "Build WEB" \
-        docker build -t memoo-web:latest -f apps/web/Dockerfile \
+    # Builds en parallèle avec barres de progression
+    BUILD_LOG_DIR="/tmp/deploy-build-$$"
+    mkdir -p "$BUILD_LOG_DIR"
+
+    export DOCKER_BUILDKIT=0
+
+    docker build -t memoo-web:latest -f apps/web/Dockerfile \
         --build-arg NEXT_PUBLIC_API_BASE=/api \
-        --build-arg NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME:-MemoList}" . &
+        --build-arg NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME:-MemoList}" . \
+        > "$BUILD_LOG_DIR/web.log" 2>&1 &
     PID_WEB=$!
 
-    retry "$MAX_RETRIES" "Build API" \
-        docker build -t memoo-api:latest -f apps/api/Dockerfile . &
+    docker build -t memoo-api:latest -f apps/api/Dockerfile . \
+        > "$BUILD_LOG_DIR/api.log" 2>&1 &
     PID_API=$!
 
-    retry "$MAX_RETRIES" "Build WORKER" \
-        docker build -t memoo-worker:latest -f apps/worker/Dockerfile . &
+    docker build -t memoo-worker:latest -f apps/worker/Dockerfile . \
+        > "$BUILD_LOG_DIR/worker.log" 2>&1 &
     PID_WORKER=$!
 
-    # Attendre les 3 builds parallèles
+    RC_WEB=-1; RC_API=-1; RC_WORKER=-1
+    BUILD_START=$(date +%s)
+
+    if [ "$INTERACTIVE" = true ]; then
+        tput civis 2>/dev/null || true
+        echo ""; echo ""; echo ""
+
+        while [ $RC_WEB -lt 0 ] || [ $RC_API -lt 0 ] || [ $RC_WORKER -lt 0 ]; do
+            BUILD_ELAPSED=$(( $(date +%s) - BUILD_START ))
+
+            # Collecter les exit codes quand un build finit
+            if [ $RC_WEB -lt 0 ] && ! kill -0 "$PID_WEB" 2>/dev/null; then
+                wait "$PID_WEB" 2>/dev/null && RC_WEB=0 || RC_WEB=$?
+            fi
+            if [ $RC_API -lt 0 ] && ! kill -0 "$PID_API" 2>/dev/null; then
+                wait "$PID_API" 2>/dev/null && RC_API=0 || RC_API=$?
+            fi
+            if [ $RC_WORKER -lt 0 ] && ! kill -0 "$PID_WORKER" 2>/dev/null; then
+                wait "$PID_WORKER" 2>/dev/null && RC_WORKER=0 || RC_WORKER=$?
+            fi
+
+            # Parser la progression
+            STEP_WEB=$(build_step "$BUILD_LOG_DIR/web.log")
+            STEP_API=$(build_step "$BUILD_LOG_DIR/api.log")
+            STEP_WORKER=$(build_step "$BUILD_LOG_DIR/worker.log")
+
+            # Remonter 3 lignes et redessiner
+            printf "\033[3A"
+            render_bar "WEB"    "${STEP_WEB%/*}" "${STEP_WEB#*/}" "$RC_WEB" "$BUILD_ELAPSED"
+            render_bar "API"    "${STEP_API%/*}" "${STEP_API#*/}" "$RC_API" "$BUILD_ELAPSED"
+            render_bar "WORKER" "${STEP_WORKER%/*}" "${STEP_WORKER#*/}" "$RC_WORKER" "$BUILD_ELAPSED"
+
+            sleep 0.5
+        done
+
+        tput cnorm 2>/dev/null || true
+    else
+        echo "  ... Build WEB + API + WORKER en parallèle"
+        wait "$PID_WEB" 2>/dev/null && RC_WEB=0 || RC_WEB=$?
+        wait "$PID_API" 2>/dev/null && RC_API=0 || RC_API=$?
+        wait "$PID_WORKER" 2>/dev/null && RC_WORKER=0 || RC_WORKER=$?
+        BUILD_ELAPSED=$(( $(date +%s) - BUILD_START ))
+    fi
+
     FAIL=0
-    wait $PID_WEB   || FAIL=1
-    wait $PID_API   || FAIL=1
-    wait $PID_WORKER || FAIL=1
+    [ $RC_WEB -ne 0 ]    && { log_error "Build WEB échoué (voir $BUILD_LOG_DIR/web.log)"; FAIL=1; }
+    [ $RC_API -ne 0 ]    && { log_error "Build API échoué (voir $BUILD_LOG_DIR/api.log)"; FAIL=1; }
+    [ $RC_WORKER -ne 0 ] && { log_error "Build WORKER échoué (voir $BUILD_LOG_DIR/worker.log)"; FAIL=1; }
 
     if [ $FAIL -ne 0 ]; then
-        log_error "Un ou plusieurs builds ont échoué"
+        log_error "Un ou plusieurs builds ont échoué. Logs dans $BUILD_LOG_DIR/"
         exit 1
     fi
+
+    log_ok "Builds parallèles terminés ($(format_time $BUILD_ELAPSED))"
+    rm -rf "$BUILD_LOG_DIR"
 
     # MIGRATE réutilise le cache du build API (quasi-instantané)
     retry "$MAX_RETRIES" "Build MIGRATE" \
