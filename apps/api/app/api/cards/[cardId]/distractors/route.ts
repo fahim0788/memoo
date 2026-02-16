@@ -3,6 +3,7 @@ import { prisma } from "@memolist/db";
 import OpenAI from "openai";
 import { json, OPTIONS } from "../../../../_lib/cors";
 import { requireAuth } from "../../../../_lib/auth";
+import { AI_MODEL, DISTRACTORS_CONFIG, DISTRACTORS_SYSTEM_PROMPT, distractorsUserPrompt } from "../../../../_lib/prompts";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -43,25 +44,11 @@ export async function POST(
     }
 
     const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.7,
-      max_tokens: 150,
+      model: AI_MODEL,
+      ...DISTRACTORS_CONFIG,
       messages: [
-        {
-          role: "system",
-          content: `Tu es un générateur de QCM pour des flashcards éducatives.
-On te donne une question et sa bonne réponse.
-Génère exactement 3 mauvaises réponses (distracteurs) qui sont :
-- Plausibles et réalistes (un étudiant pourrait hésiter)
-- Du même type/format que la bonne réponse (même longueur approximative, même catégorie)
-- Clairement fausses pour quelqu'un qui connaît le sujet
-
-Réponds UNIQUEMENT avec les 3 distracteurs, un par ligne, sans numérotation ni ponctuation finale.`,
-        },
-        {
-          role: "user",
-          content: `Question : ${question}\nBonne réponse : ${answer}`,
-        },
+        { role: "system", content: DISTRACTORS_SYSTEM_PROMPT },
+        { role: "user", content: distractorsUserPrompt(question, answer) },
       ],
     });
 

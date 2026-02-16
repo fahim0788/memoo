@@ -13,17 +13,19 @@ export async function POST(req: NextRequest) {
 
   const parsed = await validateBody(req, CreateDeckSchema);
   if (parsed.error) return parsed.error;
-  const { name, cards } = parsed.data;
+  const { name, aiVerify, cards } = parsed.data;
 
   const deck = await prisma.deck.create({
     data: {
       name,
       ownerId: auth.user.userId,
+      ...(aiVerify !== undefined && { aiVerify }),
       cards: {
-        create: cards.map((c: { question: string; answers: string[]; imageUrl?: string }) => ({
+        create: cards.map((c: { question: string; answers: string[]; imageUrl?: string; aiVerify?: boolean | null }) => ({
           question: c.question,
           answers: c.answers,
           imageUrl: c.imageUrl || null,
+          ...(c.aiVerify !== undefined && { aiVerify: c.aiVerify }),
         })),
       },
     },

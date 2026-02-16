@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { json, OPTIONS } from "../../../../_lib/cors";
 import { requireAuth } from "../../../../_lib/auth";
 import { validateBody, EvaluateAnswerSchema } from "../../../../_lib/validation";
+import { AI_MODEL, EVALUATE_CONFIG, EVALUATE_SYSTEM_PROMPT, evaluateUserPrompt } from "../../../../_lib/prompts";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -32,25 +33,23 @@ export async function POST(
   const { cardId } = params;
 
   try {
-    const card = await prisma.card.findUnique({ where: { id: cardId } });
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: { deck: { select: { aiVerify: true } } },
+    });
     if (!card) return json({ error: "card not found" }, req, 404);
 
+    const shouldAiVerify = card.aiVerify ?? card.deck.aiVerify;
+    if (!shouldAiVerify) {
+      return json({ acceptable: false, skipped: true }, req);
+    }
+
     const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0,
-      max_tokens: 10,
+      model: AI_MODEL,
+      ...EVALUATE_CONFIG,
       messages: [
-        {
-          role: "system",
-          content: `Tu es un correcteur de flashcards. On te donne une question, la ou les réponse(s) de référence, et la réponse d'un utilisateur.
-Réponds UNIQUEMENT "OUI" si la réponse utilisateur est correcte ou acceptablement équivalente (synonyme, reformulation, variante orthographique, pluriel/singulier, langue différente du même mot).
-Réponds "NON" si la réponse est incorrecte, trop vague, ou incomplète.
-Ne donne aucune explication.`,
-        },
-        {
-          role: "user",
-          content: `Question : ${question}\nRéponse(s) de référence : ${referenceAnswers.join(", ")}\nRéponse de l'utilisateur : ${userAnswer}`,
-        },
+        { role: "system", content: EVALUATE_SYSTEM_PROMPT },
+        { role: "user", content: evaluateUserPrompt(question, referenceAnswers, userAnswer) },
       ],
     });
 

@@ -182,6 +182,8 @@ Pour les réponses de 2+ mots, après échec du match exact, un fuzzy match est 
 
 Quand le match local échoue en mode `text` et que l'utilisateur est en ligne, une évaluation IA est tentée via `evaluateAnswer()`. Si la réponse est jugée acceptable, elle est ajoutée aux réponses locales de la carte pour les prochaines fois.
 
+**Note** : l'évaluation IA est contrôlée par le flag `aiVerify` (par deck avec override par carte). Si `aiVerify` est désactivé, aucun appel IA n'est effectué et la réponse est jugée uniquement par le matching local. Voir `docs/AI-ANSWER-EVALUATION.md` pour les détails.
+
 ### Non toléré
 
 - Mots de contenu manquants

@@ -13,30 +13,33 @@ import { Header } from "./Header";
 import { IconSpeaker, IconSpeakerPlaying } from "./Icons";
 import { AnswerInput, type AnswerMode } from "./AnswerInput";
 
+// Singleton audio — only one audio plays at a time across the entire study view
+let activeAudio: HTMLAudioElement | null = null;
+function stopActiveAudio() {
+  if (activeAudio) { activeAudio.pause(); activeAudio = null; }
+}
+function playGlobal(url: string, onEnded?: () => void): HTMLAudioElement {
+  stopActiveAudio();
+  const audio = new Audio(url);
+  activeAudio = audio;
+  audio.onended = () => { if (activeAudio === audio) activeAudio = null; onEnded?.(); };
+  audio.play().catch(() => { if (activeAudio === audio) activeAudio = null; });
+  return audio;
+}
+
 function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null; label: string; autoPlay?: boolean; fullWidth?: boolean }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
   const play = () => {
     if (!url) return;
-    if (!audioRef.current) {
-      audioRef.current = new Audio(url);
-      audioRef.current.onended = () => setPlaying(false);
-    }
-    audioRef.current.currentTime = 0;
-    audioRef.current.play().catch(() => setPlaying(false));
+    playGlobal(url, () => setPlaying(false));
     setPlaying(true);
   };
 
-  // Reset audio when URL changes + autoplay if requested
+  // Reset when URL changes + autoplay if requested
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
     setPlaying(false);
     if (autoPlay && url) {
-      // Small delay to let the new Audio object be created in play()
       const t = setTimeout(play, 100);
       return () => clearTimeout(t);
     }
@@ -48,6 +51,7 @@ function AudioButton({ url, label, autoPlay, fullWidth }: { url?: string | null;
     <button
       onClick={play}
       aria-label={label}
+      className="audio-btn"
       style={{
         display: "flex",
         alignItems: "center",
@@ -118,6 +122,9 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
   const [evaluating, setEvaluating] = useState(false);
   const [pendingStudy, setPendingStudy] = useState<StudyState | null>(null);
   const [initialDue, setInitialDue] = useState<number | null>(null);
+  const [frozenCard, setFrozenCard] = useState<(typeof cards)[number] | null>(null);
+  const answeringRef = useRef(false);
+  const resultShownAtRef = useRef(0);
 
   useEffect(() => {
     idbGet<StudyState>(stateKey(deck.id)).then(s => {
@@ -132,7 +139,9 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
     });
   }, [deck.id, cards]);
 
-  const current = useMemo(() => (study ? pickNextDue(cards, study) : null), [study, cards]);
+  const computed = useMemo(() => (study ? pickNextDue(cards, study) : null), [study, cards]);
+  // Lock current card while result/evaluation is visible to prevent random re-picks
+  const current = frozenCard ?? computed;
 
   const progress = useMemo(() => {
     if (!study || initialDue === null) return { done: 0, total: 0 };
@@ -145,39 +154,26 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
     return { done, total: initialDue };
   }, [study, cards, initialDue]);
 
-  useEffect(() => {
-    if (!showResult) {
-      setResult(null);
-    }
-  }, [current?.id, showResult]);
-
   function bumpDailyCounters(s: StudyState) {
     const t = todayKey();
     return s.lastActiveDay !== t ? { ...s, doneToday: 0, lastActiveDay: t } : s;
   }
 
-  async function handleAnswer(userAnswer: string, mode?: AnswerMode) {
-    if (!study || !current || showResult || evaluating) return;
+  // Play answer audio — must be called first in user gesture context
+  function playAnswerAudio(card: CardFromApi) {
+    if (!card.audioUrlFr) return;
+    playGlobal(`${STORAGE_BASE}${card.audioUrlFr}`);
+  }
 
-    let ok = isCorrect(userAnswer, current.answers);
+  function handleAnswer(userAnswer: string, mode?: AnswerMode) {
+    if (!study || !current || showResult || evaluating || answeringRef.current) return;
+    answeringRef.current = true;
 
-    // AI evaluation: only for text mode, when wrong, and when online
-    if (!ok && mode === "text" && typeof navigator !== "undefined" && navigator.onLine) {
-      setEvaluating(true);
-      try {
-        const res = await evaluateAnswer(current.id, userAnswer, current.question, current.answers as string[]);
-        if (res.acceptable) {
-          ok = true;
-          // Update local card answers so future matches skip the API
-          if (!current.answers.includes(userAnswer.trim())) {
-            current.answers.push(userAnswer.trim());
-          }
-        }
-      } catch {
-        // Timeout or network error → keep ok = false
-      }
-      setEvaluating(false);
-    }
+    // Play answer audio FIRST — synchronous, in user gesture context
+    playAnswerAudio(current);
+    setFrozenCard(current);
+
+    const ok = isCorrect(userAnswer, current.answers);
 
     const next0 = bumpDailyCounters(study);
     const next: StudyState = {
@@ -191,24 +187,62 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
 
     setResult({ ok, expected: current.answers[0] ?? "" });
     setShowResult(true);
+    resultShownAtRef.current = Date.now();
     setPendingStudy(next);
-    await idbSet(stateKey(deck.id), next);
+    idbSet(stateKey(deck.id), next);
     updateStreak();
-
     queueReview({ cardId: current.id, ok, userAnswer });
+
+    // AI evaluation async (runs after result is shown, may upgrade ok → correct)
+    const shouldAiVerify = current.aiVerify ?? deck.aiVerify ?? true;
+    if (!ok && shouldAiVerify && mode === "text" && typeof navigator !== "undefined" && navigator.onLine) {
+      setEvaluating(true);
+      evaluateAnswer(current.id, userAnswer, current.question, current.answers as string[])
+        .then(res => {
+          if (res.acceptable) {
+            if (!current.answers.includes(userAnswer.trim())) {
+              current.answers.push(userAnswer.trim());
+            }
+            // Upgrade result to correct
+            const corrected: StudyState = {
+              ...next0,
+              doneToday: next0.doneToday + 1,
+              cards: {
+                ...next0.cards,
+                [current.id]: gradeCard(next0.cards[current.id] ?? defaultCardState(), true),
+              },
+            };
+            setResult({ ok: true, expected: current.answers[0] ?? "" });
+            setPendingStudy(corrected);
+            idbSet(stateKey(deck.id), corrected);
+            queueReview({ cardId: current.id, ok: true, userAnswer });
+          }
+        })
+        .catch(() => {})
+        .finally(() => setEvaluating(false));
+    }
   }
 
   function handleShowAnswer() {
     if (!current) return;
+    // Play answer audio FIRST — synchronous, in user gesture context
+    playAnswerAudio(current);
+    setFrozenCard(current);
     setResult({ ok: false, expected: current.answers[0] ?? "" });
     setShowResult(true);
+    resultShownAtRef.current = Date.now();
   }
 
   function goNext() {
+    // Block ghost clicks from pointerup landing on "Suivant" right after submit
+    if (Date.now() - resultShownAtRef.current < 500) return;
+    answeringRef.current = false;
+    stopActiveAudio();
     if (pendingStudy) {
       setStudy(pendingStudy);
       setPendingStudy(null);
     }
+    setFrozenCard(null);
     setShowResult(false);
   }
 
@@ -228,8 +262,8 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
         title={
           chapterName ? (
             <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.3 }}>
-              <span>{deck.name}</span>
-              <span style={{ fontSize: "0.7rem", fontWeight: 400, color: "var(--color-text-muted)" }}>{chapterName}</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deck.name}</span>
+              <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "var(--color-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{chapterName}</span>
             </span>
           ) : deck.name
         }
@@ -288,7 +322,7 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
             )}
             <h3>{current.question}</h3>
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label={t.study.listenEn} autoPlay fullWidth />
+              <AudioButton url={current.audioUrlEn ? `${STORAGE_BASE}${current.audioUrlEn}` : null} label={t.study.listenQuestion} autoPlay fullWidth />
             </div>
 
             {!showResult && !evaluating && (
@@ -319,7 +353,7 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
                 <div className="small" style={{ marginTop: "1rem" }}>{t.study.reference}</div>
                 <h3 style={{ color: "#76b900" }}>{result.expected}</h3>
                 <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label={t.study.listenFr} autoPlay fullWidth />
+                  <AudioButton url={current.audioUrlFr ? `${STORAGE_BASE}${current.audioUrlFr}` : null} label={t.study.listenAnswer} fullWidth />
                 </div>
                 <button className="primary" onClick={goNext}>{t.study.next}</button>
               </>

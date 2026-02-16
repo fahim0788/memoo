@@ -218,7 +218,7 @@
 
   /* Header */
   .header {
-    @apply flex justify-between items-center;
+    @apply flex flex-col;
   }
 
   .header h2 {
@@ -298,6 +298,17 @@
   .dark button {
     background: rgba(255, 255, 255, 0.08);
     color: #d1d5db;
+  }
+
+  /* Audio play buttons - distinctive in dark mode */
+  .dark button.audio-btn {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+  }
+
+  .dark button.audio-btn:hover {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fcd34d;
   }
 
   button:hover {
@@ -607,6 +618,98 @@
 
 .answer-chip-enter {
   animation: chipIn 0.2s ease forwards;
+}
+
+/* ============================================================================
+   MINI KEYBOARD (custom compact AZERTY/QWERTY)
+============================================================================ */
+
+.mini-kb {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 4px;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mini-kb-row {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.mini-kb-key {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 38px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  transition: transform 0.08s ease, background 0.08s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mini-kb-key:active {
+  transform: scale(0.9);
+  background: var(--color-primary-light);
+}
+
+.mini-kb-key-active {
+  background: var(--color-primary) !important;
+  color: white !important;
+  border-color: var(--color-primary) !important;
+}
+
+.mini-kb-key-wide {
+  flex: 1.5;
+  font-size: 1rem;
+}
+
+.mini-kb-key-space {
+  flex: 4;
+  max-width: none;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.mini-kb-key-submit {
+  flex: 2.5;
+  max-width: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--color-success);
+  color: white;
+  border-color: var(--color-success);
+}
+
+.mini-kb-key-submit:active {
+  background: var(--color-success-border) !important;
+}
+
+/* Dark mode overrides */
+.dark .mini-kb-key {
+  background: var(--color-bg-tertiary);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .mini-kb-key:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dark .mini-kb-key-submit {
+  background: var(--color-success);
+  border-color: var(--color-success);
 }
 
 /* ============================================================================

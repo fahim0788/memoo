@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     chapterCount: ud.deck._count.chapters,
     isOwned: ud.deck.ownerId === auth.user.userId,
     icon: ud.icon ?? null,
+    aiVerify: ud.deck.aiVerify,
   }));
 
   return json({ decks }, req);

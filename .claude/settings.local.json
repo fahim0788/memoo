@@ -45,7 +45,11 @@
       "Bash(npm test:*)",
       "Bash(npx vitest:*)",
       "Bash(find:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ipconfig:*)",
+      "Bash(CORS_ORIGIN=\"http://192.168.1.101:3000\" docker-compose up:*)",
+      "Bash(docker cp:*)",
+      "Bash(git diff:*)"
     ]
   }
 }

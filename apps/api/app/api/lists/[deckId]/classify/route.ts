@@ -3,6 +3,7 @@ import { prisma } from "@memolist/db";
 import OpenAI from "openai";
 import { json, OPTIONS } from "../../../../_lib/cors";
 import { requireAuth } from "../../../../_lib/auth";
+import { AI_MODEL, CLASSIFY_CONFIG, classifySystemPrompt, classifyUserPrompt } from "../../../../_lib/prompts";
 
 export const dynamic = "force-dynamic";
 export { OPTIONS };
@@ -62,35 +63,11 @@ export async function POST(
       }).join("\n");
 
       const completion = await getOpenAI().chat.completions.create({
-        model: "gpt-4o-mini",
-        temperature: 0.3,
-        max_tokens: 4096,
-        response_format: { type: "json_object" },
+        model: AI_MODEL,
+        ...CLASSIFY_CONFIG,
         messages: [
-          {
-            role: "system",
-            content: `You are a classification assistant for a flashcard learning app.
-Given a list of numbered flashcard items (question → answer) from a deck named "${deck?.name ?? "Unknown"}",
-group them into a FEW broad logical chapters/categories.
-Use BOTH the question AND the answer to determine the correct category.
-
-Rules:
-- Create between 3 and 7 chapters MAXIMUM. Prefer fewer, larger chapters.
-- Each chapter should contain at least 15-20 cards. Do NOT create small chapters with only a few cards.
-- Merge similar or related topics into one chapter rather than splitting them.
-- For geography/flags: group by continent (Europe, Asia, Africa, Americas, Oceania). Use the ANSWER (country name) to determine the continent.
-- For vocabulary: group by broad theme (max 5-6 themes)
-- Chapter names should be short (2-4 words)
-- Every card must be assigned to exactly one chapter
-- When in doubt, merge into a larger chapter rather than creating a new one
-
-IMPORTANT: Return card numbers (not text) for compactness.
-Return JSON: { "chapters": [{ "name": "Chapter Name", "description": "Brief description", "indices": [1, 2, 3, ...] }] }`,
-          },
-          {
-            role: "user",
-            content: `Classify these ${batch.length} flashcard items into chapters:\n\n${cardList}`,
-          },
+          { role: "system", content: classifySystemPrompt(deck?.name ?? "Unknown") },
+          { role: "user", content: classifyUserPrompt(batch.length, cardList) },
         ],
       });
 

@@ -15,6 +15,9 @@ export function SyncStatus() {
     isSyncing,
     hasError,
     lastSyncCount,
+    mediaCaching,
+    mediaCacheDone,
+    mediaOfflineWarning,
   } = useSyncStatus();
 
   // Syncing in progress
@@ -36,6 +39,33 @@ export function SyncStatus() {
       }}>
         <IconSync size={16} style={{ animation: "spin 1s linear infinite" }} />
         {t.sync.syncing}
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Media precaching in progress
+  if (mediaCaching) {
+    const pct = mediaCaching.total > 0
+      ? Math.round((mediaCaching.cached / mediaCaching.total) * 100)
+      : 0;
+    return (
+      <div role="status" style={{
+        position: "fixed",
+        bottom: "16px",
+        right: "16px",
+        padding: "8px 16px",
+        background: "#3b82f6",
+        color: "#fff",
+        borderRadius: "8px",
+        fontSize: "0.875rem",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      }}>
+        <IconSync size={16} style={{ animation: "spin 1s linear infinite" }} />
+        {t.mediaCache.caching} {pct}%
         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -80,6 +110,28 @@ export function SyncStatus() {
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconWifi size={16} />
           <span>{t.sync.offline}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Media offline warning (switching to uncached list while offline)
+  if (mediaOfflineWarning) {
+    return (
+      <div role="status" style={{
+        position: "fixed",
+        bottom: "16px",
+        right: "16px",
+        padding: "8px 16px",
+        background: "#f97316",
+        color: "#fff",
+        borderRadius: "8px",
+        fontSize: "0.875rem",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <IconAlert size={16} />
+          <span>{t.mediaCache.offlineWarning}</span>
         </div>
       </div>
     );
@@ -132,6 +184,28 @@ export function SyncStatus() {
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <IconSync size={16} />
           <span>{parts.join(" + ")} {t.sync.pending.toLowerCase()}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Media precaching complete
+  if (mediaCacheDone) {
+    return (
+      <div role="status" style={{
+        position: "fixed",
+        bottom: "16px",
+        right: "16px",
+        padding: "8px 16px",
+        background: "#76B900",
+        color: "#fff",
+        borderRadius: "8px",
+        fontSize: "0.875rem",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <IconCheck size={16} />
+          <span>{t.mediaCache.done}</span>
         </div>
       </div>
     );

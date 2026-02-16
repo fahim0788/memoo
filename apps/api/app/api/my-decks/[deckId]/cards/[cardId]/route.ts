@@ -20,7 +20,7 @@ export async function PUT(
 
   const parsed = await validateBody(req, UpdateCardSchema);
   if (parsed.error) return parsed.error;
-  const { question, answers, imageUrl } = parsed.data;
+  const { question, answers, imageUrl, aiVerify } = parsed.data;
 
   const card = await prisma.card.update({
     where: { id: params.cardId },
@@ -28,6 +28,7 @@ export async function PUT(
       question,
       answers,
       ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
+      ...(aiVerify !== undefined && { aiVerify }),
     },
     select: { id: true, question: true, answers: true, imageUrl: true },
   });

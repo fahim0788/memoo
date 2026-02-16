@@ -101,6 +101,11 @@ self.addEventListener("message", (event) => {
     console.log("[SW] Manual sync requested");
     notifyClients(MSG_SYNC_TRIGGERED);
   }
+
+  if (event.data && event.data.type === "CACHE_DECK_MEDIA") {
+    const { deckId, urls } = event.data.payload;
+    event.waitUntil(cacheDeckMedia(deckId, urls, event.source));
+  }
 });
 
 // Notify all clients
@@ -108,4 +113,49 @@ function notifyClients(message) {
   self.clients.matchAll().then(clients => {
     clients.forEach(client => client.postMessage({ type: message }));
   });
+}
+
+// Precache all media files for a deck
+async function cacheDeckMedia(deckId, urls, client) {
+  if (!urls || urls.length === 0) {
+    if (client) client.postMessage({ type: "MEDIA_CACHE_COMPLETE", payload: { deckId, cached: 0, total: 0 } });
+    return;
+  }
+
+  const cache = await caches.open(CACHE_NAME);
+  let cached = 0;
+  const total = urls.length;
+
+  for (const url of urls) {
+    try {
+      const existing = await cache.match(url);
+      if (existing) {
+        cached++;
+      } else {
+        const response = await fetch(url);
+        if (response.ok) {
+          await cache.put(url, response);
+          cached++;
+        }
+      }
+    } catch (err) {
+      console.warn("[SW] Failed to cache media:", url, err);
+    }
+
+    // Report progress every 10 files or on last file
+    if (client && (cached % 10 === 0 || cached === total)) {
+      client.postMessage({
+        type: "MEDIA_CACHE_PROGRESS",
+        payload: { deckId, cached, total },
+      });
+    }
+  }
+
+  if (client) {
+    client.postMessage({
+      type: "MEDIA_CACHE_COMPLETE",
+      payload: { deckId, cached, total },
+    });
+  }
+  console.log(`[SW] Media cache complete for deck ${deckId}: ${cached}/${total}`);
 }

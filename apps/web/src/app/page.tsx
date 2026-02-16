@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
@@ -46,6 +46,12 @@ export default function HomePage() {
   const [classifying, setClassifying] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [duePerChapter, setDuePerChapter] = useState<Record<string, number>>({});
+
+  // Stable filtered cards ref for StudyView (avoid .filter() on every render)
+  const filteredStudyCards = useMemo(
+    () => selectedChapterId ? studyCards.filter(c => c.chapterId === selectedChapterId) : studyCards,
+    [selectedChapterId, studyCards],
+  );
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -167,6 +173,16 @@ export default function HomePage() {
 
   async function handleStudy(deck: DeckFromApi) {
     if (actionLoading) return;
+
+    // Offline warning: check if media is cached before proceeding
+    if (!navigator.onLine) {
+      const { isDeckMediaCached } = await import("../lib/media-cache");
+      const isCached = await isDeckMediaCached(deck.id);
+      if (!isCached) {
+        window.dispatchEvent(new CustomEvent("media-cache-offline-warning", { detail: { deckId: deck.id } }));
+      }
+    }
+
     try {
       setActionLoading(true);
       const { fetchChapters, fetchCards } = await import("../lib/api");
@@ -179,6 +195,12 @@ export default function HomePage() {
         idbSet(`cache:cards:${deck.id}`, { data: cards, timestamp: Date.now() }),
         idbSet(`cache:chapters:${deck.id}`, { data: chaps, timestamp: Date.now() }),
       ]);
+      // Auto-cache media in background (non-blocking)
+      import("../lib/media-cache").then(({ precacheDeckMedia }) =>
+        precacheDeckMedia(deck.id, cards).catch(err =>
+          console.warn("[MediaCache] Failed to start precaching:", err)
+        )
+      );
       const due = await computeDuePerChapter(deck.id, cards);
       setDuePerChapter(due);
       setStudyDeck(deck);
@@ -332,7 +354,7 @@ export default function HomePage() {
           {view === "studying" && studyDeck && (
             <StudyView
               deck={studyDeck}
-              cards={selectedChapterId ? studyCards.filter(c => c.chapterId === selectedChapterId) : studyCards}
+              cards={filteredStudyCards}
               chapterName={selectedChapterId ? chapters.find(ch => ch.id === selectedChapterId)?.name : null}
               chapterColor={selectedChapterId && progressMap[studyDeck.id]?.statuses?.[selectedChapterId] ? chapterStatusColor(progressMap[studyDeck.id].statuses[selectedChapterId]) : null}
               onBack={async () => {

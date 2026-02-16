@@ -15,7 +15,7 @@ export async function GET(
 
   const cards = await prisma.card.findMany({
     where: { deckId: params.deckId },
-    select: { id: true, question: true, answers: true, distractors: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true, chapterId: true },
+    select: { id: true, question: true, answers: true, distractors: true, aiVerify: true, audioUrlEn: true, audioUrlFr: true, imageUrl: true, chapterId: true },
     orderBy: { createdAt: "asc" },
   });
 

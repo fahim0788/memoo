@@ -110,8 +110,8 @@ export interface Translations {
     todayLabel: string;
     typeYourAnswer: string;
     scramblePlaceholder: string;
-    listenEn: string;
-    listenFr: string;
+    listenQuestion: string;
+    listenAnswer: string;
     evaluating: string;
   };
 
@@ -260,6 +260,13 @@ export interface Translations {
     action: string;
     actions: string;
     synchronized: string;
+  };
+
+  // Cache media hors-ligne
+  mediaCache: {
+    caching: string;
+    done: string;
+    offlineWarning: string;
   };
 
   // Dialogue de confirmation (ConfirmDialog)
@@ -474,8 +481,8 @@ const fr: Translations = {
     todayLabel: "Aujourd'hui : ",
     typeYourAnswer: "Tape ta réponse…",
     scramblePlaceholder: "Touche les mots dans l'ordre…",
-    listenEn: "Écouter EN",
-    listenFr: "Écouter FR",
+    listenQuestion: "Écouter la question",
+    listenAnswer: "Écouter la réponse",
     evaluating: "Vérification...",
   },
 
@@ -625,6 +632,12 @@ const fr: Translations = {
     action: "action",
     actions: "actions",
     synchronized: "synchronisée",
+  },
+
+  mediaCache: {
+    caching: "Mise en cache audio",
+    done: "Audio disponible hors ligne",
+    offlineWarning: "Audio non disponible hors ligne pour cette liste",
   },
 
   dialog: {
@@ -830,8 +843,8 @@ const en: Translations = {
     todayLabel: "Today: ",
     typeYourAnswer: "Type your answer…",
     scramblePlaceholder: "Tap the words in order…",
-    listenEn: "Listen EN",
-    listenFr: "Listen FR",
+    listenQuestion: "Listen to question",
+    listenAnswer: "Listen to answer",
     evaluating: "Checking...",
   },
 
@@ -981,6 +994,12 @@ const en: Translations = {
     action: "action",
     actions: "actions",
     synchronized: "synchronized",
+  },
+
+  mediaCache: {
+    caching: "Caching audio",
+    done: "Audio available offline",
+    offlineWarning: "Audio not available offline for this list",
   },
 
   dialog: {

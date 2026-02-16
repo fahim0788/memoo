@@ -6,6 +6,7 @@ import {
   isOnline as checkIsOnline,
 } from "../lib/sync-manager";
 import { getPendingCount as getListOpsPendingCount } from "../lib/offline-queue";
+import { initMediaCacheListener } from "../lib/media-cache";
 
 type SyncState = "idle" | "syncing" | "offline" | "error";
 
@@ -15,6 +16,9 @@ export function useSyncStatus() {
   const [listOpsPendingCount, setListOpsPendingCount] = useState(0);
   const [listOpsSyncState, setListOpsSyncState] = useState<SyncState>("idle");
   const [lastSyncCount, setLastSyncCount] = useState<number | null>(null);
+  const [mediaCaching, setMediaCaching] = useState<{ deckId: string; cached: number; total: number } | null>(null);
+  const [mediaCacheDone, setMediaCacheDone] = useState<{ cached: number; total: number } | null>(null);
+  const [mediaOfflineWarning, setMediaOfflineWarning] = useState(false);
 
   // Initialize sync manager for list operations
   useEffect(() => {
@@ -88,6 +92,48 @@ export function useSyncStatus() {
     };
   }, []);
 
+  // Listen for media cache events from SW
+  useEffect(() => {
+    const cleanup = initMediaCacheListener();
+
+    function handleStart(event: Event) {
+      const { deckId, total } = (event as CustomEvent).detail;
+      setMediaCaching({ deckId, cached: 0, total });
+    }
+
+    function handleProgress(event: Event) {
+      const { deckId, cached, total } = (event as CustomEvent).detail;
+      setMediaCaching({ deckId, cached, total });
+    }
+
+    function handleComplete(event: Event) {
+      const { cached, total } = (event as CustomEvent).detail;
+      setMediaCaching(null);
+      if (cached > 0) {
+        setMediaCacheDone({ cached, total });
+        setTimeout(() => setMediaCacheDone(null), 3000);
+      }
+    }
+
+    function handleOfflineWarning() {
+      setMediaOfflineWarning(true);
+      setTimeout(() => setMediaOfflineWarning(false), 4000);
+    }
+
+    window.addEventListener("media-cache-start", handleStart);
+    window.addEventListener("media-cache-progress", handleProgress);
+    window.addEventListener("media-cache-complete", handleComplete);
+    window.addEventListener("media-cache-offline-warning", handleOfflineWarning);
+
+    return () => {
+      cleanup();
+      window.removeEventListener("media-cache-start", handleStart);
+      window.removeEventListener("media-cache-progress", handleProgress);
+      window.removeEventListener("media-cache-complete", handleComplete);
+      window.removeEventListener("media-cache-offline-warning", handleOfflineWarning);
+    };
+  }, []);
+
   // Combined pending count
   const pendingCount = reviewsPendingCount + listOpsPendingCount;
 
@@ -104,5 +150,8 @@ export function useSyncStatus() {
     isSyncing,
     hasError,
     lastSyncCount,
+    mediaCaching,
+    mediaCacheDone,
+    mediaOfflineWarning,
   };
 }

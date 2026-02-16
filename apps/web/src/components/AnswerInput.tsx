@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import type { CardFromApi } from "../lib/api";
 import { generateDistractors } from "../lib/api";
 import { normalizeText } from "../lib/text";
 import { t } from "../lib/i18n";
+import { MiniKeyboard } from "./MiniKeyboard";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -411,24 +412,38 @@ function TextInputMode({ onAnswer, onShowAnswer }: {
   onShowAnswer: () => void;
 }) {
   const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleChar = useCallback((char: string) => {
+    setText(prev => prev + char);
+  }, []);
+
+  const handleBackspace = useCallback(() => {
+    setText(prev => prev.slice(0, -1));
+  }, []);
+
+  const handleSubmit = useCallback(() => {
+    if (text.trim()) onAnswer(text);
+  }, [text, onAnswer]);
 
   return (
     <>
       <div className="input-wrapper">
         <input
+          ref={inputRef}
           value={text}
-          onChange={e => setText(e.target.value)}
+          readOnly
+          inputMode="none"
           placeholder={t.study.typeYourAnswer}
           onKeyDown={e => e.key === "Enter" && text.trim() && onAnswer(text)}
-          autoFocus
         />
       </div>
-      <div className="actions">
-        <button className="primary" onClick={() => text.trim() && onAnswer(text)}>
-          {t.study.validate}
-        </button>
-        <button onClick={onShowAnswer}>{t.study.showAnswer}</button>
-      </div>
+      <MiniKeyboard
+        onChar={handleChar}
+        onBackspace={handleBackspace}
+        onSubmit={handleSubmit}
+      />
+      <button onClick={onShowAnswer}>{t.study.showAnswer}</button>
     </>
   );
 }

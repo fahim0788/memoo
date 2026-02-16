@@ -64,15 +64,18 @@ const CardInputSchema = z.object({
   question: z.string().min(1, "question required"),
   answers: z.array(z.string().min(1)).min(1, "at least one answer required"),
   imageUrl: z.string().optional().nullable(),
+  aiVerify: z.boolean().optional().nullable(),
 });
 
 export const CreateDeckSchema = z.object({
   name: z.string().min(1, "name required").max(200),
+  aiVerify: z.boolean().optional(),
   cards: z.array(CardInputSchema).min(1, "at least one card required"),
 });
 
 export const UpdateDeckSchema = z.object({
   name: z.string().min(1, "name required").max(200),
+  aiVerify: z.boolean().optional(),
 });
 
 export const CreateCardSchema = CardInputSchema;

@@ -20,6 +20,6 @@ export async function GET(req: NextRequest) {
   });
 
   return json({
-    decks: decks.map(d => ({ id: d.id, name: d.name, cardCount: d.cards.length, isOwned: false })),
+    decks: decks.map(d => ({ id: d.id, name: d.name, cardCount: d.cards.length, isOwned: false, aiVerify: d.aiVerify })),
   }, req);
 }

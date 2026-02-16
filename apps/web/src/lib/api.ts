@@ -39,6 +39,7 @@ export type CardFromApi = {
   question: string;
   answers: string[];
   distractors: string[];
+  aiVerify?: boolean | null;
   audioUrlEn?: string | null;
   audioUrlFr?: string | null;
   imageUrl?: string | null;
@@ -60,6 +61,7 @@ export type DeckFromApi = {
   chapterCount?: number;
   isOwned?: boolean;
   icon?: string | null;
+  aiVerify?: boolean;
 };
 
 // Types – Sync

@@ -13,6 +13,77 @@ Lors de la revision, un utilisateur peut taper une reponse **semantiquement corr
 
 Le matching textuel (`normalizeText` + mots-cles) ne couvre pas les synonymes, reformulations, ou traductions.
 
+**Cependant**, l'evaluation IA n'est pas pertinente pour tous les types de cartes. Pour les reponses factuelles courtes (drapeaux, capitales), les mauvaises reponses sont infiniment diverses et ne convergent jamais — chaque erreur genere un appel IA inutile (l'IA dira "NON" a chaque fois). Un flag `aiVerify` permet de desactiver l'evaluation IA pour ces decks.
+
+---
+
+## Flag `aiVerify` — controle par deck et par carte
+
+### Principe
+
+Le flag `aiVerify` controle si l'evaluation IA est activee. Il fonctionne avec un systeme d'heritage :
+
+```
+Card.aiVerify ?? Deck.aiVerify ?? true
+```
+
+- **Deck.aiVerify** : `Boolean @default(true)` — active par defaut pour tous les decks
+- **Card.aiVerify** : `Boolean?` (nullable) — `null` = herite du deck, `true`/`false` = override
+
+### Quand desactiver ?
+
+| Type de deck | `aiVerify` recommande | Raison |
+|---|---|---|
+| Phrases / traductions | `true` (defaut) | Reformulations valides, convergence forte |
+| Vocabulaire bilingue | `true` (defaut) | Synonymes, variantes ortho |
+| Drapeaux du monde | `false` | 1 seule bonne reponse, matching local suffit |
+| Capitales / dates | `false` | Reponses factuelles courtes, pas d'ambiguite |
+| Formules scientifiques | `false` | Notation exacte requise |
+
+### Analyse economique
+
+| Scenario | Avec aiVerify=true | Avec aiVerify=false |
+|---|---|---|
+| Bonne reponse | 0 appel (match local) | 0 appel (match local) |
+| Bonne reformulation (1ere fois) | 1 appel → cache | ❌ marque incorrect |
+| Bonne reformulation (fois suivantes) | 0 appel (cache) | ❌ marque incorrect |
+| Mauvaise reponse | 1 appel → NON (jamais cache) | 0 appel → ❌ immediat |
+
+**Pour les phrases** : les bonnes reformulations convergent vite (5-10 variantes), le cout initial est amorti.
+
+**Pour les drapeaux** : les mauvaises reponses sont infiniment diverses ("Irlande", "Hongrie", "Mexique"...), chaque erreur = 1 appel IA sans benefice de cache. Desactiver `aiVerify` economise 100% de ces appels.
+
+### API
+
+**Creer un deck sans verification IA :**
+```json
+POST /api/my-decks
+{
+  "name": "Drapeaux du monde",
+  "aiVerify": false,
+  "cards": [...]
+}
+```
+
+**Modifier un deck existant :**
+```json
+PUT /api/my-decks/{deckId}
+{
+  "name": "Drapeaux du monde",
+  "aiVerify": false
+}
+```
+
+**Override par carte (optionnel) :**
+```json
+PUT /api/my-decks/{deckId}/cards/{cardId}
+{
+  "question": "Traduire : How are you?",
+  "answers": ["Comment allez-vous"],
+  "aiVerify": true
+}
+```
+
 ---
 
 ## Solution : evaluation IA avec cache auto-alimenté
@@ -49,6 +120,9 @@ Reponse utilisateur
   │
   ├─ Mode != "text" ? (MCQ, YesNo, Number, Scramble)
   │   └─ OUI → ❌ incorrect (reponse definitive, pas d'ambiguite)
+  │
+  ├─ aiVerify desactive ? (card.aiVerify ?? deck.aiVerify === false)
+  │   └─ OUI → ❌ incorrect (pas d'appel IA, economie de cout)
   │
   ├─ Hors ligne (navigator.onLine === false) ?
   │   └─ OUI → ❌ incorrect (pas d'appel reseau)
@@ -91,10 +165,11 @@ Reponse utilisateur
 Route API `POST` :
 - **Auth** : Bearer token obligatoire (`requireAuth`)
 - **Input** : `{ userAnswer: string, question: string, referenceAnswers: string[] }`
+- **Guard aiVerify** : verifie `card.aiVerify ?? deck.aiVerify` avant tout appel OpenAI. Si `false`, retourne `{ acceptable: false, skipped: true }` immediatement
 - **Modele** : `gpt-4o-mini` (le plus economique d'OpenAI)
 - **Temperature** : `0` (reponse deterministe, pas de creativite)
 - **Max tokens** : `10` (juste "OUI" ou "NON")
-- **Output** : `{ acceptable: boolean }`
+- **Output** : `{ acceptable: boolean }` (+ `skipped: true` si aiVerify desactive)
 
 **Prompt systeme** :
 ```
@@ -120,7 +195,8 @@ Ne donne aucune explication.
 
 **`apps/web/src/components/StudyView.tsx`** — `handleAnswer()`
 - State `evaluating` pour afficher le spinner
-- Si `isCorrect()` echoue + mode `text` + online → appel IA
+- **Guard frontend** : `const shouldAiVerify = current.aiVerify ?? deck.aiVerify ?? true`
+- Si `isCorrect()` echoue + `shouldAiVerify` + mode `text` + online → appel IA
 - Si accepte : `current.answers.push()` pour le cache local de session
 
 **`apps/web/src/components/AnswerInput.tsx`**
@@ -188,6 +264,7 @@ Quand l'IA valide une reponse, elle est aussi pushee dans `current.answers` cote
 | Pas de rate limiting | Un utilisateur pourrait spammer des evaluations | Ajouter un rate limit par userId (futur) |
 | Pas de rollback | Impossible de distinguer reponses originales vs IA | Ajouter un champ `source` au JSON (futur) |
 | Latence ~1-3s | Delai visible sur le mode texte uniquement | Indicateur "Verification..." affiche |
+| Pas de cache negatif | Les mauvaises reponses generent toujours un appel IA | Desactiver `aiVerify` pour les decks factuels, ou ajouter un `rejectedAnswers[]` (futur) |
 
 ---
 
@@ -202,6 +279,7 @@ Quand l'IA valide une reponse, elle est aussi pushee dans `current.answers` cote
 | Reformulation incorrecte | ⏳ 1-3s → ❌ (appel IA, pas de sauvegarde) |
 | Mode MCQ/YesNo/Number/Scramble, mauvaise reponse | ❌ immediat (pas d'appel IA) |
 | Mode texte, hors ligne, mauvaise reponse | ❌ immediat (pas d'appel IA) |
+| Mode texte, `aiVerify=false` (deck ou carte) | ❌ immediat (pas d'appel IA) |
 | Erreur serveur ou timeout | ❌ immediat (fail safe) |
 
 ---
@@ -215,6 +293,8 @@ Quand l'IA valide une reponse, elle est aussi pushee dans `current.answers` cote
 3. **Offline** : couper le reseau → taper une reformulation → verifier ❌ immediat, pas de spinner
 4. **Autres modes** : repondre faux en MCQ/YesNo → verifier ❌ immediat, pas de spinner
 5. **Persistance** : apres un accept IA, verifier en DB que `Card.answers` contient la nouvelle entree
+6. **aiVerify=false (deck)** : creer un deck avec `aiVerify: false` → reviser en mode texte → taper une reformulation → verifier ❌ immediat, pas de spinner, pas d'appel reseau
+7. **aiVerify override (carte)** : dans un deck `aiVerify: false`, mettre une carte a `aiVerify: true` → verifier que l'IA est appelee pour cette carte uniquement
 
 ### Automatises
 
