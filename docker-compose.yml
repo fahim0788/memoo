@@ -42,6 +42,7 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN:-https://memoo.fr}

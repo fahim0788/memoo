@@ -2,7 +2,9 @@
 
 ## Vue d'ensemble
 
-Le composant `AnswerInput` remplace la saisie texte unique par **5 modes de saisie** qui s'adaptent automatiquement au contenu de chaque carte. L'objectif est de réduire la friction, varier l'expérience et rendre la révision plus engageante.
+Le composant `AnswerInput` remplace la saisie texte unique par **6 modes de saisie** qui s'adaptent automatiquement au contenu de chaque carte. L'objectif est de réduire la friction, varier l'expérience et rendre la révision plus engageante.
+
+Un systeme **`allowedModes`** (par deck avec override par carte) permet de restreindre les modes autorises selon le type de contenu (ex: pas de scramble/fillblank pour les decks d'examen civique).
 
 **Fichier principal** : `apps/web/src/components/AnswerInput.tsx`
 **Intégration** : `apps/web/src/components/StudyView.tsx`
@@ -94,7 +96,45 @@ leurre2 = nombre - (hash >> 4 % range + 1)
 
 ---
 
-### 5. TextInput - Saisie classique (fallback)
+### 5. FillBlank - Texte à trous avec distracteurs IA
+
+**Détection** : réponse de 3 mots ou plus
+**Déclenchement** : ~20% des cartes éligibles (varie par jour)
+
+**UX** :
+- La réponse s'affiche avec N mots-clés remplacés par `___`
+- Un pool de chips (mots corrects + distracteurs IA) est affiché en dessous, mélangés
+- L'utilisateur tape les chips pour remplir les trous dans l'ordre
+- Le trou actif est mis en évidence (bordure solid + couleur primary)
+- Cliquer sur un trou déjà rempli retire le mot (permet de corriger)
+- **Auto-validation** : quand tous les trous sont remplis, validation automatique après 350ms
+
+**Nombre de trous (adaptatif selon la longueur)** :
+| Longueur réponse | Nombre de trous |
+|---|---|
+| 3-5 mots | 1 trou |
+| 6-10 mots | 2 trous |
+| 11+ mots | 3 trous |
+
+**Distracteurs IA** :
+- Générés par GPT-4o-mini via `POST /api/cards/{cardId}/fill-blanks`
+- 2 distracteurs par trou (même type grammatical, plausibles dans le contexte)
+- **Cachés en DB** (`Card.fillBlanks`) : 1 appel IA par carte, à vie (comme les distracteurs MCQ)
+- Fallback vers le mode scramble si offline ou si la génération échoue
+
+**Structure DB** (`Card.fillBlanks`, JSON) :
+```json
+[
+  { "index": 2, "word": "photosynthèse", "distractors": ["respiration", "fermentation"] },
+  { "index": 5, "word": "chlorophylle", "distractors": ["mélanine", "kératine"] }
+]
+```
+
+**Intérêt pédagogique** : Combine reconnaissance (comme MCQ) et contexte syntaxique (comme scramble). L'utilisateur doit identifier les mots-clés importants parmi des distracteurs plausibles, tout en gardant le contexte de la phrase.
+
+---
+
+### 6. TextInput - Saisie classique (fallback)
 
 **Détection** : fallback quand aucun autre mode ne s'applique
 **Déclenchement** : toujours disponible comme fallback + ~30-60% des cartes éligibles pour d'autres modes
@@ -112,22 +152,27 @@ leurre2 = nombre - (hash >> 4 % range + 1)
 ## Algorithme de sélection du mode
 
 ```
-detectMode(card, allCards) :
-  1. Si réponse ∈ {oui, non, yes, no, vrai, faux, true, false} → yesno
-  2. Si réponse = nombre → number
+detectMode(card, allCards, allowedModes?) :
+  0. allowedModes = card.allowedModes ?? deck.allowedModes ?? null
+     (null = tous les modes autorisés)
+  1. Si réponse ∈ {oui, non, yes, no, vrai, faux, true, false} et "yesno" autorisé → yesno
+  2. Si réponse = nombre et "number" autorisé → number
   3. seed = hash(cardId) + jour_courant
      roll = seed % 10
   4. Si réponse ≥ 3 mots :
-       roll 0-4 → scramble (50%)
-       roll 5-6 et deck ≥ 4 cartes → mcq (20%)
-       roll 7-9 → text (30%)
+       roll 0-3 et "scramble" autorisé → scramble (40%)
+       roll 4-5 et "fillblank" autorisé → fillblank (20%)
+       roll 6-7 et deck ≥ 4 cartes et "mcq" autorisé → mcq (20%)
+       roll 8-9 et "text" autorisé → text (20%)
   5. Si deck ≥ 4 cartes :
-       roll 0-3 → mcq (40%)
-       roll 4-9 → text (60%)
-  6. Sinon → text
+       roll 0-3 et "mcq" autorisé → mcq (40%)
+       roll 4-9 et "text" autorisé → text (60%)
+  6. Sinon → text (fallback ultime)
 ```
 
 **Variété quotidienne** : le seed inclut `Math.floor(Date.now() / 86400000)`, donc le mode change chaque jour pour une même carte. Cela évite la monotonie tout en restant déterministe au sein d'une session.
+
+**Filtrage par `allowedModes`** : si un mode est sélectionné par le roll mais n'est pas dans la liste `allowedModes`, l'algorithme passe au mode suivant. Cela garantit que les decks factuels (civique, drapeaux) n'affichent jamais de scramble ou fillblank.
 
 ---
 
@@ -202,11 +247,12 @@ StudyView
   ├── ProgressBar
   └── Card
        ├── Question + Image + Audio
-       ├── AnswerInput (key={cardId})  ← NOUVEAU
+       ├── AnswerInput (key={cardId})
        │    ├── YesNoInput
        │    ├── NumberInput
        │    ├── ScrambleInput
        │    ├── McqInput
+       │    ├── FillBlankInput      ← NOUVEAU
        │    └── TextInputMode
        └── ResultSection (après validation)
 ```
@@ -214,9 +260,10 @@ StudyView
 **Props** :
 | Prop | Type | Description |
 |------|------|-------------|
-| `card` | `CardFromApi` | Carte courante (question, answers, id) |
+| `card` | `CardFromApi` | Carte courante (question, answers, id, fillBlanks, allowedModes) |
 | `allCards` | `CardFromApi[]` | Toutes les cartes du deck (pour MCQ) |
-| `onAnswer` | `(string) => void` | Callback quand l'utilisateur soumet une réponse |
+| `allowedModes` | `string[] \| null` | Modes autorisés (null = tous). Calculé par StudyView : `card.allowedModes ?? deck.allowedModes ?? null` |
+| `onAnswer` | `(string, AnswerMode) => void` | Callback quand l'utilisateur soumet une réponse |
 | `onShowAnswer` | `() => void` | Callback pour "Voir la réponse" (pas de notation) |
 
 **Flux de données** :

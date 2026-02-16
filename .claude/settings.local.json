@@ -49,7 +49,13 @@
       "Bash(ipconfig:*)",
       "Bash(CORS_ORIGIN=\"http://192.168.1.101:3000\" docker-compose up:*)",
       "Bash(docker cp:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(DATABASE_URL=\"postgresql://memolist:memolist@localhost:5432/memolist\" npx prisma generate:*)",
+      "Bash(docker-compose config:*)",
+      "Bash(DATABASE_URL=\"postgresql://memolist:memolist@localhost:5432/memolist\" npx prisma migrate deploy:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(cmd //c \"taskkill /PID 56980 /F\")",
+      "Bash(docker-compose down:*)"
     ]
   }
 }

@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     isOwned: ud.deck.ownerId === auth.user.userId,
     icon: ud.icon ?? null,
     aiVerify: ud.deck.aiVerify,
+    allowedModes: ud.deck.allowedModes ?? null,
   }));
 
   return json({ decks }, req);

@@ -20,11 +20,15 @@ export async function PUT(
 
   const parsed = await validateBody(req, UpdateDeckSchema);
   if (parsed.error) return parsed.error;
-  const { name, aiVerify } = parsed.data;
+  const { name, aiVerify, allowedModes } = parsed.data;
 
   await prisma.deck.update({
     where: { id: params.deckId },
-    data: { name, ...(aiVerify !== undefined && { aiVerify }) },
+    data: {
+      name,
+      ...(aiVerify !== undefined && { aiVerify }),
+      ...(allowedModes !== undefined && { allowedModes }),
+    },
   });
 
   return json({ ok: true }, req);

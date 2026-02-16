@@ -76,6 +76,7 @@ export const CreateDeckSchema = z.object({
 export const UpdateDeckSchema = z.object({
   name: z.string().min(1, "name required").max(200),
   aiVerify: z.boolean().optional(),
+  allowedModes: z.array(z.string()).nullable().optional(),
 });
 
 export const CreateCardSchema = CardInputSchema;
@@ -99,6 +100,11 @@ export const EvaluateAnswerSchema = z.object({
 });
 
 export const GenerateDistractorsSchema = z.object({
+  question: z.string().min(1, "question required"),
+  answer: z.string().min(1, "answer required"),
+});
+
+export const GenerateFillBlanksSchema = z.object({
   question: z.string().min(1, "question required"),
   answer: z.string().min(1, "answer required"),
 });

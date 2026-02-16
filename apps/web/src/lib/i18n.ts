@@ -110,6 +110,7 @@ export interface Translations {
     todayLabel: string;
     typeYourAnswer: string;
     scramblePlaceholder: string;
+    fillBlankPlaceholder: string;
     listenQuestion: string;
     listenAnswer: string;
     evaluating: string;
@@ -481,6 +482,7 @@ const fr: Translations = {
     todayLabel: "Aujourd'hui : ",
     typeYourAnswer: "Tape ta réponse…",
     scramblePlaceholder: "Touche les mots dans l'ordre…",
+    fillBlankPlaceholder: "Remplis les trous…",
     listenQuestion: "Écouter la question",
     listenAnswer: "Écouter la réponse",
     evaluating: "Vérification...",
@@ -843,6 +845,7 @@ const en: Translations = {
     todayLabel: "Today: ",
     typeYourAnswer: "Type your answer…",
     scramblePlaceholder: "Tap the words in order…",
+    fillBlankPlaceholder: "Fill in the blanks…",
     listenQuestion: "Listen to question",
     listenAnswer: "Listen to answer",
     evaluating: "Checking...",

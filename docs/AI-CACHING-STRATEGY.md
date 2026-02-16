@@ -1,6 +1,6 @@
 # Strategie de cache IA (OpenAI)
 
-Vue d'ensemble du cache des 3 fonctionnalites IA du projet. Toutes utilisent `gpt-4o-mini`.
+Vue d'ensemble du cache des 4 fonctionnalites IA du projet. Toutes utilisent `gpt-4o-mini`.
 
 > Detail de l'evaluation des reponses : voir [AI-ANSWER-EVALUATION.md](AI-ANSWER-EVALUATION.md)
 
@@ -11,6 +11,7 @@ Vue d'ensemble du cache des 3 fonctionnalites IA du projet. Toutes utilisent `gp
 | Fonctionnalite | Cache serveur (DB) | Colonne / Table | Appels IA |
 |---|---|---|---|
 | Distracteurs QCM | **Oui** | `Card.distractors` (Json) | 1 par carte, a vie |
+| Fill-blanks (texte a trous) | **Oui** | `Card.fillBlanks` (Json) | 1 par carte, a vie |
 | Evaluation reponse | Non (contextuel) — enrichit `answers` | `Card.answers` (Json) | Decroissant avec le temps |
 | Classification chapitres | **Oui** | `Chapter` + `Card.chapterId` | 1 par deck (re-executable) |
 
@@ -41,7 +42,43 @@ Les distracteurs sont stockes sur la `Card` (pas sur `UserDeck`). Tous les utili
 
 ---
 
-## 2. Evaluation de reponse — cache auto-alimente
+## 2. Fill-blanks (texte a trous) — cache permanent en DB
+
+**Route** : `POST /api/cards/{cardId}/fill-blanks`
+**Fichier** : `apps/api/app/api/cards/[cardId]/fill-blanks/route.ts`
+
+### Fonctionnement
+
+```
+1er appel (Card.fillBlanks = null)
+  → Calcul du nombre de trous selon la longueur de la reponse :
+    - 3-5 mots → 1 trou
+    - 6-10 mots → 2 trous
+    - 11+ mots → 3 trous
+  → Appel OpenAI → genere N mots-cles a masquer + 2 distracteurs par trou
+  → prisma.card.update({ fillBlanks: [...] })
+  → retourne les fill-blanks
+
+Appels suivants (Card.fillBlanks != null)
+  → retourne directement depuis la DB, zero appel IA
+```
+
+### Structure en DB
+
+```json
+[
+  { "index": 2, "word": "photosynthese", "distractors": ["respiration", "digestion"] },
+  { "index": 5, "word": "lumineuse", "distractors": ["thermique", "electrique"] }
+]
+```
+
+### Partage
+
+Meme principe que les distracteurs QCM : stockes sur la `Card`, partages entre tous les utilisateurs. Un seul appel IA par carte.
+
+---
+
+## 3. Evaluation de reponse — cache auto-alimente
 
 **Route** : `POST /api/cards/{cardId}/evaluate`
 **Fichier** : `apps/api/app/api/cards/[cardId]/evaluate/route.ts`
@@ -81,7 +118,7 @@ Le flag `aiVerify` (deck ou carte) permet de desactiver completement l'evaluatio
 
 ---
 
-## 3. Classification en chapitres — cache permanent en DB
+## 4. Classification en chapitres — cache permanent en DB
 
 **Route** : `POST /api/lists/{deckId}/classify`
 **Fichier** : `apps/api/app/api/lists/[deckId]/classify/route.ts`
@@ -116,6 +153,7 @@ Les resultats IA sont caches **dans les tables elles-memes** (colonnes JSON ou r
 | Fonctionnalite | Tokens/appel | Cout/appel | Frequence |
 |---|---|---|---|
 | Distracteurs | ~150 in + ~30 out | ~$0.00003 | 1x par carte |
+| Fill-blanks | ~200 in + ~80 out | ~$0.00008 | 1x par carte |
 | Evaluation | ~100 in + ~3 out | ~$0.00002 | Decroissant |
 | Classification | ~2000 in + ~500 out | ~$0.0006 | 1x par deck |
 
@@ -126,7 +164,8 @@ Pour 100 utilisateurs actifs, le cout IA converge vers < $0.10/mois grace au cac
 ## Conclusion : rien a ajouter cote serveur
 
 Le cache IA est deja optimal :
-- **Distracteurs** : one-shot en DB, partage entre tous les users
+- **Distracteurs QCM** : one-shot en DB, partage entre tous les users
+- **Fill-blanks** : one-shot en DB, meme principe que les distracteurs
 - **Evaluation** : auto-ameliorant via enrichissement de `Card.answers`
 - **Classification** : persistee en tables relationnelles
 - **Guard aiVerify** : elimine les appels inutiles pour les decks factuels

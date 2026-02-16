@@ -12,7 +12,14 @@ export const EVALUATE_CONFIG = {
 } as const;
 
 export const EVALUATE_SYSTEM_PROMPT = `Tu es un correcteur de flashcards. On te donne une question, la ou les réponse(s) de référence, et la réponse d'un utilisateur.
-Réponds UNIQUEMENT "OUI" si la réponse utilisateur est correcte ou acceptablement équivalente (synonyme, reformulation, variante orthographique, pluriel/singulier, langue différente du même mot).
+Réponds UNIQUEMENT "OUI" si la réponse utilisateur est correcte ou acceptablement équivalente.
+Variantes acceptables (répondre OUI) :
+- Synonymes et reformulations du même sens
+- Variantes orthographiques, accents manquants
+- Singulier/pluriel
+- Tutoiement ↔ vouvoiement (te/vous, ton/votre, tu/vous, etc.)
+- Masculin/féminin quand le sens reste identique
+- Ordre des mots différent mais même sens
 Réponds "NON" si la réponse est incorrecte, trop vague, ou incomplète.
 Ne donne aucune explication.`;
 
@@ -42,6 +49,37 @@ Réponds UNIQUEMENT avec les 3 distracteurs, un par ligne, sans numérotation ni
 
 export function distractorsUserPrompt(question: string, answer: string) {
   return `Question : ${question}\nBonne réponse : ${answer}`;
+}
+
+// ---- Fill-in-the-Blanks Generation ----
+
+export const FILL_BLANKS_CONFIG = {
+  temperature: 0.5,
+  max_tokens: 300,
+  response_format: { type: "json_object" } as const,
+} as const;
+
+export const FILL_BLANKS_SYSTEM_PROMPT = `Tu es un générateur d'exercices "texte à trous" pour flashcards éducatives.
+On te donne une question, sa bonne réponse (une phrase), et le nombre de mots à masquer.
+Choisis les N mots-clés les plus importants à masquer (noms, verbes, adjectifs porteurs de sens — PAS les articles, prépositions ou conjonctions).
+Pour chaque mot masqué, génère exactement 2 distracteurs plausibles :
+- Du même type grammatical que le mot correct
+- Plausibles dans le contexte de la phrase
+- Clairement faux pour quelqu'un qui connaît le sujet
+
+Réponds UNIQUEMENT en JSON :
+{ "blanks": [{ "index": <position 0-based du mot dans la phrase>, "word": "<mot exact tel qu'il apparaît>", "distractors": ["<d1>", "<d2>"] }] }`;
+
+export function fillBlanksUserPrompt(question: string, answer: string, blankCount: number) {
+  return `Question : ${question}\nRéponse : ${answer}\nNombre de trous : ${blankCount}`;
+}
+
+/** Compute the number of blanks based on answer word count */
+export function computeBlankCount(answer: string): number {
+  const wordCount = answer.trim().split(/\s+/).length;
+  if (wordCount <= 5) return 1;
+  if (wordCount <= 10) return 2;
+  return 3;
 }
 
 // ---- Chapter Classification ----

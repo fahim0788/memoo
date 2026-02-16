@@ -145,6 +145,7 @@ Reponse utilisateur
 | **YesNo** | 2 boutons (Oui/Non) — reponse binaire, aucune ambiguite |
 | **NumberChoice** | 3 boutons numeriques — clic sur un nombre precis |
 | **WordScramble** | Reconstruction mot par mot — la reponse est composee des mots exacts |
+| **FillBlank** | Selection de mots dans un pool — la reponse est composee des mots exacts de la phrase |
 | **MCQ** | 4 boutons — l'utilisateur choisit parmi des options fixes |
 | **TextInput** | Saisie libre → seul mode ou la formulation peut varier ✅ |
 
@@ -277,7 +278,7 @@ Quand l'IA valide une reponse, elle est aussi pushee dans `current.answers` cote
 | Reponse deja validee par IA precedemment | ✅ immediat (local, via `Card.answers` enrichi) |
 | Reformulation correcte, premiere occurrence | ⏳ 1-3s → ✅ (appel IA + sauvegarde) |
 | Reformulation incorrecte | ⏳ 1-3s → ❌ (appel IA, pas de sauvegarde) |
-| Mode MCQ/YesNo/Number/Scramble, mauvaise reponse | ❌ immediat (pas d'appel IA) |
+| Mode MCQ/YesNo/Number/Scramble/FillBlank, mauvaise reponse | ❌ immediat (pas d'appel IA) |
 | Mode texte, hors ligne, mauvaise reponse | ❌ immediat (pas d'appel IA) |
 | Mode texte, `aiVerify=false` (deck ou carte) | ❌ immediat (pas d'appel IA) |
 | Erreur serveur ou timeout | ❌ immediat (fail safe) |

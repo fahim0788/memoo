@@ -330,6 +330,7 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
                 key={current.id}
                 card={current}
                 allCards={cards}
+                allowedModes={current.allowedModes ?? deck.allowedModes ?? null}
                 onAnswer={handleAnswer}
                 onShowAnswer={handleShowAnswer}
               />

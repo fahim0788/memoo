@@ -34,11 +34,15 @@ function authHeaders(): HeadersInit {
 }
 
 // Types – Listes
+export type FillBlank = { index: number; word: string; distractors: string[] };
+
 export type CardFromApi = {
   id: string;
   question: string;
   answers: string[];
   distractors: string[];
+  fillBlanks?: FillBlank[] | null;
+  allowedModes?: string[] | null;
   aiVerify?: boolean | null;
   audioUrlEn?: string | null;
   audioUrlFr?: string | null;
@@ -62,6 +66,7 @@ export type DeckFromApi = {
   isOwned?: boolean;
   icon?: string | null;
   aiVerify?: boolean;
+  allowedModes?: string[] | null;
 };
 
 // Types – Sync
@@ -302,6 +307,27 @@ export async function generateDistractors(
       signal: controller.signal,
       cache: "no-store",
     }, "générer les pièges");
+    return r.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function generateFillBlanks(
+  cardId: string,
+  question: string,
+  answer: string,
+): Promise<{ fillBlanks: FillBlank[] }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const r = await safeFetch(`${API_BASE}/cards/${cardId}/fill-blanks`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ question, answer }),
+      signal: controller.signal,
+      cache: "no-store",
+    }, "générer les trous");
     return r.json();
   } finally {
     clearTimeout(timeout);
