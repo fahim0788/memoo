@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import type { CardFromApi, FillBlank } from "../lib/api";
-import { generateDistractors, generateFillBlanks } from "../lib/api";
+import type { CardFromApi } from "../lib/api";
+import { generateDistractors } from "../lib/api";
 import { normalizeText } from "../lib/text";
 import { t } from "../lib/i18n";
 import { MiniKeyboard } from "./MiniKeyboard";
@@ -30,16 +30,49 @@ function hashCode(s: string): number {
   return Math.abs(h);
 }
 
-/** Shuffle array deterministically with seed */
+/** Shuffle array deterministically with seed (uses Math.imul to avoid overflow) */
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const result = [...arr];
   let s = seed;
   for (let i = result.length - 1; i > 0; i--) {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    s = (Math.imul(s, 1103515245) + 12345) & 0x7fffffff;
     const j = s % (i + 1);
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+/** True random shuffle (Fisher-Yates with Math.random) */
+function randomShuffle<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/** Pick noise words from other cards in the deck */
+function pickNoiseWords(card: CardFromApi, allCards: CardFromApi[], answerWords: string[], count: number): string[] {
+  const answerSet = new Set(answerWords.map(w => w.toLowerCase()));
+  const candidates: string[] = [];
+  for (const c of allCards) {
+    if (c.id === card.id) continue;
+    const words = (c.answers[0] ?? "").trim().split(/\s+/);
+    for (const w of words) {
+      if (w.length > 2 && !answerSet.has(w.toLowerCase())) candidates.push(w);
+    }
+  }
+  const unique = [...new Set(candidates)];
+  if (unique.length === 0) return [];
+  return seededShuffle(unique, hashCode(card.id) + 777).slice(0, count);
+}
+
+/** Pick random word indices to blank out (all words eligible) */
+function pickBlankIndices(words: string[], seed: number): number[] {
+  const indices = words.map((_, i) => i);
+  const count = Math.min(indices.length, words.length <= 4 ? 1 : words.length <= 8 ? 2 : 3);
+  return seededShuffle(indices, seed).slice(0, count).sort((a, b) => a - b);
 }
 
 const YES_NO_VALUES = ["oui", "non", "yes", "no", "vrai", "faux", "true", "false"];
@@ -199,18 +232,31 @@ function NumberInput({ card, onAnswer, onShowAnswer }: {
 
 // ─── WordScramble ─────────────────────────────────────────────
 
-function ScrambleInput({ card, onAnswer, onShowAnswer }: {
+function ScrambleInput({ card, allCards, onAnswer, onShowAnswer }: {
   card: CardFromApi;
+  allCards: CardFromApi[];
   onAnswer: (a: string) => void;
   onShowAnswer: () => void;
 }) {
   const answer = card.answers[0] ?? "";
   const words = answer.trim().split(/\s+/);
+  const noiseCount = words.length <= 4 ? 1 : 2;
+  const noiseWords = useMemo(
+    () => pickNoiseWords(card, allCards, words, noiseCount),
+    [card.id, allCards.length],
+  );
   const shuffled = useMemo(
-    () => seededShuffle(words.map((w, i) => ({ word: w, origIdx: i })), hashCode(card.id)),
-    [card.id],
+    () => seededShuffle(
+      [
+        ...words.map((w, i) => ({ word: w, origIdx: i, isNoise: false })),
+        ...noiseWords.map((w) => ({ word: w, origIdx: -1, isNoise: true })),
+      ],
+      hashCode(card.id),
+    ),
+    [card.id, noiseWords],
   );
 
+  const expectedCount = words.length;
   const [placed, setPlaced] = useState<number[]>([]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
@@ -225,8 +271,8 @@ function ScrambleInput({ card, onAnswer, onShowAnswer }: {
   const addWord = (shuffleIdx: number) => {
     const next = [...placed, shuffleIdx];
     setPlaced(next);
-    // Auto-validate when all words are placed
-    if (next.length === shuffled.length) {
+    // Auto-validate when expected word count is placed
+    if (next.length === expectedCount) {
       const assembled = next.map(i => shuffled[i].word).join(" ");
       setTimeout(() => onAnswer(assembled), 350);
     }
@@ -355,8 +401,6 @@ function McqInput({ card, allCards, onAnswer, onShowAnswer }: {
     hasStoredDistractors ? card.distractors : null,
   );
   const [loading, setLoading] = useState(false);
-  // Random seed set once on mount — stable across StrictMode double-renders
-  const [shuffleSeed] = useState(() => (Math.random() * 0x7fffffff) | 0);
 
   // Ask AI for distractors on first encounter (no stored distractors)
   useEffect(() => {
@@ -383,8 +427,8 @@ function McqInput({ card, allCards, onAnswer, onShowAnswer }: {
     const distractors = (aiDistractors && aiDistractors.length > 0)
       ? aiDistractors.slice(0, 3)
       : deckDistractors(card, allCards);
-    return seededShuffle([answer, ...distractors], shuffleSeed);
-  }, [card.id, aiDistractors, allCards.length, shuffleSeed]);
+    return randomShuffle([answer, ...distractors]);
+  }, [card.id, aiDistractors, allCards.length]);
 
   if (loading) {
     return (
@@ -417,83 +461,45 @@ function McqInput({ card, allCards, onAnswer, onShowAnswer }: {
   );
 }
 
-// ─── FillBlank (AI-generated blanks with distractors) ────────
+// ─── FillBlank (algorithmic blanks + noise words from deck) ──
 
-function FillBlankInput({ card, onAnswer, onShowAnswer }: {
+function FillBlankInput({ card, allCards, onAnswer, onShowAnswer }: {
   card: CardFromApi;
+  allCards: CardFromApi[];
   onAnswer: (a: string) => void;
   onShowAnswer: () => void;
 }) {
   const answer = card.answers[0] ?? "";
-  const answerWords = answer.trim().split(/\s+/);
-  const hasStored = card.fillBlanks && card.fillBlanks.length > 0;
+  const answerWords = useMemo(() => answer.trim().split(/\s+/), [answer]);
 
-  const [blanks, setBlanks] = useState<FillBlank[] | null>(
-    hasStored ? card.fillBlanks! : null,
+  // Algorithmically pick which words to blank (deterministic per card+day)
+  const daySeed = Math.floor(Date.now() / 86_400_000);
+  const blankIdxList = useMemo(
+    () => pickBlankIndices(answerWords, hashCode(card.id) + daySeed),
+    [card.id, answerWords],
   );
-  const [loading, setLoading] = useState(false);
+  const blankIndices = useMemo(() => new Set(blankIdxList), [blankIdxList]);
 
-  // Lazy-load fill-blanks from API
-  useEffect(() => {
-    if (hasStored || blanks !== null) return;
-    if (typeof navigator === "undefined" || !navigator.onLine) return;
-
-    let cancelled = false;
-    setLoading(true);
-    generateFillBlanks(card.id, card.question, answer)
-      .then(res => {
-        if (!cancelled && res.fillBlanks.length > 0) {
-          setBlanks(res.fillBlanks);
-          card.fillBlanks = res.fillBlanks;
-        }
-      })
-      .catch(() => { /* fallback: show as scramble-like */ })
-      .finally(() => { if (!cancelled) setLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [card.id]);
+  // Correct words = the blanked-out words (always in chips)
+  // Noise words = from other cards in the deck (not MCQ distractors which are answer-level)
+  const allChips = useMemo(() => {
+    const correct = blankIdxList.map(i => answerWords[i]);
+    const noiseCount = Math.max(2, correct.length * 2);
+    const noise = pickNoiseWords(card, allCards, answerWords, noiseCount);
+    return seededShuffle([...correct, ...noise], hashCode(card.id));
+  }, [card.id, blankIdxList, answerWords, allCards.length]);
 
   // State: which blank slot the user is currently filling
   const [filled, setFilled] = useState<Record<number, string>>({});
   const [usedChips, setUsedChips] = useState<Set<string>>(new Set());
 
-  useEffect(() => { setFilled({}); setUsedChips(new Set()); }, [card.id, blanks]);
-
-  // Build pool of chips: correct words + all distractors, shuffled
-  // Must be before early returns to respect React Rules of Hooks
-  const allChips = useMemo(() => {
-    if (!blanks || blanks.length === 0) return [];
-    const chips: string[] = [];
-    for (const b of blanks) {
-      chips.push(b.word);
-      for (const d of b.distractors) chips.push(d);
-    }
-    return seededShuffle(chips, hashCode(card.id));
-  }, [card.id, blanks]);
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", padding: "2rem 0" }}>
-        <div style={{ fontSize: "1.1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>
-          {t.study.evaluating}
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback if blanks couldn't be generated
-  if (!blanks || blanks.length === 0) {
-    return <ScrambleInput card={card} onAnswer={onAnswer} onShowAnswer={onShowAnswer} />;
-  }
-
-  const blankIndices = new Set(blanks.map(b => b.index));
+  useEffect(() => { setFilled({}); setUsedChips(new Set()); }, [card.id]);
 
   // Find next unfilled blank index
-  const nextBlankIdx = blanks.find(b => filled[b.index] === undefined)?.index ?? null;
+  const nextBlankIdx = blankIdxList.find(i => filled[i] === undefined) ?? null;
 
   const handleChipClick = (chip: string) => {
     if (nextBlankIdx === null) return;
-    const chipKey = `${chip}:${nextBlankIdx}`;
     const newFilled = { ...filled, [nextBlankIdx]: chip };
     const newUsed = new Set(usedChips);
     // Mark a unique instance as used
@@ -511,7 +517,7 @@ function FillBlankInput({ card, onAnswer, onShowAnswer }: {
     setUsedChips(newUsed);
 
     // Auto-submit when all blanks filled
-    if (Object.keys(newFilled).length === blanks.length) {
+    if (Object.keys(newFilled).length === blankIdxList.length) {
       const assembled = answerWords.map((w, i) =>
         blankIndices.has(i) ? (newFilled[i] ?? w) : w,
       ).join(" ");
@@ -689,11 +695,11 @@ export function AnswerInput({ card, allCards, allowedModes, onAnswer, onShowAnsw
     case "number":
       return <NumberInput card={card} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     case "scramble":
-      return <ScrambleInput card={card} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
+      return <ScrambleInput card={card} allCards={allCards} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     case "mcq":
       return <McqInput card={card} allCards={allCards} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     case "fillblank":
-      return <FillBlankInput card={card} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
+      return <FillBlankInput card={card} allCards={allCards} onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
     default:
       return <TextInputMode onAnswer={handleAnswer} onShowAnswer={onShowAnswer} />;
   }

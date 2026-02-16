@@ -246,6 +246,15 @@ export function StudyView({ deck, cards, chapterName, chapterColor, onBack, user
     setShowResult(false);
   }
 
+  // Auto-advance to celebration screen after last card
+  useEffect(() => {
+    if (!showResult || !pendingStudy || evaluating) return;
+    const nextDue = pickNextDue(cards, pendingStudy);
+    if (nextDue !== null) return;
+    const timer = setTimeout(() => goNext(), 2000);
+    return () => clearTimeout(timer);
+  }, [showResult, pendingStudy, evaluating, cards]);
+
   if (!study) {
     return (
       <div className="card">{t.common.loading}</div>

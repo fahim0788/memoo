@@ -1,5 +1,5 @@
 /* MemoList MVP SW - offline-first with automatic sync */
-const CACHE_NAME = "memolist-v2";
+const CACHE_NAME = "memolist-v3";
 const ASSETS = [
   "/",
   "/manifest.webmanifest"
@@ -32,6 +32,13 @@ self.addEventListener("activate", (event) => {
         )
       )
       .then(() => self.clients.claim())
+      // Force-reload all open tabs so they pick up fresh content
+      .then(() => self.clients.matchAll({ type: "window" }))
+      .then(clients => {
+        for (const client of clients) {
+          client.navigate(client.url);
+        }
+      })
       .catch(err => console.error("[SW] Activate failed:", err))
   );
 });
@@ -54,10 +61,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For navigation, serve cached shell then network
+  // For navigation, network-first (fixes stale cache → black screen after deploy)
   if (req.mode === "navigate") {
     event.respondWith(
-      caches.match("/").then(cached => cached || fetch(req).catch(() => cached))
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put("/", copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match("/").then(cached => cached || new Response("Offline", { status: 503 })))
     );
     return;
   }
