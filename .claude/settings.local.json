@@ -55,7 +55,13 @@
       "Bash(DATABASE_URL=\"postgresql://memolist:memolist@localhost:5432/memolist\" npx prisma migrate deploy:*)",
       "Bash(docker-compose logs:*)",
       "Bash(cmd //c \"taskkill /PID 56980 /F\")",
-      "Bash(docker-compose down:*)"
+      "Bash(docker-compose down:*)",
+      "Bash(cmd.exe /c \"netstat -ano\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr 3000\")",
+      "Bash(docker rm:*)",
+      "Bash(cmd.exe /c \"netsh interface ipv4 show excludedportrange protocol=tcp\")",
+      "Bash(cmd.exe /c \"taskkill /PID 85252 /F\")",
+      "Bash(cmd.exe /c \"taskkill /PID 85252 /T /F\")"
     ]
   }
 }

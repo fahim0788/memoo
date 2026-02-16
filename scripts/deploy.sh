@@ -111,8 +111,8 @@ spin() {
         wait "$pid" 2>/dev/null || true
     fi
 
-    wait "$pid" 2>/dev/null
-    local rc=$?
+    local rc=0
+    wait "$pid" 2>/dev/null || rc=$?
     local elapsed=$(( $(date +%s) - start_time ))
 
     if [ $rc -eq 0 ]; then
