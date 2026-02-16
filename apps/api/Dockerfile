@@ -25,8 +25,9 @@ WORKDIR /app
 # Contournement certificat SSL (proxy entreprise)
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# URL factice pour prisma generate
+# Valeurs factices pour le build (prisma generate + Next.js collect page data)
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+ENV JWT_SECRET="build-only-placeholder"
 
 # Copy everything from deps
 COPY --from=deps /app ./
