@@ -284,11 +284,15 @@
   }
 
   button {
-    @apply flex-1 min-w-[120px] px-4 py-3 rounded-xl font-semibold cursor-pointer;
+    @apply px-4 py-3 rounded-xl font-semibold cursor-pointer;
     @apply transition-all duration-200 ease-out;
     background: var(--color-accent-light);
     border: none;
     color: var(--color-text);
+  }
+
+  .actions button {
+    @apply flex-1 min-w-[120px];
   }
 
   .dark button {
