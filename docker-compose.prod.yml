@@ -125,9 +125,9 @@ services:
     image: minio/minio:latest
     container_name: memoo-minio
     command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"   # API S3
-      - "9001:9001"   # Console web
+    expose:
+      - "9000"   # API S3 (internal only)
+      - "9001"   # Console web (internal only)
     environment:
       - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
