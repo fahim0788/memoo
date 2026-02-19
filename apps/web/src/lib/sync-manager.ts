@@ -1,6 +1,14 @@
 /**
  * Sync Manager
  * Handles online/offline detection, queue processing, and retry logic
+ *
+ * Bug fixes applied:
+ * - BUG 3: Recheck queue after sync cycle for new ops enqueued during sync
+ * - BUG 5: Dispatch sync-rollback event after rollback for cache refresh
+ * - BUG 6: Detect 401 auth-expired, stop retries, emit event
+ * - BUG 8: Reset orphaned "syncing" operations on startup
+ * - BUG 9: Dispatch sync-operation-failed event on permanent failure
+ * - BUG 10: Treat 404 on DELETE_DECK as success
  */
 
 import {
@@ -10,6 +18,7 @@ import {
   shouldRetry,
   type QueuedOperation,
   getPendingCount,
+  resetSyncingOperations,
 } from "./offline-queue";
 import {
   addList as apiAddList,
@@ -17,7 +26,7 @@ import {
   reorderLists as apiReorderLists,
   deleteDeck as apiDeleteDeck,
 } from "./api";
-import { idbGet, idbSet } from "./idb";
+import { idbSet } from "./idb";
 
 // Cache keys (same as api-cache.ts)
 const CACHE_KEYS = {
@@ -28,6 +37,7 @@ const CACHE_KEYS = {
 
 type SyncStatus = "idle" | "syncing" | "offline" | "error";
 type SyncListener = (status: SyncStatus, pendingCount: number) => void;
+type ProcessResult = "ok" | "fail" | "auth-expired";
 
 let currentStatus: SyncStatus = "idle";
 let listeners: SyncListener[] = [];
@@ -102,6 +112,7 @@ async function executeOperation(operation: QueuedOperation): Promise<void> {
 
 /**
  * Rollback an operation by restoring the snapshot
+ * BUG 5: Dispatches sync-rollback event for cache refresh
  */
 async function rollbackOperation(operation: QueuedOperation): Promise<void> {
   const { snapshot } = operation.payload;
@@ -121,41 +132,81 @@ async function rollbackOperation(operation: QueuedOperation): Promise<void> {
   if (snapshot.availablePersonal !== undefined) {
     await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: snapshot.availablePersonal, timestamp: Date.now() });
   }
+
+  // BUG 5: Signal that a rollback happened - UI/cache should refresh
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("sync-rollback", {
+      detail: { operationId: operation.id, operationType: operation.type }
+    }));
+  }
 }
 
 /**
  * Process a single operation
+ * Returns "ok", "fail", or "auth-expired" to guide queue processing
  */
-async function processOperation(operation: QueuedOperation): Promise<boolean> {
+async function processOperation(operation: QueuedOperation): Promise<ProcessResult> {
   try {
     await updateOperation(operation.id, { status: "syncing" });
     await executeOperation(operation);
     await dequeue(operation.id);
     console.log("[SyncManager] Operation synced successfully:", operation.id);
-    return true;
+    return "ok";
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error("[SyncManager] Operation failed:", operation.id, errorMessage);
 
-    if (shouldRetry(operation)) {
-      await updateOperation(operation.id, {
-        status: "failed",
-        retryCount: operation.retryCount + 1,
-        lastError: errorMessage,
-      });
-      return false;
-    } else {
+    // BUG 6: 401 = token expired, don't retry, emit event
+    if (errorMessage.includes("Session expir")) {
+      console.warn("[SyncManager] Auth expired, stopping sync");
+      await updateOperation(operation.id, { status: "failed", lastError: errorMessage });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth-expired"));
+      }
+      return "auth-expired";
+    }
+
+    // BUG 10: 404 on DELETE means resource already gone = success
+    if (operation.type === "DELETE_DECK" && errorMessage.includes("introuvable")) {
+      console.log("[SyncManager] DELETE_DECK got 404, treating as success:", operation.id);
+      await dequeue(operation.id);
+      return "ok";
+    }
+
+    // Always increment retryCount first
+    const newRetryCount = operation.retryCount + 1;
+    await updateOperation(operation.id, {
+      status: "failed",
+      retryCount: newRetryCount,
+      lastError: errorMessage,
+    });
+
+    // Check if max retries reached (using the UPDATED count)
+    if (!shouldRetry({ ...operation, retryCount: newRetryCount })) {
       // Max retries reached - rollback and remove from queue
       console.warn("[SyncManager] Max retries reached, rolling back:", operation.id);
       await rollbackOperation(operation);
       await dequeue(operation.id);
-      return false;
+
+      // BUG 9: Notify UI of permanent failure
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("sync-operation-failed", {
+          detail: {
+            operationType: operation.type,
+            operationId: operation.id,
+            lastError: errorMessage,
+          }
+        }));
+      }
     }
+
+    return "fail";
   }
 }
 
 /**
  * Process all pending operations in the queue
+ * BUG 3: Rechecks queue after sync for new ops enqueued during processing
  */
 export async function processQueue(): Promise<void> {
   if (syncInProgress) {
@@ -190,9 +241,11 @@ export async function processQueue(): Promise<void> {
       break;
     }
 
-    const success = await processOperation(operation);
-    if (!success) {
+    const result = await processOperation(operation);
+    if (result !== "ok") {
       hasFailures = true;
+      // BUG 6: Stop processing queue on auth expiration
+      if (result === "auth-expired") break;
     }
   }
 
@@ -204,6 +257,10 @@ export async function processQueue(): Promise<void> {
     if (hasFailures) {
       await setStatus("error");
       scheduleRetry();
+    } else {
+      // BUG 3: New ops appeared during sync - process them now
+      await notifyListeners();
+      return processQueue();
     }
   } else {
     await setStatus("idle");
@@ -247,9 +304,15 @@ export async function forceSync(): Promise<void> {
 
 /**
  * Initialize the sync manager (call once at app startup)
+ * BUG 8: Resets orphaned "syncing" operations before first processQueue
  */
 export function initSyncManager(): () => void {
   console.log("[SyncManager] Initializing");
+
+  // BUG 8: Reset any operations stuck in "syncing" state from a previous session
+  resetSyncingOperations().then(count => {
+    if (count > 0) console.log("[SyncManager] Reset", count, "orphaned syncing operations");
+  });
 
   // Set initial status
   if (!isOnline()) {

@@ -170,7 +170,7 @@
   }
 
   .container {
-    @apply w-full max-w-2xl px-4 py-4 flex flex-col gap-4;
+    @apply w-full max-w-2xl px-4 py-4 flex flex-col gap-5;
     padding-bottom: 5rem;
   }
 
@@ -188,6 +188,11 @@
     border-top: 1px solid var(--color-border);
     z-index: 50;
     padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* Logo hidden on mobile (only visible in desktop sidebar) */
+  .bottom-nav-logo {
+    display: none;
   }
 
   .bottom-nav-tab {
@@ -241,6 +246,96 @@
     box-shadow: var(--shadow-sm);
   }
 
+  /* Section header (e.g. "Mes listes") */
+  .section-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: -0.85rem;
+  }
+
+  /* Stats container — visual box around stat cards */
+  .stats-container {
+    @apply rounded-2xl p-3;
+    transition: all 0.2s ease;
+  }
+
+  :root .stats-container {
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .stats-container {
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stats-container > div > div {
+    @apply rounded-xl;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+  }
+
+  .dark .stats-container > div > div {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Deck list — global container with separated box per deck */
+  .deck-list {
+    @apply rounded-2xl p-3 flex flex-col;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  :root .deck-list {
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .deck-list {
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Each deck = its own box inside the container */
+  .deck-list > div {
+    @apply rounded-xl;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+  }
+
+  .dark .deck-list > div {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .deck-list-search {
+    background: transparent !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.5rem 0.5rem !important;
+    margin: 0;
+    box-shadow: none !important;
+    font-size: 0.85rem;
+  }
+
+  .deck-list-search:focus {
+    border-color: var(--color-primary) !important;
+    outline: none;
+    box-shadow: none !important;
+  }
+
+  .deck-list .card-button {
+    @apply rounded-xl;
+    padding: 0.75rem 0.75rem;
+  }
+
   /* Text */
   .small {
     @apply text-xs;
@@ -250,6 +345,31 @@
   /* Inputs */
   .input-wrapper {
     @apply w-full;
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .desktop-submit-btn {
+    padding: 0 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    background: var(--color-success);
+    color: white;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+  }
+
+  .desktop-submit-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .desktop-submit-btn:not(:disabled):hover {
+    opacity: 0.85;
   }
 
   input {
@@ -469,6 +589,8 @@
   .card-button {
     @apply transition-all duration-200;
     cursor: pointer;
+    padding: 0.65rem 0.75rem;
+    @apply rounded-xl;
   }
 
   .card-button:hover {
@@ -719,5 +841,136 @@
 @media (min-width: 640px) {
   .header h2 {
     @apply text-2xl;
+  }
+}
+
+/* ============================================================================
+   DESKTOP LAYOUT (≥768px) — Sidebar nav + wider content
+============================================================================ */
+
+@media (min-width: 768px) {
+  /* ── Bottom nav → Left sidebar ── */
+  .bottom-nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 72px;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 1.5rem;
+    gap: 0.25rem;
+    border-top: none;
+    border-right: 1px solid var(--color-border);
+    padding-bottom: 0;
+  }
+
+  .bottom-nav-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0 1rem 0;
+    cursor: pointer;
+  }
+
+  .bottom-nav-logo img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .bottom-nav-tab {
+    flex: none;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.6rem;
+  }
+
+  /* ── Content shifts right when sidebar is present ── */
+  .app:has(~ .bottom-nav) {
+    padding-left: 72px;
+  }
+
+  /* ── Hide back button when sidebar provides navigation ── */
+  .app:has(~ .bottom-nav) .header-back-btn {
+    display: none;
+  }
+
+  /* ── Top navbar (fixed) ── */
+  .header {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: auto !important; /* override inline width:100% — use left+right instead */
+    z-index: 40;
+    flex-direction: row !important;
+    align-items: center;
+    background: color-mix(in srgb, var(--color-bg) 95%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 1.5rem;
+    min-height: 56px;
+  }
+
+  /* Navbar starts after sidebar when present */
+  body:has(.bottom-nav) .header {
+    left: 72px;
+  }
+
+  /* Home: header-row fills width → space-between pushes actions right */
+  .header:not(:has(.header-title)) .header-row {
+    flex: 1 !important;
+  }
+
+  /* Internal pages: header-row shrinks, title takes the left */
+  .header:has(.header-title) .header-row {
+    width: auto !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* Title moves to left of navbar */
+  .header-title {
+    order: -1;
+    flex: 1 !important;
+    margin: 0 1rem 0 0 !important;
+    font-size: 1rem !important;
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Home: hide logo images (logo is in sidebar) */
+  body:has(.bottom-nav) .header-logo-img {
+    display: none !important;
+  }
+
+  /* More spacing between header action buttons on desktop */
+  .header-actions {
+    gap: 1.25rem !important;
+  }
+
+  /* ── Container adjustments ── */
+  .container {
+    padding-bottom: 2rem; /* no bottom nav to clear */
+    padding-top: 5rem;    /* space for fixed navbar */
+    gap: 1.75rem;         /* more breathing room between sections */
+  }
+
+  /* ── Deck list — slightly more gap on desktop ── */
+  .deck-list {
+    gap: 0.5rem;
+  }
+
+  /* ── Hide mobile keyboard on desktop (physical keyboard available) ── */
+  .mini-kb {
+    display: none;
+  }
+
+  /* ── Cards get subtle hover lift on desktop ── */
+  .card-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
 }

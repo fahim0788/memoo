@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memoo.fr — Architecture Réseau</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #0a0e1a;
+    --bg-card: #111827;
+    --bg-card-hover: #1a2236;
+    --border-subtle: rgba(255,255,255,0.06);
+    --border-accent: rgba(99,102,241,0.3);
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #60a5fa;
+    --accent-indigo: #818cf8;
+    --accent-purple: #a78bfa;
+    --accent-green: #34d399;
+    --accent-teal: #2dd4bf;
+    --accent-orange: #fb923c;
+    --accent-red: #f87171;
+    --accent-pink: #f472b6;
+    --accent-cyan: #22d3ee;
+    --accent-yellow: #fbbf24;
+    --glow-blue: rgba(96,165,250,0.15);
+    --glow-green: rgba(52,211,153,0.15);
+    --glow-red: rgba(248,113,113,0.12);
+    --glow-purple: rgba(167,139,250,0.12);
+  }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bg-glow-1 {
+    position: fixed;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%);
+    top: -100px; left: -100px;
+    pointer-events: none; z-index: 0;
+  }
+  .bg-glow-2 {
+    position: fixed;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(52,211,153,0.04) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 30px 60px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 100px;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-indigo);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .header h1 {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #e2e8f0, #818cf8, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .header .mono {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-cyan);
+    font-size: 13px;
+  }
+
+  /* LAYER SECTIONS */
+  .layer {
+    position: relative;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 28px 24px 24px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(17,24,39,0.6);
+    backdrop-filter: blur(8px);
+  }
+  .layer-label {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 14px;
+    border-radius: 6px;
+  }
+
+  .layer-internet { border-color: rgba(96,165,250,0.2); }
+  .layer-internet .layer-label { background: rgba(96,165,250,0.15); color: var(--accent-blue); }
+
+  .layer-nat { border-color: rgba(251,146,60,0.2); }
+  .layer-nat .layer-label { background: rgba(251,146,60,0.15); color: var(--accent-orange); }
+
+  .nat-rules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .nat-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+  .nat-rule:hover {
+    border-color: rgba(251,146,60,0.25);
+    background: var(--bg-card-hover);
+  }
+  .nat-proto {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(251,146,60,0.15);
+    color: var(--accent-orange);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .layer-firewall { border-color: rgba(248,113,113,0.2); }
+  .layer-firewall .layer-label { background: rgba(248,113,113,0.15); color: var(--accent-red); }
+
+  .layer-docker { border-color: rgba(52,211,153,0.2); }
+  .layer-docker .layer-label { background: rgba(52,211,153,0.15); color: var(--accent-green); }
+
+  .layer-volumes { border-color: rgba(251,191,36,0.2); }
+  .layer-volumes .layer-label { background: rgba(251,191,36,0.15); color: var(--accent-yellow); }
+
+  .layer-external { border-color: rgba(167,139,250,0.2); }
+  .layer-external .layer-label { background: rgba(167,139,250,0.15); color: var(--accent-purple); }
+
+  /* NODES */
+  .nodes-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px 18px 14px;
+    min-width: 140px;
+    max-width: 200px;
+    flex: 1;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+  .node:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .node-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .node-icon.blue { background: rgba(96,165,250,0.12); color: var(--accent-blue); box-shadow: 0 0 20px rgba(96,165,250,0.08); }
+  .node-icon.green { background: rgba(52,211,153,0.12); color: var(--accent-green); box-shadow: 0 0 20px rgba(52,211,153,0.08); }
+  .node-icon.purple { background: rgba(167,139,250,0.12); color: var(--accent-purple); box-shadow: 0 0 20px rgba(167,139,250,0.08); }
+  .node-icon.orange { background: rgba(251,146,60,0.12); color: var(--accent-orange); box-shadow: 0 0 20px rgba(251,146,60,0.08); }
+  .node-icon.red { background: rgba(248,113,113,0.12); color: var(--accent-red); box-shadow: 0 0 20px rgba(248,113,113,0.08); }
+  .node-icon.teal { background: rgba(45,212,191,0.12); color: var(--accent-teal); box-shadow: 0 0 20px rgba(45,212,191,0.08); }
+  .node-icon.cyan { background: rgba(34,211,238,0.12); color: var(--accent-cyan); box-shadow: 0 0 20px rgba(34,211,238,0.08); }
+  .node-icon.yellow { background: rgba(251,191,36,0.12); color: var(--accent-yellow); box-shadow: 0 0 20px rgba(251,191,36,0.08); }
+  .node-icon.pink { background: rgba(244,114,182,0.12); color: var(--accent-pink); box-shadow: 0 0 20px rgba(244,114,182,0.08); }
+
+  .node-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 3px;
+  }
+  .node-tech {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .node-port {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent-cyan);
+    margin-top: 4px;
+    background: rgba(34,211,238,0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .node-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+  .node-badge.exposed {
+    background: rgba(248,113,113,0.2);
+    color: var(--accent-red);
+    border: 1px solid rgba(248,113,113,0.3);
+  }
+  .node-badge.internal {
+    background: rgba(52,211,153,0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(52,211,153,0.25);
+  }
+
+  /* FLOW ARROWS SECTION */
+  .flows-section {
+    margin-top: 32px;
+    margin-bottom: 20px;
+  }
+  .flows-section h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 10px;
+  }
+
+  .flow-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(17,24,39,0.5);
+    border: 1px solid var(--border-subtle);
+    font-size: 13px;
+    transition: all 0.2s ease;
+  }
+  .flow-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+  }
+
+  .flow-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    min-width: 24px;
+    text-align: center;
+  }
+  .flow-arrow.user { color: var(--accent-blue); }
+  .flow-arrow.internal { color: var(--accent-green); }
+  .flow-arrow.external { color: var(--accent-red); }
+  .flow-arrow.system { color: var(--accent-yellow); }
+
+  .flow-from, .flow-to {
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .flow-from { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+  .flow-to { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+  .flow-desc {
+    color: var(--text-secondary);
+    font-size: 11px;
+    flex: 1;
+  }
+
+  /* FIREWALL RULES */
+  .fw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .fw-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+  .fw-rule:hover {
+    border-color: rgba(248,113,113,0.25);
+    background: var(--bg-card-hover);
+  }
+  .fw-port {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 50px;
+  }
+  .fw-port.open { color: var(--accent-green); }
+  .fw-port.restricted { color: var(--accent-yellow); }
+  .fw-port.blocked { color: var(--accent-red); }
+  .fw-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .fw-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .fw-status.open { background: rgba(52,211,153,0.15); color: var(--accent-green); }
+  .fw-status.restricted { background: rgba(251,191,36,0.15); color: var(--accent-yellow); }
+  .fw-status.blocked { background: rgba(248,113,113,0.15); color: var(--accent-red); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(17,24,39,0.6);
+    border: 1px solid var(--border-subtle);
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .legend-line {
+    width: 32px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .legend-line.solid-blue { background: var(--accent-blue); }
+  .legend-line.dashed-green {
+    background: repeating-linear-gradient(90deg, var(--accent-green) 0px, var(--accent-green) 6px, transparent 6px, transparent 10px);
+  }
+  .legend-line.solid-red { background: var(--accent-red); }
+  .legend-line.solid-yellow { background: var(--accent-yellow); }
+  .legend-icon {
+    font-size: 16px;
+  }
+
+  /* VOLUMES */
+  .volumes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .volume-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    min-width: 200px;
+  }
+  .volume-icon {
+    font-size: 20px;
+    color: var(--accent-yellow);
+  }
+  .volume-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .volume-desc {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* SVG CONNECTORS */
+  .connector-section {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    height: 44px;
+    margin: -6px 0;
+    z-index: 2;
+  }
+  .connector-section svg {
+    overflow: visible;
+  }
+
+  /* NGINX ROUTES */
+  .routes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+  }
+  .route-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+  }
+  .route-path { color: var(--accent-cyan); font-weight: 600; }
+  .route-arrow { color: var(--text-muted); }
+  .route-target { color: var(--accent-green); }
+
+  /* SECURITY HEADERS */
+  .security-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    justify-content: center;
+  }
+  .sec-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(248,113,113,0.1);
+    color: var(--accent-red);
+    border: 1px solid rgba(248,113,113,0.15);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .container { padding: 20px 14px 40px; }
+    .header h1 { font-size: 24px; }
+    .flow-grid { grid-template-columns: 1fr; }
+    .fw-grid { grid-template-columns: 1fr; }
+    .nodes-row { gap: 10px; }
+    .node { min-width: 110px; padding: 12px 10px 10px; }
+    .routes-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Docker network label */
+  .docker-network-label {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .docker-network-label span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-green);
+    background: rgba(52,211,153,0.08);
+    padding: 4px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(52,211,153,0.15);
+  }
+
+  .sub-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .sub-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .pi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-green);
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.15);
+    padding: 4px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
+  /* Connector arrows between layers */
+  .layer-connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 32px;
+    gap: 16px;
+    position: relative;
+  }
+  .layer-connector .arrow-down {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .layer-connector .arrow-shaft {
+    width: 2px;
+    height: 16px;
+  }
+  .layer-connector .arrow-shaft.blue { background: var(--accent-blue); }
+  .layer-connector .arrow-shaft.green { background: var(--accent-green); }
+  .layer-connector .arrow-shaft.dashed-green {
+    background: repeating-linear-gradient(180deg, var(--accent-green) 0px, var(--accent-green) 4px, transparent 4px, transparent 8px);
+  }
+  .layer-connector .arrow-head {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+  }
+  .layer-connector .arrow-head.blue { border-top: 6px solid var(--accent-blue); }
+  .layer-connector .arrow-head.green { border-top: 6px solid var(--accent-green); }
+  .layer-connector .conn-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">◆ Architecture Réseau</div>
+    <h1>Memoo.fr</h1>
+    <p>Application web PWA — Self-hosted sur Raspberry Pi</p>
+    <br>
+    <span class="mono">HTTPS · Docker · PostgreSQL · MinIO · Next.js</span>
+  </div>
+
+  <!-- LAYER 1: INTERNET / USERS -->
+  <div class="layer layer-internet">
+    <div class="layer-label">☁ Couche Externe — Internet</div>
+    <div class="nodes-row">
+      <div class="node">
+        <div class="node-icon blue">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="18" height="14" rx="2"/><line x1="2" y1="13" x2="20" y2="13"/><circle cx="11" cy="17" r="0"/><line x1="8" y1="20" x2="14" y2="20"/></svg>
+        </div>
+        <div class="node-name">Utilisateurs</div>
+        <div class="node-tech">Desktop / Mobile / PWA</div>
+      </div>
+      <div class="node">
+        <div class="node-icon purple">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="9"/><ellipse cx="11" cy="11" rx="4" ry="9"/><line x1="2" y1="11" x2="20" y2="11"/></svg>
+        </div>
+        <div class="node-name">DNS</div>
+        <div class="node-tech">memoo.fr → IP publique Box</div>
+      </div>
+      <div class="node">
+        <div class="node-icon teal">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="16" height="10" rx="1"/><path d="M7 7V5a4 4 0 018 0v2"/></svg>
+        </div>
+        <div class="node-name">HTTPS</div>
+        <div class="node-tech">Let's Encrypt TLS 1.3</div>
+        <div class="node-port">:443</div>
+      </div>
+      <div class="node">
+        <div class="node-icon cyan">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="node-name">WireGuard VPN</div>
+        <div class="node-tech">Admin distant</div>
+        <div class="node-port">:51820/UDP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR: Internet → Box -->
+  <div class="layer-connector">
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+    <span class="conn-label">IP publique → Box Internet</span>
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+  </div>
+
+  <!-- LAYER 1.5: BOX INTERNET / NAT -->
+  <div class="layer layer-nat">
+    <div class="layer-label">📡 Box Internet — NAT / Port Forwarding</div>
+    <div class="nodes-row" style="margin-bottom: 8px;">
+      <div class="node">
+        <div class="node-icon orange">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.55a11 11 0 0112.07 0"/><path d="M1.42 9a16 16 0 0119.16 0"/><path d="M8.53 16.11a6 6 0 014.94 0"/><circle cx="11" cy="19" r="1" fill="currentColor"/></svg>
+        </div>
+        <div class="node-name">Box Internet (FAI)</div>
+        <div class="node-tech">IP publique statique/dynamique<br>NAT vers réseau local</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-bottom:8px;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-orange);background:rgba(251,146,60,0.08);padding:4px 14px;border-radius:6px;border:1px solid rgba(251,146,60,0.15);">Règles de redirection de ports → Raspberry Pi (192.168.1.x)</span>
+    </div>
+    <div class="nat-rules">
+      <div class="nat-rule">
+        <span class="fw-port open">:80</span>
+        <span class="fw-desc">→ Pi :80 — HTTP (redirect HTTPS)</span>
+        <span class="nat-proto">TCP</span>
+      </div>
+      <div class="nat-rule">
+        <span class="fw-port open">:443</span>
+        <span class="fw-desc">→ Pi :443 — HTTPS trafic chiffré</span>
+        <span class="nat-proto">TCP</span>
+      </div>
+      <div class="nat-rule">
+        <span class="fw-port open">:51820</span>
+        <span class="fw-desc">→ Pi :51820 — WireGuard VPN</span>
+        <span class="nat-proto">UDP</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR: Box → Firewall Pi -->
+  <div class="layer-connector">
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+    <span class="conn-label">LAN → Pi :80 :443 (TCP) · :51820 (UDP)</span>
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+  </div>
+  <div class="layer layer-firewall">
+    <div class="layer-label">🛡 Firewall — UFW (Raspberry Pi)</div>
+    <div class="pi-badge">🍓 Raspberry Pi · Debian ARM64</div>
+    <div class="fw-grid">
+      <div class="fw-rule">
+        <span class="fw-port open">:80</span>
+        <span class="fw-desc">HTTP → redirigé HTTPS</span>
+        <span class="fw-status open">OPEN</span>
+      </div>
+      <div class="fw-rule">
+        <span class="fw-port open">:443</span>
+        <span class="fw-desc">HTTPS — trafic chiffré</span>
+        <span class="fw-status open">OPEN</span>
+      </div>
+      <div class="fw-rule">
+        <span class="fw-port restricted">:22</span>
+        <span class="fw-desc">SSH — LAN 192.168.1.0/24 + VPN 10.8.0.0/24</span>
+        <span class="fw-status restricted">RESTRICT</span>
+      </div>
+      <div class="fw-rule">
+        <span class="fw-port open">:51820</span>
+        <span class="fw-desc">WireGuard VPN (UDP)</span>
+        <span class="fw-status open">OPEN</span>
+      </div>
+      <div class="fw-rule">
+        <span class="fw-port blocked">*</span>
+        <span class="fw-desc">Tous les autres ports</span>
+        <span class="fw-status blocked">DENY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR -->
+  <div class="layer-connector">
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+    <span class="conn-label">:80 & :443 → container nginx</span>
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+  </div>
+
+  <!-- LAYER 3: DOCKER -->
+  <div class="layer layer-docker">
+    <div class="layer-label">🐳 Docker — Réseau Bridge Interne</div>
+    <div class="docker-network-label"><span>memoo-network (bridge)</span></div>
+
+    <div class="nodes-row">
+      <!-- nginx -->
+      <div class="node">
+        <div class="node-badge exposed">EXPOSÉ</div>
+        <div class="node-icon blue">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11,2 20,7 20,17 11,22 2,17 2,7"/></svg>
+        </div>
+        <div class="node-name">nginx</div>
+        <div class="node-tech">nginx:1.25-alpine<br>Reverse Proxy + SSL</div>
+        <div class="node-port">:80 :443 → hôte</div>
+      </div>
+      <!-- web -->
+      <div class="node">
+        <div class="node-badge internal">INTERNE</div>
+        <div class="node-icon green">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="18" height="18" rx="3"/><path d="M9 2v18"/><path d="M2 9h18"/></svg>
+        </div>
+        <div class="node-name">web</div>
+        <div class="node-tech">Next.js PWA<br>standalone</div>
+        <div class="node-port">:3000</div>
+      </div>
+      <!-- api -->
+      <div class="node">
+        <div class="node-badge internal">INTERNE</div>
+        <div class="node-icon purple">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h14a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M8 10l3 3 3-3"/></svg>
+        </div>
+        <div class="node-name">api</div>
+        <div class="node-tech">Next.js + Prisma<br>Backend REST</div>
+        <div class="node-port">:3001</div>
+      </div>
+      <!-- db -->
+      <div class="node">
+        <div class="node-badge internal">INTERNE</div>
+        <div class="node-icon orange">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="11" cy="6" rx="8" ry="4"/><path d="M3 6v10c0 2.21 3.58 4 8 4s8-1.79 8-4V6"/><path d="M3 11c0 2.21 3.58 4 8 4s8-1.79 8-4"/></svg>
+        </div>
+        <div class="node-name">db</div>
+        <div class="node-tech">PostgreSQL 16<br>alpine</div>
+        <div class="node-port">:5432</div>
+      </div>
+      <!-- worker -->
+      <div class="node">
+        <div class="node-badge internal">INTERNE</div>
+        <div class="node-icon pink">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </div>
+        <div class="node-name">worker</div>
+        <div class="node-tech">Node.js<br>TTS processor</div>
+        <div class="node-port">aucun port</div>
+      </div>
+      <!-- minio -->
+      <div class="node">
+        <div class="node-badge internal">INTERNE</div>
+        <div class="node-icon yellow">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h14a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M4 12h14a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 012-2z"/><circle cx="6" cy="7" r="0.5" fill="currentColor"/><circle cx="6" cy="15" r="0.5" fill="currentColor"/></svg>
+        </div>
+        <div class="node-name">minio</div>
+        <div class="node-tech">MinIO S3<br>Object Storage</div>
+        <div class="node-port">:9000 :9001</div>
+      </div>
+    </div>
+
+    <!-- NGINX ROUTES -->
+    <div class="sub-section">
+      <div class="sub-section-title">Routes Nginx — Reverse Proxy</div>
+      <div class="routes-grid">
+        <div class="route-item">
+          <span class="route-path">/</span>
+          <span class="route-arrow">→</span>
+          <span class="route-target">web:3000</span>
+          <span style="color:var(--text-muted);font-size:10px;margin-left:auto">HTML/CSS/JS/SW</span>
+        </div>
+        <div class="route-item">
+          <span class="route-path">/api/*</span>
+          <span class="route-arrow">→</span>
+          <span class="route-target">api:3001</span>
+          <span style="color:var(--text-muted);font-size:10px;margin-left:auto">REST API</span>
+        </div>
+        <div class="route-item">
+          <span class="route-path">/storage/tts/*</span>
+          <span class="route-arrow">→</span>
+          <span class="route-target">minio:9000</span>
+          <span style="color:var(--text-muted);font-size:10px;margin-left:auto">bucket: memolist-tts</span>
+        </div>
+        <div class="route-item">
+          <span class="route-path">/storage/flags/*</span>
+          <span class="route-arrow">→</span>
+          <span class="route-target">minio:9000</span>
+          <span style="color:var(--text-muted);font-size:10px;margin-left:auto">bucket: memolist-flags</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY HEADERS -->
+    <div class="sub-section">
+      <div class="sub-section-title">En-têtes de Sécurité Nginx</div>
+      <div class="security-tags">
+        <span class="sec-tag">HSTS</span>
+        <span class="sec-tag">Content-Security-Policy</span>
+        <span class="sec-tag">X-Frame-Options</span>
+        <span class="sec-tag">X-Content-Type-Options: nosniff</span>
+        <span class="sec-tag">Block: dotfiles</span>
+        <span class="sec-tag">Block: .env, docker-compose.*</span>
+      </div>
+    </div>
+
+    <!-- OPTIONAL CONTAINER -->
+    <div class="sub-section">
+      <div class="sub-section-title">Container Optionnel (profile: tools)</div>
+      <div class="nodes-row">
+        <div class="node" style="max-width:220px;opacity:0.65;border-style:dashed;">
+          <div class="node-icon teal" style="opacity:0.7">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="node-name">migrate</div>
+          <div class="node-tech">Prisma migrations<br>exécution manuelle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR -->
+  <div class="layer-connector">
+    <div class="arrow-down"><div class="arrow-shaft dashed-green"></div><div class="arrow-head green"></div></div>
+    <span class="conn-label">Volumes montés</span>
+    <div class="arrow-down"><div class="arrow-shaft dashed-green"></div><div class="arrow-head green"></div></div>
+  </div>
+
+  <!-- LAYER 4: VOLUMES -->
+  <div class="layer layer-volumes">
+    <div class="layer-label">💾 Volumes Docker Persistants</div>
+    <div class="volumes-grid">
+      <div class="volume-item">
+        <span class="volume-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="10" cy="5" rx="7" ry="3"/><path d="M3 5v10c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/><path d="M3 10c0 1.66 3.13 3 7 3s7-1.34 7-3"/></svg>
+        </span>
+        <div>
+          <div class="volume-name">pgdata</div>
+          <div class="volume-desc">Données PostgreSQL</div>
+        </div>
+      </div>
+      <div class="volume-item">
+        <span class="volume-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </span>
+        <div>
+          <div class="volume-name">tts-storage</div>
+          <div class="volume-desc">Audio TTS — partagé api ↔ worker</div>
+        </div>
+      </div>
+      <div class="volume-item">
+        <span class="volume-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M4 12h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 012-2z"/></svg>
+        </span>
+        <div>
+          <div class="volume-name">minio-data</div>
+          <div class="volume-desc">Stockage objet MinIO (buckets S3)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYER 5: EXTERNAL APIS -->
+  <div class="layer layer-external">
+    <div class="layer-label">🌐 Services Externes — API Sortantes</div>
+    <div class="nodes-row">
+      <div class="node">
+        <div class="node-icon purple">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <div class="node-name">OpenAI API</div>
+        <div class="node-tech">TTS génération audio<br>Évaluation IA</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+      <div class="node">
+        <div class="node-icon pink">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="node-name">Brevo API</div>
+        <div class="node-tech">Envoi d'emails<br>transactionnels</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+      <div class="node">
+        <div class="node-icon teal">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="16" height="10" rx="1"/><path d="M7 7V5a4 4 0 018 0v2"/></svg>
+        </div>
+        <div class="node-name">Let's Encrypt</div>
+        <div class="node-tech">Certbot auto-renew<br>/etc/letsencrypt → nginx</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOWS -->
+  <div class="flows-section">
+    <h3>Flux de Données</h3>
+    <div class="flow-grid">
+      <!-- User flows -->
+      <div class="flow-item">
+        <span class="flow-from">Utilisateur</span>
+        <span class="flow-arrow user">━━▸</span>
+        <span class="flow-to">nginx</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">web</span>
+        <span class="flow-desc">HTML / JS / CSS / PWA</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">Utilisateur</span>
+        <span class="flow-arrow user">━━▸</span>
+        <span class="flow-to">nginx</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">api</span>
+        <span class="flow-desc">Requêtes REST /api/*</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">Utilisateur</span>
+        <span class="flow-arrow user">━━▸</span>
+        <span class="flow-to">nginx</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">minio</span>
+        <span class="flow-desc">Audio TTS /storage/*</span>
+      </div>
+      <!-- Internal flows -->
+      <div class="flow-item">
+        <span class="flow-from">api</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">db</span>
+        <span class="flow-desc">Queries SQL via Prisma (DATABASE_URL)</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">api</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">minio</span>
+        <span class="flow-desc">Lecture / écriture fichiers audio S3</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">worker</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">db</span>
+        <span class="flow-desc">Poll jobs TTS (toutes les 5s)</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">worker</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">minio</span>
+        <span class="flow-desc">Stockage audio généré</span>
+      </div>
+      <!-- External flows -->
+      <div class="flow-item">
+        <span class="flow-from">worker</span>
+        <span class="flow-arrow external">━━▸</span>
+        <span class="flow-to" style="background:rgba(248,113,113,0.1);color:var(--accent-red)">OpenAI</span>
+        <span class="flow-desc">Génération audio TTS (sortant)</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">api</span>
+        <span class="flow-arrow external">━━▸</span>
+        <span class="flow-to" style="background:rgba(248,113,113,0.1);color:var(--accent-red)">OpenAI</span>
+        <span class="flow-desc">Évaluation réponses IA (sortant)</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">api</span>
+        <span class="flow-arrow external">━━▸</span>
+        <span class="flow-to" style="background:rgba(248,113,113,0.1);color:var(--accent-red)">Brevo</span>
+        <span class="flow-desc">Envoi emails transactionnels (sortant)</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">Let's Encrypt</span>
+        <span class="flow-arrow system">━━▸</span>
+        <span class="flow-to">nginx</span>
+        <span class="flow-desc">Renouvellement auto certificats SSL</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">WireGuard</span>
+        <span class="flow-arrow system">━━▸</span>
+        <span class="flow-to">Box NAT</span>
+        <span class="flow-arrow system">━━▸</span>
+        <span class="flow-to">Pi SSH :22</span>
+        <span class="flow-desc">Admin distante via VPN</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">DNS</span>
+        <span class="flow-arrow user">━━▸</span>
+        <span class="flow-to">Box Internet</span>
+        <span class="flow-arrow user">━━▸</span>
+        <span class="flow-to">Pi</span>
+        <span class="flow-desc">NAT :80 :443 (TCP) · :51820 (UDP)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-line solid-blue"></div>
+      <span>Trafic utilisateur (HTTPS)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line dashed-green"></div>
+      <span>Trafic interne Docker</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line solid-red"></div>
+      <span>API externes (sortant)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line solid-yellow"></div>
+      <span>Système / maintenance</span>
+    </div>
+    <div class="legend-item">
+      <span style="display:inline-block;width:32px;height:3px;border-radius:2px;background:var(--accent-orange);"></span>
+      <span>NAT / Port forwarding (Box)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-icon">🔒</span>
+      <span>Connexion chiffrée SSL/TLS</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-icon">🛡</span>
+      <span>Firewall UFW</span>
+    </div>
+    <div class="legend-item">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent-red);background:rgba(248,113,113,0.2);padding:2px 7px;border-radius:4px;font-weight:600;">EXPOSÉ</span>
+      <span>Port accessible depuis l'extérieur</span>
+    </div>
+    <div class="legend-item">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent-green);background:rgba(52,211,153,0.15);padding:2px 7px;border-radius:4px;font-weight:600;">INTERNE</span>
+      <span>Réseau Docker uniquement</span>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:32px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;">
+    memoo.fr · Architecture v1.0 · Raspberry Pi Self-Hosted · Février 2026
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -6,6 +6,7 @@ import {
   isOnline as checkIsOnline,
 } from "../lib/sync-manager";
 import { getPendingCount as getListOpsPendingCount } from "../lib/offline-queue";
+import { refreshCache } from "../lib/api-cache";
 import { initMediaCacheListener } from "../lib/media-cache";
 
 type SyncState = "idle" | "syncing" | "offline" | "error";
@@ -90,6 +91,17 @@ export function useSyncStatus() {
     return () => {
       window.removeEventListener("sync-complete", handleSyncComplete);
     };
+  }, []);
+
+  // BUG 5: Listen for rollback events - force cache refresh from server
+  useEffect(() => {
+    function handleRollback() {
+      console.log("[useSyncStatus] Rollback detected, refreshing cache");
+      refreshCache().catch(() => {});
+    }
+
+    window.addEventListener("sync-rollback", handleRollback);
+    return () => window.removeEventListener("sync-rollback", handleRollback);
   }, []);
 
   // Listen for media cache events from SW

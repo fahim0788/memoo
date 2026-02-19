@@ -14,35 +14,33 @@ export function StatsCard({ stats }: StatsCardProps) {
   if (stats.todayTotal === 0 && stats.streak === 0) return null;
 
   return (
-    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-      <div style={{
-        flex: 1,
-        minWidth: "120px",
-        padding: "0.5rem 0.75rem",
-        borderRadius: "12px",
-        background: "var(--color-primary-light)",
-      }}>
-        <div className="small">{t.stats.todayLabel}</div>
-        <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          {stats.todayTotal}
-          <span style={{ fontSize: "0.75rem", fontWeight: 400, marginLeft: "4px", color: "var(--color-text-secondary)" }}>
-            {t.plural.cards(stats.todayTotal)}
-          </span>
+    <div className="stats-container">
+      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div style={{
+          flex: 1,
+          minWidth: "120px",
+          padding: "0.5rem 0.75rem",
+        }}>
+          <div className="small">{t.stats.todayLabel}</div>
+          <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+            {stats.todayTotal}
+            <span style={{ fontSize: "0.75rem", fontWeight: 400, marginLeft: "4px", color: "var(--color-text-secondary)" }}>
+              {t.plural.cards(stats.todayTotal)}
+            </span>
+          </div>
         </div>
-      </div>
-      <div style={{
-        flex: 1,
-        minWidth: "120px",
-        padding: "0.5rem 0.75rem",
-        borderRadius: "12px",
-        background: "var(--color-primary-light)",
-      }}>
-        <div className="small">{t.stats.streak}</div>
-        <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          {stats.streak > 0 ? stats.streak : "-"}
-          <span style={{ fontSize: "0.75rem", fontWeight: 400, marginLeft: "4px", color: "var(--color-text-secondary)" }}>
-            {stats.streak > 0 ? t.plural.days(stats.streak) : ""}
-          </span>
+        <div style={{
+          flex: 1,
+          minWidth: "120px",
+          padding: "0.5rem 0.75rem",
+        }}>
+          <div className="small">{t.stats.streak}</div>
+          <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+            {stats.streak > 0 ? stats.streak : "-"}
+            <span style={{ fontSize: "0.75rem", fontWeight: 400, marginLeft: "4px", color: "var(--color-text-secondary)" }}>
+              {stats.streak > 0 ? t.plural.days(stats.streak) : ""}
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 /**
  * Tiny IndexedDB helper (no deps).
  * Stores a single JSON blob for MVP.
+ * Includes async mutex for safe read-modify-write operations.
  */
 const DB_NAME = "memolist_mvp";
 const DB_VERSION = 1;
@@ -45,5 +46,19 @@ export async function idbSet<T>(key: string, value: T): Promise<void> {
     });
   } finally {
     db.close();
+  }
+}
+
+// --- Async mutex for read-modify-write atomicity ---
+const locks = new Map<string, Promise<unknown>>();
+
+export async function withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = locks.get(key) ?? Promise.resolve();
+  const next = prev.then(fn, fn);
+  locks.set(key, next);
+  try {
+    return await next;
+  } finally {
+    if (locks.get(key) === next) locks.delete(key);
   }
 }

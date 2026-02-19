@@ -221,4 +221,42 @@ describe("offline-queue", () => {
       expect(op.type).toBe("DELETE_DECK");
     });
   });
+
+  describe("resetSyncingOperations", () => {
+    it("resets syncing operations to pending", async () => {
+      const op = await enqueue("ADD_LIST", { deckId: "d1" });
+      await updateOperation(op.id, { status: "syncing" });
+
+      const { resetSyncingOperations } = await import("../lib/offline-queue");
+      const count = await resetSyncingOperations();
+      expect(count).toBe(1);
+
+      const queue = await getQueue();
+      expect(queue[0].status).toBe("pending");
+    });
+
+    it("returns 0 when no syncing operations", async () => {
+      await enqueue("ADD_LIST", { deckId: "d1" });
+      const { resetSyncingOperations } = await import("../lib/offline-queue");
+      const count = await resetSyncingOperations();
+      expect(count).toBe(0);
+    });
+
+    it("only resets syncing ops, leaves pending and failed", async () => {
+      const op1 = await enqueue("ADD_LIST", { deckId: "d1" });
+      const op2 = await enqueue("ADD_LIST", { deckId: "d2" });
+      const op3 = await enqueue("ADD_LIST", { deckId: "d3" });
+      await updateOperation(op1.id, { status: "syncing" });
+      await updateOperation(op3.id, { status: "failed" });
+
+      const { resetSyncingOperations } = await import("../lib/offline-queue");
+      const count = await resetSyncingOperations();
+      expect(count).toBe(1);
+
+      const queue = await getQueue();
+      expect(queue.find(op => op.id === op1.id)!.status).toBe("pending");
+      expect(queue.find(op => op.id === op2.id)!.status).toBe("pending");
+      expect(queue.find(op => op.id === op3.id)!.status).toBe("failed");
+    });
+  });
 });

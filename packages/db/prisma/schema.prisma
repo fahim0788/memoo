@@ -7,15 +7,16 @@ datasource db {
 }
 
 /**
- * Schema avec authentification email/password
+ * Schema avec authentification email/password + OAuth (Google, Apple)
  */
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  password  String
-  isActive  Boolean  @default(true)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String
+  lastName     String
+  password     String?
+  authProvider String   @default("EMAIL")
+  isActive     Boolean  @default(true)
   emailVerified             Boolean   @default(false)
   verificationCode          String?
   verificationCodeExpiresAt DateTime?

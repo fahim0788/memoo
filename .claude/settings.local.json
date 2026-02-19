@@ -62,7 +62,17 @@
       "Bash(cmd.exe /c \"netsh interface ipv4 show excludedportrange protocol=tcp\")",
       "Bash(cmd.exe /c \"taskkill /PID 85252 /F\")",
       "Bash(cmd.exe /c \"taskkill /PID 85252 /T /F\")",
-      "Bash(powershell.exe -Command \"Start-Process ''C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe''\")"
+      "Bash(powershell.exe -Command \"Start-Process ''C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe''\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(docker-compose:*)",
+      "Bash(DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" npx prisma generate:*)",
+      "Bash(grep:*)",
+      "Bash(tee:*)",
+      "Bash(echo:*)",
+      "Bash(python3 -c \" import sys,json data=json.load\\(sys.stdin\\) print\\(f''Total: {data[\"\"numTotalTests\"\"]}, Passed: {data[\"\"numPassedTests\"\"]}, Failed: {data[\"\"numFailedTests\"\"]}''\\) for suite in data.get\\(''testResults'',[]\\): for t in suite.get\\(''assertionResults'',[]\\): if t[''status'']==''failed'': print\\(f'' FAIL: {t[\"\"ancestorTitles\"\"][-1]} > {t[\"\"title\"\"]}''\\) print\\(f'' {t[\"\"failureMessages\"\"][0][:200]}''\\) \")",
+      "Bash(python3:*)",
+      "Bash(node:*)"
     ]
   }
 }

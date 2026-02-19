@@ -25,6 +25,8 @@ services:
         # PROD: Utiliser /api (nginx gère le routing)
         NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:3001/api}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-MemoList}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
     ports:
       - "3000:3000"
     depends_on:
@@ -56,6 +58,9 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-memolist-tts}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - BREVO_API_KEY=${BREVO_API_KEY:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID:-}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET:-}
     volumes:
       - tts-storage:/app/storage/tts
       - ./apps/worker/storage/drapeaux:/app/apps/worker/storage/drapeaux:ro

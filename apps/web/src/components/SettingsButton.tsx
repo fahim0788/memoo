@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { IconGear, IconSun, IconMoon, IconClose } from "./Icons";
 import { useTheme } from "../hooks/useTheme";
 import { t } from "../lib/i18n";
@@ -55,8 +56,8 @@ export function SettingsButton({ onLogout }: SettingsButtonProps = {}) {
         <IconGear size={20} className="w-5 h-5" />
       </button>
 
-      {/* Settings Panel Overlay */}
-      {isOpen && (
+      {/* Settings Panel Overlay — portal to body to escape header's backdrop-filter containing block */}
+      {isOpen && createPortal(
         <div className="settings-panel" onClick={() => setIsOpen(false)}>
           <div
             className="settings-content"
@@ -195,7 +196,8 @@ export function SettingsButton({ onLogout }: SettingsButtonProps = {}) {
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

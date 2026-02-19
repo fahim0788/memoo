@@ -21,6 +21,13 @@ export const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:3000";
 
 export const BREVO_API_KEY = process.env.BREVO_API_KEY ?? "";
 
+export const APP_URL = process.env.APP_URL ?? "https://memoo.fr";
+
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
+
+export const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID ?? "";
+export const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET ?? "";
+
 // Validate DATABASE_URL at import time so the app fails fast
 if (isProd) {
   requireEnv("DATABASE_URL");

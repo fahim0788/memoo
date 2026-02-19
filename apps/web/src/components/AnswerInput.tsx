@@ -647,6 +647,22 @@ function TextInputMode({ onAnswer, onShowAnswer }: {
 }) {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Auto-focus on desktop so user can type immediately
+  useEffect(() => {
+    if (isDesktop && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isDesktop]);
 
   const handleChar = useCallback((char: string) => {
     setText(prev => prev + char);
@@ -666,11 +682,21 @@ function TextInputMode({ onAnswer, onShowAnswer }: {
         <input
           ref={inputRef}
           value={text}
-          readOnly
-          inputMode="none"
+          onChange={(e) => setText(e.target.value)}
+          inputMode={isDesktop ? "text" : "none"}
           placeholder={t.study.typeYourAnswer}
           onKeyDown={e => e.key === "Enter" && text.trim() && onAnswer(text)}
+          autoComplete="off"
         />
+        {isDesktop && (
+          <button
+            className="desktop-submit-btn"
+            onClick={handleSubmit}
+            disabled={!text.trim()}
+          >
+            {t.study.validate}
+          </button>
+        )}
       </div>
       <MiniKeyboard
         onChar={handleChar}

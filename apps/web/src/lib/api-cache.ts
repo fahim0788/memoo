@@ -148,6 +148,25 @@ export async function fetchCards(deckId: string): Promise<CardFromApi[]> {
 }
 
 /**
+ * Restore cache from a snapshot (used for rollback on partial write failure)
+ */
+async function restoreSnapshot(snapshot: {
+  myLists?: unknown[];
+  allLists?: unknown[];
+  availablePersonal?: unknown[];
+}): Promise<void> {
+  if (snapshot.myLists !== undefined) {
+    await idbSet(CACHE_KEYS.MY_LISTS, { data: snapshot.myLists, timestamp: Date.now() });
+  }
+  if (snapshot.allLists !== undefined) {
+    await idbSet(CACHE_KEYS.ALL_LISTS, { data: snapshot.allLists, timestamp: Date.now() });
+  }
+  if (snapshot.availablePersonal !== undefined) {
+    await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: snapshot.availablePersonal, timestamp: Date.now() });
+  }
+}
+
+/**
  * Add a list to user's subscriptions
  * TRUE OFFLINE-FIRST: Updates cache immediately, queues API call
  */
@@ -171,24 +190,29 @@ export async function addList(deckId: string, icon?: string): Promise<void> {
   const deckFromPersonal = availableCache?.data?.find(d => d.id === deckId);
   const deckToAdd = deckFromAll || deckFromPersonal;
 
-  // 4. Optimistic update - modify caches locally
-  if (deckToAdd) {
-    const newMyLists = [...(myListsCache?.data || []), { ...deckToAdd, icon: icon || null }];
-    await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
-  }
-  if (allListsCache?.data) {
-    const newAllLists = allListsCache.data.filter(d => d.id !== deckId);
-    await idbSet(CACHE_KEYS.ALL_LISTS, { data: newAllLists, timestamp: Date.now() });
-  }
-  if (availableCache?.data) {
-    const newAvailable = availableCache.data.filter(d => d.id !== deckId);
-    await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
-  }
+  // 4+5. Optimistic update + enqueue (atomic block with rollback)
+  try {
+    if (deckToAdd) {
+      const newMyLists = [...(myListsCache?.data || []), { ...deckToAdd, icon: icon || null }];
+      await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
+    }
+    if (allListsCache?.data) {
+      const newAllLists = allListsCache.data.filter(d => d.id !== deckId);
+      await idbSet(CACHE_KEYS.ALL_LISTS, { data: newAllLists, timestamp: Date.now() });
+    }
+    if (availableCache?.data) {
+      const newAvailable = availableCache.data.filter(d => d.id !== deckId);
+      await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
+    }
 
-  console.log("[Cache] Optimistic update done for addList");
+    console.log("[Cache] Optimistic update done for addList");
 
-  // 5. Queue the operation for API sync
-  await enqueue("ADD_LIST", { deckId, icon, snapshot });
+    await enqueue("ADD_LIST", { deckId, icon, snapshot });
+  } catch (err) {
+    console.error("[Cache] Failed during addList, rolling back", err);
+    await restoreSnapshot(snapshot);
+    throw err;
+  }
 
   // 6. Try to process queue immediately if online
   processQueue();
@@ -216,27 +240,30 @@ export async function removeList(deckId: string): Promise<void> {
   // 3. Find the deck being removed
   const deckToRemove = myListsCache?.data?.find(d => d.id === deckId);
 
-  // 4. Optimistic update - modify caches locally
-  if (myListsCache?.data) {
-    const newMyLists = myListsCache.data.filter(d => d.id !== deckId);
-    await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
-  }
-  if (deckToRemove) {
-    if (deckToRemove.isOwned) {
-      // Personal deck goes back to available personal
-      const newAvailable = [...(availableCache?.data || []), deckToRemove];
-      await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
-    } else {
-      // Public deck goes back to all lists
-      const newAllLists = [...(allListsCache?.data || []), deckToRemove];
-      await idbSet(CACHE_KEYS.ALL_LISTS, { data: newAllLists, timestamp: Date.now() });
+  // 4+5. Optimistic update + enqueue (atomic block with rollback)
+  try {
+    if (myListsCache?.data) {
+      const newMyLists = myListsCache.data.filter(d => d.id !== deckId);
+      await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
     }
+    if (deckToRemove) {
+      if (deckToRemove.isOwned) {
+        const newAvailable = [...(availableCache?.data || []), deckToRemove];
+        await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
+      } else {
+        const newAllLists = [...(allListsCache?.data || []), deckToRemove];
+        await idbSet(CACHE_KEYS.ALL_LISTS, { data: newAllLists, timestamp: Date.now() });
+      }
+    }
+
+    console.log("[Cache] Optimistic update done for removeList");
+
+    await enqueue("REMOVE_LIST", { deckId, snapshot });
+  } catch (err) {
+    console.error("[Cache] Failed during removeList, rolling back", err);
+    await restoreSnapshot(snapshot);
+    throw err;
   }
-
-  console.log("[Cache] Optimistic update done for removeList");
-
-  // 5. Queue the operation for API sync
-  await enqueue("REMOVE_LIST", { deckId, snapshot });
 
   // 6. Try to process queue immediately if online
   processQueue();
@@ -255,18 +282,23 @@ export async function reorderLists(deckIds: string[]): Promise<void> {
     myLists: myListsCache?.data,
   };
 
-  // 3. Optimistic update - reorder cache locally
-  if (myListsCache?.data) {
-    const reordered = deckIds
-      .map(id => myListsCache.data.find(d => d.id === id))
-      .filter((d): d is DeckFromApi => d !== undefined);
-    await idbSet(CACHE_KEYS.MY_LISTS, { data: reordered, timestamp: Date.now() });
+  // 3+4. Optimistic update + enqueue (atomic block with rollback)
+  try {
+    if (myListsCache?.data) {
+      const reordered = deckIds
+        .map(id => myListsCache.data.find(d => d.id === id))
+        .filter((d): d is DeckFromApi => d !== undefined);
+      await idbSet(CACHE_KEYS.MY_LISTS, { data: reordered, timestamp: Date.now() });
+    }
+
+    console.log("[Cache] Optimistic update done for reorderLists");
+
+    await enqueue("REORDER_LISTS", { deckIds, snapshot });
+  } catch (err) {
+    console.error("[Cache] Failed during reorderLists, rolling back", err);
+    await restoreSnapshot(snapshot);
+    throw err;
   }
-
-  console.log("[Cache] Optimistic update done for reorderLists");
-
-  // 4. Queue the operation for API sync
-  await enqueue("REORDER_LISTS", { deckIds, snapshot });
 
   // 5. Try to process queue immediately if online
   processQueue();
@@ -289,22 +321,26 @@ export async function deleteDeck(deckId: string): Promise<void> {
     availablePersonal: availableCache?.data,
   };
 
-  // 3. Optimistic update - remove from all caches
-  if (myListsCache?.data) {
-    const newMyLists = myListsCache.data.filter(d => d.id !== deckId);
-    await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
-  }
-  if (availableCache?.data) {
-    const newAvailable = availableCache.data.filter(d => d.id !== deckId);
-    await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
-  }
-  // Also clear cards cache for this deck
-  await idbSet(CACHE_KEYS.CARDS(deckId), null);
+  // 3+4. Optimistic update + enqueue (atomic block with rollback)
+  try {
+    if (myListsCache?.data) {
+      const newMyLists = myListsCache.data.filter(d => d.id !== deckId);
+      await idbSet(CACHE_KEYS.MY_LISTS, { data: newMyLists, timestamp: Date.now() });
+    }
+    if (availableCache?.data) {
+      const newAvailable = availableCache.data.filter(d => d.id !== deckId);
+      await idbSet(CACHE_KEYS.AVAILABLE_PERSONAL, { data: newAvailable, timestamp: Date.now() });
+    }
+    await idbSet(CACHE_KEYS.CARDS(deckId), null);
 
-  console.log("[Cache] Optimistic update done for deleteDeck");
+    console.log("[Cache] Optimistic update done for deleteDeck");
 
-  // 4. Queue the operation for API sync
-  await enqueue("DELETE_DECK", { deckId, snapshot });
+    await enqueue("DELETE_DECK", { deckId, snapshot });
+  } catch (err) {
+    console.error("[Cache] Failed during deleteDeck, rolling back", err);
+    await restoreSnapshot(snapshot);
+    throw err;
+  }
 
   // 5. Try to process queue immediately if online
   processQueue();

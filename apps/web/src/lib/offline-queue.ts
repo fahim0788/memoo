@@ -3,7 +3,7 @@
  * Stores operations when offline and replays them when back online
  */
 
-import { idbGet, idbSet } from "./idb";
+import { idbGet, idbSet, withLock } from "./idb";
 
 export type OperationType = "ADD_LIST" | "REMOVE_LIST" | "REORDER_LISTS" | "DELETE_DECK";
 
@@ -52,22 +52,24 @@ export async function enqueue(
   type: OperationType,
   payload: QueuedOperation["payload"]
 ): Promise<QueuedOperation> {
-  const queue = await getQueue();
+  return withLock("offline:queue", async () => {
+    const queue = await getQueue();
 
-  const operation: QueuedOperation = {
-    id: generateId(),
-    type,
-    payload,
-    createdAt: Date.now(),
-    retryCount: 0,
-    status: "pending",
-  };
+    const operation: QueuedOperation = {
+      id: generateId(),
+      type,
+      payload,
+      createdAt: Date.now(),
+      retryCount: 0,
+      status: "pending",
+    };
 
-  queue.push(operation);
-  await idbSet(QUEUE_KEY, queue);
+    queue.push(operation);
+    await idbSet(QUEUE_KEY, queue);
 
-  console.log("[OfflineQueue] Enqueued operation:", operation.type, operation.id);
-  return operation;
+    console.log("[OfflineQueue] Enqueued operation:", operation.type, operation.id);
+    return operation;
+  });
 }
 
 /**
@@ -77,23 +79,27 @@ export async function updateOperation(
   id: string,
   updates: Partial<Pick<QueuedOperation, "status" | "retryCount" | "lastError">>
 ): Promise<void> {
-  const queue = await getQueue();
-  const index = queue.findIndex(op => op.id === id);
+  return withLock("offline:queue", async () => {
+    const queue = await getQueue();
+    const index = queue.findIndex(op => op.id === id);
 
-  if (index !== -1) {
-    queue[index] = { ...queue[index], ...updates };
-    await idbSet(QUEUE_KEY, queue);
-  }
+    if (index !== -1) {
+      queue[index] = { ...queue[index], ...updates };
+      await idbSet(QUEUE_KEY, queue);
+    }
+  });
 }
 
 /**
  * Remove an operation from the queue (after successful sync)
  */
 export async function dequeue(id: string): Promise<void> {
-  const queue = await getQueue();
-  const filtered = queue.filter(op => op.id !== id);
-  await idbSet(QUEUE_KEY, filtered);
-  console.log("[OfflineQueue] Dequeued operation:", id);
+  return withLock("offline:queue", async () => {
+    const queue = await getQueue();
+    const filtered = queue.filter(op => op.id !== id);
+    await idbSet(QUEUE_KEY, filtered);
+    console.log("[OfflineQueue] Dequeued operation:", id);
+  });
 }
 
 /**
@@ -127,4 +133,26 @@ export async function getOperationsToSync(): Promise<QueuedOperation[]> {
   return queue.filter(
     op => op.status === "pending" || (op.status === "failed" && shouldRetry(op))
   );
+}
+
+/**
+ * Reset operations stuck in "syncing" state back to "pending"
+ * Called on app startup to recover from interrupted syncs
+ */
+export async function resetSyncingOperations(): Promise<number> {
+  return withLock("offline:queue", async () => {
+    const queue = await getQueue();
+    let count = 0;
+    for (const op of queue) {
+      if (op.status === "syncing") {
+        op.status = "pending";
+        count++;
+      }
+    }
+    if (count > 0) {
+      await idbSet(QUEUE_KEY, queue);
+      console.log("[OfflineQueue] Reset", count, "syncing operations to pending");
+    }
+    return count;
+  });
 }

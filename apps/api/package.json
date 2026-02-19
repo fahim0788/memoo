@@ -24,6 +24,8 @@
 
     "bcryptjs": "^3.0.3",
 
+    "google-auth-library": "^10.5.0",
+
     "jsonwebtoken": "^9.0.3",
 
     "minio": "^8.0.6",

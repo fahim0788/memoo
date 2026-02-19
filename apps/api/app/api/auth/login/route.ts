@@ -20,7 +20,16 @@ export async function POST(req: NextRequest) {
   const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!user) {
+    return json({ error: "invalid credentials" }, req, 401);
+  }
+
+  // Google-only accounts have no password
+  if (!user.password) {
+    return json({ error: "use_google_signin" }, req, 400);
+  }
+
+  if (!(await bcrypt.compare(password, user.password))) {
     return json({ error: "invalid credentials" }, req, 401);
   }
 

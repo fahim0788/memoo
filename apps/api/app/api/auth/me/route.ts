@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: auth.user.userId },
-    select: { id: true, email: true, firstName: true, lastName: true, isActive: true, createdAt: true },
+    select: { id: true, email: true, firstName: true, lastName: true, isActive: true, authProvider: true, createdAt: true },
   });
 
   if (!user) {
@@ -45,12 +45,17 @@ export async function PUT(req: NextRequest) {
   if (firstName !== undefined) updateData.firstName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase() : firstName;
   if (lastName !== undefined) updateData.lastName = lastName;
 
+  const isOAuthAccount = !user.password;
+
   // Email or password change requires current password verification
   if (email && email !== user.email) {
+    if (isOAuthAccount) {
+      return json({ error: "cannot change email for OAuth account" }, req, 400);
+    }
     if (!currentPassword) {
       return json({ error: "current password required" }, req, 400);
     }
-    const valid = await bcrypt.compare(currentPassword, user.password);
+    const valid = await bcrypt.compare(currentPassword, user.password!);
     if (!valid) {
       return json({ error: "invalid password" }, req, 403);
     }
@@ -62,10 +67,13 @@ export async function PUT(req: NextRequest) {
   }
 
   if (newPassword) {
+    if (isOAuthAccount) {
+      return json({ error: "cannot change password for OAuth account" }, req, 400);
+    }
     if (!currentPassword) {
       return json({ error: "current password required" }, req, 400);
     }
-    const valid = await bcrypt.compare(currentPassword, user.password);
+    const valid = await bcrypt.compare(currentPassword, user.password!);
     if (!valid) {
       return json({ error: "invalid password" }, req, 403);
     }
@@ -79,7 +87,7 @@ export async function PUT(req: NextRequest) {
   const updated = await prisma.user.update({
     where: { id: auth.user.userId },
     data: updateData,
-    select: { id: true, email: true, firstName: true, lastName: true, isActive: true, createdAt: true },
+    select: { id: true, email: true, firstName: true, lastName: true, isActive: true, authProvider: true, createdAt: true },
   });
 
   return json({ user: updated }, req);

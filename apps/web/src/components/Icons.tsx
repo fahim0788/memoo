@@ -435,7 +435,7 @@ export function IconHome({ size = 20, className = "", style }: IconProps) {
   );
 }
 
-export function IconCompass({ size = 20, className = "", style }: IconProps) {
+export function IconSearch({ size = 20, className = "", style }: IconProps) {
   return (
     <svg
       width={size}
@@ -449,8 +449,8 @@ export function IconCompass({ size = 20, className = "", style }: IconProps) {
       className={className}
       style={style}
     >
-      <circle cx="12" cy="12" r="10" />
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   );
 }

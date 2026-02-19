@@ -439,14 +439,12 @@ export default function HomePage() {
         </div>
       </div>
 
-      {view !== "studying" && (
-        <BottomNav
-          activeView={view}
-          onHome={handleHome}
-          onExplore={() => setView("available")}
-          onCreate={() => setView("create")}
-        />
-      )}
+      <BottomNav
+        activeView={view}
+        onHome={handleHome}
+        onExplore={() => setView("available")}
+        onCreate={() => setView("create")}
+      />
 
       <SyncStatus />
     </>

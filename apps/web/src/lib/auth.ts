@@ -6,6 +6,7 @@ export type User = {
   email: string;
   firstName: string;
   lastName: string;
+  authProvider?: string;
   createdAt: string;
 };
 
@@ -49,12 +50,67 @@ export async function login(
     if (data.error === "email_not_verified") {
       throw Object.assign(new Error("email_not_verified"), { code: "EMAIL_NOT_VERIFIED" });
     }
+    if (data.error === "use_google_signin") {
+      throw Object.assign(new Error("use_google_signin"), { code: "USE_GOOGLE_SIGNIN" });
+    }
     const messages: Record<string, string> = {
       "invalid credentials": "Email ou mot de passe incorrect",
       "account disabled": "Ce compte a été désactivé",
       "email and password required": "Email et mot de passe requis",
     };
     throw new Error(messages[data.error] || data.error || "Impossible de se connecter");
+  }
+
+  const data = await r.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function googleLogin(credential: string): Promise<AuthResponse> {
+  const r = await fetch(`${API_BASE}/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+
+  if (!r.ok) {
+    if (r.status === 0 || !navigator.onLine) {
+      throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
+    }
+    const data = await r.json().catch(() => ({}));
+    const messages: Record<string, string> = {
+      "invalid Google token": "Échec de la vérification Google",
+      "Google email not verified": "Votre email Google n'est pas vérifié",
+      "account disabled": "Ce compte a été désactivé",
+      "Google Sign-In not configured": "Google Sign-In non configuré",
+    };
+    throw new Error(messages[data.error] || data.error || "Impossible de se connecter avec Google");
+  }
+
+  const data = await r.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function facebookLogin(accessToken: string): Promise<AuthResponse> {
+  const r = await fetch(`${API_BASE}/auth/facebook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken }),
+  });
+
+  if (!r.ok) {
+    if (r.status === 0 || !navigator.onLine) {
+      throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
+    }
+    const data = await r.json().catch(() => ({}));
+    const messages: Record<string, string> = {
+      "invalid Facebook token": "Échec de la vérification Facebook",
+      "Facebook email not available": "Votre email Facebook n'est pas disponible",
+      "account disabled": "Ce compte a été désactivé",
+      "Facebook Login not configured": "Facebook Login non configuré",
+    };
+    throw new Error(messages[data.error] || data.error || "Impossible de se connecter avec Facebook");
   }
 
   const data = await r.json();

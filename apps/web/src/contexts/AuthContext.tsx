@@ -10,6 +10,8 @@ import {
 import {
   getMe,
   login as authLogin,
+  googleLogin as authGoogleLogin,
+  facebookLogin as authFacebookLogin,
   register as authRegister,
   logout as authLogout,
   updateProfile as authUpdateProfile,
@@ -18,11 +20,16 @@ import {
   type AuthResponse,
   type UpdateProfileData,
 } from "../lib/auth";
+import { clearQueue } from "../lib/offline-queue";
+import { clearCache } from "../lib/api-cache";
+import { clearReviewQueue } from "../lib/sync";
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
+  facebookLogin: (accessToken: string) => Promise<void>;
   register: (
     email: string,
     password: string,
@@ -31,7 +38,7 @@ type AuthContextType = {
   ) => Promise<{ requiresVerification?: boolean }>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   updateProfile: (data: UpdateProfileData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,6 +66,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }
 
+  async function googleLogin(credential: string) {
+    const result = await authGoogleLogin(credential);
+    setUser(result.user);
+  }
+
+  async function facebookLogin(accessToken: string) {
+    const result = await authFacebookLogin(accessToken);
+    setUser(result.user);
+  }
+
   async function register(
     email: string,
     password: string,
@@ -78,13 +95,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(updated);
   }
 
-  function logout() {
+  async function logout() {
     authLogout();
+    // BUG 7: Clear all offline data to prevent cross-account contamination
+    await Promise.all([
+      clearQueue(),
+      clearCache(),
+      clearReviewQueue(),
+    ]);
+    localStorage.removeItem("chapter-progress");
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, verifyEmail, updateProfile, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, googleLogin, facebookLogin, register, verifyEmail, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

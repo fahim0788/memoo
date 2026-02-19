@@ -82,6 +82,14 @@ export interface Translations {
     resetSuccess: string;
     passwordMismatch: string;
     backToLogin: string;
+    // OAuth Sign-In
+    continueWithGoogle: string;
+    or: string;
+    useGoogleSignIn: string;
+    connectedViaGoogle: string;
+    googleError: string;
+    facebookError: string;
+    connectedViaFacebook: string;
   };
 
   // Menu principal / Navigation
@@ -456,6 +464,14 @@ const fr: Translations = {
     resetSuccess: "Mot de passe réinitialisé. Vous pouvez vous connecter.",
     passwordMismatch: "Les mots de passe ne correspondent pas",
     backToLogin: "Retour à la connexion",
+    // Google Sign-In
+    continueWithGoogle: "Continuer avec Google",
+    or: "ou",
+    useGoogleSignIn: "Ce compte utilise Google. Connectez-vous avec Google.",
+    connectedViaGoogle: "Connecte via Google",
+    googleError: "Erreur lors de la connexion avec Google",
+    facebookError: "Erreur lors de la connexion avec Facebook",
+    connectedViaFacebook: "Connecté via Facebook",
   },
 
   menu: {
@@ -734,7 +750,7 @@ const fr: Translations = {
   nav: {
     home: "Accueil",
     explore: "Explorer",
-    add: "Ajouter",
+    add: "Créer",
   },
 
   plural: {
@@ -819,6 +835,14 @@ const en: Translations = {
     resetSuccess: "Password reset successfully. You can now sign in.",
     passwordMismatch: "Passwords do not match",
     backToLogin: "Back to login",
+    // Google Sign-In
+    continueWithGoogle: "Continue with Google",
+    or: "or",
+    useGoogleSignIn: "This account uses Google. Please sign in with Google.",
+    connectedViaGoogle: "Connected via Google",
+    googleError: "Error signing in with Google",
+    facebookError: "Error signing in with Facebook",
+    connectedViaFacebook: "Connected via Facebook",
   },
 
   menu: {
@@ -1097,7 +1121,7 @@ const en: Translations = {
   nav: {
     home: "Home",
     explore: "Explore",
-    add: "Add",
+    add: "Create",
   },
 
   plural: {

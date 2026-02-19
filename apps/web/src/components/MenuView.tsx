@@ -76,15 +76,21 @@ export function MenuView({
       {stats && <StatsCard stats={stats} />}
 
       {myLists.length > 0 && (
-        <div className="card">
-          <div className="small">{t.menu.myLists}</div>
+        <>
+        {/* Section header */}
+        <div className="section-header">
+          <span className="small" style={{ fontWeight: 600, fontSize: "0.8rem" }}>{t.menu.myLists}</span>
+        </div>
+
+        {/* Deck cards */}
+        <div className="deck-list">
           {myLists.length >= 3 && (
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t.menuView.searchPlaceholder}
               aria-label={t.menuView.searchPlaceholder}
-              style={{ marginBottom: "0.25rem" }}
+              className="deck-list-search"
             />
           )}
           {filteredLists.map((deck) => {
@@ -309,6 +315,7 @@ export function MenuView({
             );
           })}
         </div>
+        </>
       )}
 
       {myLists.length > 0 && myLists.some(d => (d.chapterCount ?? 0) > 0) && (

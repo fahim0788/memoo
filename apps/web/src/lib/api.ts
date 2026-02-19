@@ -75,6 +75,7 @@ export type Review = {
   ok: boolean;
   userAnswer: string;
   reviewedAt?: number;
+  reviewId?: string;
 };
 
 export type PushResponse = {

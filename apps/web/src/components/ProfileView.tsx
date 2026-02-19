@@ -32,10 +32,12 @@ export function ProfileView({ onBack, userName, onLogout, onHelp, stats }: Profi
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const isOAuthAccount = user?.authProvider && user.authProvider !== "EMAIL";
+
   const hasInfoChanges =
     firstName !== (user?.firstName || "") ||
     lastName !== (user?.lastName || "") ||
-    email !== (user?.email || "");
+    (!isOAuthAccount && email !== (user?.email || ""));
 
   const hasPasswordChange = newPassword.length > 0;
 
@@ -133,6 +135,7 @@ export function ProfileView({ onBack, userName, onLogout, onHelp, stats }: Profi
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={!!isOAuthAccount}
           />
         </div>
 
@@ -142,72 +145,82 @@ export function ProfileView({ onBack, userName, onLogout, onHelp, stats }: Profi
           </div>
         )}
 
-        <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "0.75rem", marginTop: "0.25rem" }}>
-          {!showPasswordSection ? (
-            <button
-              type="button"
-              onClick={() => setShowPasswordSection(true)}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--color-primary)",
-                fontSize: "0.875rem",
-                padding: 0,
-                textDecoration: "underline",
-              }}
-            >
-              {t.profile.changePassword}
-            </button>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        {isOAuthAccount ? (
+          <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "0.75rem", marginTop: "0.25rem" }}>
+            <div className="badge ok" style={{ textAlign: "center" }}>
+              {user?.authProvider === "FACEBOOK" ? t.auth.connectedViaFacebook : t.auth.connectedViaGoogle}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "0.75rem", marginTop: "0.25rem" }}>
+              {!showPasswordSection ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordSection(true)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--color-primary)",
+                    fontSize: "0.875rem",
+                    padding: 0,
+                    textDecoration: "underline",
+                  }}
+                >
+                  {t.profile.changePassword}
+                </button>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div>
+                    <label htmlFor="profile-currentPassword" className="small">{t.profile.currentPassword}</label>
+                    <input
+                      id="profile-currentPassword"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="profile-newPassword" className="small">{t.profile.newPassword}</label>
+                    <input
+                      id="profile-newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      autoComplete="new-password"
+                      minLength={6}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="profile-confirmPassword" className="small">{t.profile.confirmPassword}</label>
+                    <input
+                      id="profile-confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Email change also requires current password */}
+            {email !== (user?.email || "") && !showPasswordSection && (
               <div>
-                <label htmlFor="profile-currentPassword" className="small">{t.profile.currentPassword}</label>
+                <label htmlFor="profile-currentPassword-email" className="small">{t.profile.currentPassword}</label>
                 <input
-                  id="profile-currentPassword"
+                  id="profile-currentPassword-email"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   autoComplete="current-password"
                 />
               </div>
-              <div>
-                <label htmlFor="profile-newPassword" className="small">{t.profile.newPassword}</label>
-                <input
-                  id="profile-newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  autoComplete="new-password"
-                  minLength={6}
-                />
-              </div>
-              <div>
-                <label htmlFor="profile-confirmPassword" className="small">{t.profile.confirmPassword}</label>
-                <input
-                  id="profile-confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Email change also requires current password */}
-        {email !== (user?.email || "") && !showPasswordSection && (
-          <div>
-            <label htmlFor="profile-currentPassword-email" className="small">{t.profile.currentPassword}</label>
-            <input
-              id="profile-currentPassword-email"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
+            )}
+          </>
         )}
 
         {error && (

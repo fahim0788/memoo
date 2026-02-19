@@ -24,7 +24,7 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
   return (
     <div className="header" style={{ display: "flex", flexDirection: "column", width: "100%" }}>
       {/* Row 1: Back/Logo + Right actions */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", minHeight: "44px" }}>
+      <div className="header-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", minHeight: "44px" }}>
         {/* Left: Logo (home) or Back (internal pages) */}
         {isHome ? (
           <h2
@@ -37,8 +37,8 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
               flex: "0 0 auto",
             }}
           >
-            <img src="/logo-memoo-black.png" alt="" style={{ width: "34px", height: "34px", flexShrink: 0 }} className="dark:hidden" />
-            <img src="/logo-memoo-white.png" alt="" style={{ width: "34px", height: "34px", flexShrink: 0 }} className="hidden dark:block" />
+            <img src="/logo-memoo-black.png" alt="" style={{ width: "34px", height: "34px", flexShrink: 0 }} className="dark:hidden header-logo-img" />
+            <img src="/logo-memoo-white.png" alt="" style={{ width: "34px", height: "34px", flexShrink: 0 }} className="hidden dark:block header-logo-img" />
             <span>{t.menu.title}</span>
           </h2>
         ) : (
@@ -46,7 +46,7 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
             {onBack && (
               <button
                 onClick={onBack}
-                className="header-action-btn icon-clickable"
+                className="header-action-btn icon-clickable header-back-btn"
                 aria-label={t.common.back}
                 title={t.common.back}
               >
@@ -58,7 +58,7 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
         )}
 
         {/* Right: Profile + Language + Help + Settings */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "0 0 auto" }}>
+        <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "0 0 auto" }}>
           {userName && onProfile ? (
             <button
               onClick={onProfile}
@@ -95,7 +95,7 @@ export function Header({ userName, onLogout, onHelp, onProfile, onBack, title, s
 
       {/* Row 2: Title on its own line (only for internal pages) */}
       {!isHome && title && (
-        <h3 style={{
+        <h3 className="header-title" style={{
           margin: "0.15rem 0 0 0",
           fontSize: "0.9rem",
           fontWeight: 500,

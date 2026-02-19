@@ -1,5 +1,6 @@
 import "./globals.css";
 import { PwaBoot } from "../lib/pwa-boot";
+import { GoogleAuthProvider } from "../contexts/GoogleAuthProvider";
 import { AuthProvider } from "../contexts/AuthContext";
 
 export const metadata = {
@@ -38,10 +39,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <AuthProvider>
-          <PwaBoot />
-          {children}
-        </AuthProvider>
+        <GoogleAuthProvider>
+          <AuthProvider>
+            <PwaBoot />
+            {children}
+          </AuthProvider>
+        </GoogleAuthProvider>
       </body>
     </html>
   );
