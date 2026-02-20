@@ -8,6 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { forgotPassword, resendCode, resetPassword } from "../../lib/auth";
 import { t } from "../../lib/i18n";
 import { useLanguage } from "../../hooks/useLanguage";
+import { trackPageVisit, trackRegistrationStarted, trackEmailVerificationSent } from "../../lib/event-tracker";
 
 type Mode = "login" | "register" | "verify-email" | "forgot-password" | "reset-password";
 
@@ -48,6 +49,11 @@ export default function LoginPage() {
       router.push("/");
     }
   }, [authLoading, user, router]);
+
+  // Track page visit on mount
+  useEffect(() => {
+    trackPageVisit("login");
+  }, []);
 
   // Resend countdown timer
   useEffect(() => {
@@ -128,6 +134,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await register(email, password, firstName, lastName);
+      trackEmailVerificationSent(email);
       startResendCooldown();
       switchMode("verify-email");
     } catch (err) {
@@ -156,6 +163,7 @@ export default function LoginPage() {
     if (resendCountdown > 0) return;
     try {
       await resendCode(email);
+      trackEmailVerificationSent(email);
       setSuccess(t.auth.codeSent);
       startResendCooldown();
     } catch {

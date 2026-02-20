@@ -26,6 +26,7 @@ model User {
   reviews    Review[]
   userDecks  UserDeck[]
   ownedDecks Deck[]
+  events     Event[]
 }
 
 model Deck {
@@ -122,4 +123,27 @@ model TtsJob {
   completedAt    DateTime?
 
   @@index([status, createdAt])
+}
+
+/**
+ * Event journal for funnel tracking (anonyme - pas d'IP)
+ */
+model Event {
+  id        String   @id @default(cuid())
+  userId    String?  // null si utilisateur anonyme
+  sessionId String   // Identifiant de session anonyme
+  type      String   // "PAGE_VISITED", "REGISTRATION_STARTED", "REGISTRATION_COMPLETED", "EMAIL_VERIFICATION_SENT", "REMINDER_1_SENT", etc.
+  category  String   // "AUTH", "CLEANUP", "EMAIL", "SYSTEM"
+  action    String?  // Action spécifique (ex: "LOGIN_PAGE_VIEWED", "REGISTRATION_FORM_SUBMITTED")
+  status    String   @default("pending") // pending, success, failed
+  metadata  Json?    // Données additionnelles {email, path, referrer, etc}
+  error     String?  // Message d'erreur si status = failed
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, category])
+  @@index([type, createdAt])
+  @@index([status, createdAt])
+  @@index([sessionId, createdAt])
 }
