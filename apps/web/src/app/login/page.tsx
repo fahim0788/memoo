@@ -397,7 +397,14 @@ export default function LoginPage() {
                   />
                 </div>
                 {error && <div className="badge bad" style={{ alignSelf: "stretch", textAlign: "center" }}>{error}</div>}
-                {success && <div className="badge ok" style={{ alignSelf: "stretch", textAlign: "center" }}>{success}</div>}
+                {success && (
+                  <>
+                    <div className="badge ok" style={{ alignSelf: "stretch", textAlign: "center" }}>{success}</div>
+                    <p className="small" style={{ textAlign: "center", color: "var(--color-text-secondary, #888)", margin: "0", lineHeight: "1.4" }}>
+                      {t.auth.checkSpamHint}
+                    </p>
+                  </>
+                )}
                 <button type="submit" className="primary" disabled={loading || code.length !== 6} style={{ opacity: loading || code.length !== 6 ? 0.7 : 1, marginTop: "0.5rem" }}>
                   {loading ? t.common.loading : t.auth.verifyButton}
                 </button>

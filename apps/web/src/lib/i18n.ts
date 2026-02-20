@@ -70,6 +70,7 @@ export interface Translations {
     invalidCode: string;
     codeExpired: string;
     emailNotVerified: string;
+    checkSpamHint: string;
     // Forgot / Reset password
     forgotPassword: string;
     forgotPasswordTitle: string;
@@ -452,6 +453,7 @@ const fr: Translations = {
     invalidCode: "Code invalide ou expiré",
     codeExpired: "Le code a expiré. Demandez-en un nouveau.",
     emailNotVerified: "Veuillez vérifier votre email. Un nouveau code a été envoyé.",
+    checkSpamHint: "Si vous ne voyez pas le mail, vérifiez votre dossier spams et déplacez-le vers votre boîte de réception.",
     // Forgot / Reset password
     forgotPassword: "Mot de passe oublié ?",
     forgotPasswordTitle: "Mot de passe oublié",
@@ -823,6 +825,7 @@ const en: Translations = {
     invalidCode: "Invalid or expired code",
     codeExpired: "Code has expired. Request a new one.",
     emailNotVerified: "Please verify your email. A new code has been sent.",
+    checkSpamHint: "If you don't see the email, check your spam folder and move it to your inbox.",
     // Forgot / Reset password
     forgotPassword: "Forgot password?",
     forgotPasswordTitle: "Forgot password",
