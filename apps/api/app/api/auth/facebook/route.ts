@@ -92,6 +92,22 @@ export async function POST(req: NextRequest) {
 
   const token = signToken({ userId: user.id, email: user.email });
 
+  // Track OAuth login success
+  await prisma.event.create({
+    data: {
+      userId: user.id,
+      sessionId: `server_${user.id}`,
+      type: 'OAUTH_LOGIN_SUCCESS',
+      category: 'AUTH',
+      action: 'OAUTH_LOGIN',
+      status: 'success',
+      metadata: {
+        provider: 'facebook',
+        email: user.email,
+      },
+    },
+  }).catch(() => {});
+
   return json({
     ok: true,
     token,

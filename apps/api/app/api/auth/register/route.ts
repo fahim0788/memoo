@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const hashedPassword = await bcrypt.hash(password, 10);
   const code = generateCode();
 
-  await prisma.user.create({
+  const newUser = await prisma.user.create({
     data: {
       email,
       password: hashedPassword,
@@ -39,6 +39,23 @@ export async function POST(req: NextRequest) {
   });
 
   await sendVerificationEmail(email, code);
+
+  // Track successful registration
+  await prisma.event.create({
+    data: {
+      userId: newUser.id,
+      sessionId: `server_${newUser.id}`,
+      type: 'REGISTRATION_COMPLETED',
+      category: 'AUTH',
+      action: 'USER_REGISTERED',
+      status: 'success',
+      metadata: {
+        hasFirstName: !!firstName,
+        hasLastName: !!lastName,
+        email: newUser.email,
+      },
+    },
+  }).catch(() => {});
 
   return json({ ok: true, requiresVerification: true }, req);
 }

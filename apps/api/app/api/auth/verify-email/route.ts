@@ -43,6 +43,19 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // Track email verification success
+  await prisma.event.create({
+    data: {
+      userId: user.id,
+      sessionId: `server_${user.id}`,
+      type: 'EMAIL_VERIFIED',
+      category: 'AUTH',
+      action: 'VERIFICATION_CODE_VERIFIED',
+      status: 'success',
+      metadata: { email: user.email },
+    },
+  }).catch(() => {});
+
   const token = signToken({ userId: user.id, email: user.email });
 
   return json({

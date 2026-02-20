@@ -1,7 +1,9 @@
 /**
  * Event Tracker - Track user/visitor behavior for funnel analysis
- * All tracking is anonymous (no IP, no personal data)
+ * Tracking is session-based (sessionId), includes userId if authenticated
  */
+
+import { getToken } from './auth';
 
 // Generate or retrieve session ID (stored in localStorage)
 function getSessionId(): string {
@@ -39,10 +41,17 @@ export async function trackEvent(data: EventData): Promise<void> {
       metadata: data.metadata || {},
     };
 
+    // Build headers - include auth token if available
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = getToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     // Send to API (fire and forget, no error throwing)
     await fetch("/api/events", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     }).catch((err) => {
       // Silently fail - don't break user experience if tracking fails

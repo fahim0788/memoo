@@ -625,11 +625,53 @@
 
   <!-- HEADER -->
   <div class="header">
-    <div class="header-badge">◆ Architecture Réseau</div>
+    <div class="header-badge">◆ Architecture Réseau v2.0</div>
     <h1>Memoo.fr</h1>
     <p>Application web PWA — Self-hosted sur Raspberry Pi</p>
     <br>
-    <span class="mono">HTTPS · Docker · PostgreSQL · MinIO · Next.js</span>
+    <span class="mono">HTTPS · Docker · PostgreSQL · MinIO · OAuth · Offline-First · Service Worker</span>
+  </div>
+
+  <!-- LAYER 0: AUTHENTICATION PROVIDERS -->
+  <div class="layer layer-external">
+    <div class="layer-label">🔐 Fournisseurs OAuth — Authentification</div>
+    <div class="nodes-row">
+      <div class="node">
+        <div class="node-icon blue">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="9"/><path d="M8 8h6v6H8z"/><path d="M8 8L14 14M14 8L8 14"/></svg>
+        </div>
+        <div class="node-name">Google OAuth</div>
+        <div class="node-tech">OIDC / OpenID Connect<br>google.com</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+      <div class="node">
+        <div class="node-icon pink">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 2L6 9l-4 2h16V2z"/><path d="M2 9l4 2v4l-4-6z"/><path d="M2 13l4 2 10-5v-2l-10 5z"/></svg>
+        </div>
+        <div class="node-name">Facebook OAuth</div>
+        <div class="node-tech">OIDC / OpenID Connect<br>facebook.com</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+      <div class="node">
+        <div class="node-icon cyan">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 13 12 13 22"/></svg>
+        </div>
+        <div class="node-name">Email natif</div>
+        <div class="node-tech">Magic links<br>Brevo API</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+    </div>
+    <div class="sub-section">
+      <div class="sub-section-title">OAuth Flow</div>
+      <div style="background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);line-height:1.6;">
+        1. Utilisateur clique "Sign in with Google/Facebook"<br>
+        2. Redirect → google.com ou facebook.com (OAuth 2.0 code flow)<br>
+        3. Callback → /api/auth/callback/[provider]<br>
+        4. Backend échange code → access_token<br>
+        5. Crée/met à jour User + Session<br>
+        6. Retour vers /dashboard + cookie auth
+      </div>
+    </div>
   </div>
 
   <!-- LAYER 1: INTERNET / USERS -->
@@ -641,7 +683,7 @@
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="18" height="14" rx="2"/><line x1="2" y1="13" x2="20" y2="13"/><circle cx="11" cy="17" r="0"/><line x1="8" y1="20" x2="14" y2="20"/></svg>
         </div>
         <div class="node-name">Utilisateurs</div>
-        <div class="node-tech">Desktop / Mobile / PWA</div>
+        <div class="node-tech">Desktop / Mobile / PWA<br>Service Worker offline</div>
       </div>
       <div class="node">
         <div class="node-icon purple">
@@ -884,6 +926,66 @@
 
   <!-- CONNECTOR -->
   <div class="layer-connector">
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+    <span class="conn-label">Service Worker + Offline Sync</span>
+    <div class="arrow-down"><div class="arrow-shaft blue"></div><div class="arrow-head blue"></div></div>
+  </div>
+
+  <!-- OFFLINE-FIRST LAYER -->
+  <div class="layer" style="border-color:rgba(167,139,250,0.2);">
+    <div class="layer-label" style="background:rgba(167,139,250,0.15);color:var(--accent-purple);">⚡ Offline-First Architecture — Client-Side Cache</div>
+
+    <div class="nodes-row">
+      <div class="node" style="max-width:250px;">
+        <div class="node-icon purple">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M9 9h6v6H9z"/></svg>
+        </div>
+        <div class="node-name">Service Worker</div>
+        <div class="node-tech">Cache API<br>IndexedDB<br>Background Sync</div>
+      </div>
+      <div class="node" style="max-width:250px;">
+        <div class="node-icon pink">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 5H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2v-2"/><path d="M14 3h4a2 2 0 012 2v4a2 2 0 01-2 2h-4"/></svg>
+        </div>
+        <div class="node-name">Offline Queue</div>
+        <div class="node-tech">localStorage + IndexedDB<br>Actions en attente</div>
+      </div>
+      <div class="node" style="max-width:250px;">
+        <div class="node-icon teal">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 21H3V3h9V1H3a2 2 0 00-2 2v18a2 2 0 002 2h18z"/><path d="M17 9l-5 5-4-4-7 7"/></svg>
+        </div>
+        <div class="node-name">Sync Manager</div>
+        <div class="node-tech">Détecte connexion<br>Rejeu offline queue</div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-section-title">Offline Capabilities</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px;">
+        <div style="background:rgba(167,139,250,0.08);padding:10px;border-radius:8px;border:1px solid rgba(167,139,250,0.15);font-size:11px;">
+          <strong style="color:var(--accent-purple)">Lecture (Read):</strong><br>Servie à partir du cache IndexedDB / localStorage
+        </div>
+        <div style="background:rgba(167,139,250,0.08);padding:10px;border-radius:8px;border:1px solid rgba(167,139,250,0.15);font-size:11px;">
+          <strong style="color:var(--accent-purple)">Écriture (Write):</strong><br>Mises en queue, rejouées au reconnect
+        </div>
+        <div style="background:rgba(167,139,250,0.08);padding:10px;border-radius:8px;border:1px solid rgba(167,139,250,0.15);font-size:11px;">
+          <strong style="color:var(--accent-purple)">Sync Pull:</strong><br>Récupère delta après reconnect
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-section-title">Cache Strategy</div>
+      <div style="background:rgba(0,0,0,0.2);padding:12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);line-height:1.6;">
+        <div style="margin-bottom:8px;"><strong style="color:var(--accent-purple)">sw.js</strong> (Versioned): Network → Cache (stale-while-revalidate)</div>
+        <div style="margin-bottom:8px;"><strong style="color:var(--accent-purple)">API responses</strong>: IndexedDB + sync queue (optimistic updates)</div>
+        <div><strong style="color:var(--accent-purple)">Assets</strong>: Cache-first pour JS/CSS/images</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR -->
+  <div class="layer-connector">
     <div class="arrow-down"><div class="arrow-shaft dashed-green"></div><div class="arrow-head green"></div></div>
     <span class="conn-label">Volumes montés</span>
     <div class="arrow-down"><div class="arrow-shaft dashed-green"></div><div class="arrow-head green"></div></div>
@@ -927,6 +1029,22 @@
   <div class="layer layer-external">
     <div class="layer-label">🌐 Services Externes — API Sortantes</div>
     <div class="nodes-row">
+      <div class="node">
+        <div class="node-icon blue">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="9"/><path d="M8 8h6v6H8z"/><path d="M8 8L14 14M14 8L8 14"/></svg>
+        </div>
+        <div class="node-name">Google OAuth</div>
+        <div class="node-tech">OIDC Auth<br>Login backend</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
+      <div class="node">
+        <div class="node-icon pink">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 2L6 9l-4 2h16V2z"/><path d="M2 9l4 2v4l-4-6z"/><path d="M2 13l4 2 10-5v-2l-10 5z"/></svg>
+        </div>
+        <div class="node-name">Facebook OAuth</div>
+        <div class="node-tech">OIDC Auth<br>Login backend</div>
+        <div class="node-port">HTTPS sortant</div>
+      </div>
       <div class="node">
         <div class="node-icon purple">
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -1049,6 +1167,43 @@
         <span class="flow-to">Pi</span>
         <span class="flow-desc">NAT :80 :443 (TCP) · :51820 (UDP)</span>
       </div>
+      <!-- OAuth flows -->
+      <div class="flow-item">
+        <span class="flow-from">Utilisateur</span>
+        <span class="flow-arrow external">━━▸</span>
+        <span class="flow-to" style="background:rgba(96,165,250,0.1);color:var(--accent-blue)">Google/Facebook</span>
+        <span class="flow-arrow external">━━▸</span>
+        <span class="flow-to">api</span>
+        <span class="flow-desc">OAuth 2.0 code flow → session créée</span>
+      </div>
+      <!-- Offline sync flows -->
+      <div class="flow-item">
+        <span class="flow-from">web (offline)</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">Service Worker</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">IndexedDB</span>
+        <span class="flow-desc">Lecture/écriture locale sans réseau</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">Offline Queue</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">api</span>
+        <span class="flow-desc">Rejeu auto au reconnect (sync pull)</span>
+      </div>
+      <!-- Event tracking -->
+      <div class="flow-item">
+        <span class="flow-from">web</span>
+        <span class="flow-arrow system">━━▸</span>
+        <span class="flow-to">api</span>
+        <span class="flow-desc">POST /api/events — PAGE_VISITED, conversions (anonyme)</span>
+      </div>
+      <div class="flow-item">
+        <span class="flow-from">api</span>
+        <span class="flow-arrow internal">- - ▸</span>
+        <span class="flow-to">db (Event table)</span>
+        <span class="flow-desc">Stockage tracking funnel — sessionId uniquement</span>
+      </div>
     </div>
   </div>
 
@@ -1093,7 +1248,8 @@
   </div>
 
   <div style="text-align:center;margin-top:32px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;">
-    memoo.fr · Architecture v1.0 · Raspberry Pi Self-Hosted · Février 2026
+    memoo.fr · Architecture v2.0 · Raspberry Pi Self-Hosted · Février 2026<br>
+    <span style="font-size:10px;margin-top:4px;display:block;color:var(--text-muted);">Updated: OAuth (Google/Facebook) + Offline-First Sync + Event Tracking</span>
   </div>
 
 </div>

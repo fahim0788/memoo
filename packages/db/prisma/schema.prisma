@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 /**
@@ -17,6 +18,7 @@ model User {
   password     String?
   authProvider String   @default("EMAIL")
   isActive     Boolean  @default(true)
+  role         String   @default("USER") // USER, ADMIN
   emailVerified             Boolean   @default(false)
   verificationCode          String?
   verificationCodeExpiresAt DateTime?
@@ -27,6 +29,7 @@ model User {
   userDecks  UserDeck[]
   ownedDecks Deck[]
   events     Event[]
+  certificationRequests CertificationRequest[]
 }
 
 model Deck {
@@ -35,6 +38,7 @@ model Deck {
   ownerId      String?
   aiVerify     Boolean  @default(true)
   allowedModes Json?
+  certificationRequestId String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -42,6 +46,7 @@ model Deck {
   cards     Card[]
   chapters  Chapter[]
   userDecks UserDeck[]
+  certificationRequest CertificationRequest? @relation(fields: [certificationRequestId], references: [id], onDelete: SetNull)
 }
 
 model Card {
@@ -146,4 +151,26 @@ model Event {
   @@index([type, createdAt])
   @@index([status, createdAt])
   @@index([sessionId, createdAt])
+}
+
+/**
+ * Certification generation requests (admin-triggered)
+ */
+model CertificationRequest {
+  id        String   @id @default(cuid())
+  adminId   String   // Admin qui déclenche
+  certCode  String   // AZ-900, AWS-SAA, etc (ex: "AZ-900")
+  status    String   @default("pending") // pending, processing, success, failed
+  deckId    String?  // Deck créé (une fois success)
+  errorLog  String?  // Raison d'échec
+  metadata  Json?    // {source, validationsRun, timestamps, etc}
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  decks     Deck[]
+
+  @@index([status, createdAt])
+  @@index([adminId, createdAt])
+  @@unique([certCode])
 }

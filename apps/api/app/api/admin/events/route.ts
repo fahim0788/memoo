@@ -31,7 +31,10 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / pageSize),
     });
   } catch (err) {
-    console.error('Error:', err);
-    return NextResponse.json({ error: 'Error' }, { status: 500 });
+    console.error('Fetch events error:', err);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

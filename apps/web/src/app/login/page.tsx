@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { forgotPassword, resendCode, resetPassword } from "../../lib/auth";
 import { t } from "../../lib/i18n";
 import { useLanguage } from "../../hooks/useLanguage";
-import { trackPageVisit, trackRegistrationStarted, trackEmailVerificationSent } from "../../lib/event-tracker";
+import { trackPageVisit, trackRegistrationStarted, trackEmailVerificationSent, trackEvent } from "../../lib/event-tracker";
 
 type Mode = "login" | "register" | "verify-email" | "forgot-password" | "reset-password";
 
@@ -102,6 +102,11 @@ export default function LoginPage() {
     setNewPassword("");
     setConfirmPassword("");
     setMode(newMode);
+
+    // Track when user starts registration
+    if (newMode === "register") {
+      trackRegistrationStarted();
+    }
   }
 
   // ── Login ──
@@ -113,6 +118,14 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/");
     } catch (err: any) {
+      // Track login failure
+      trackEvent({
+        type: 'LOGIN_FAILED',
+        category: 'AUTH',
+        action: err?.code === "EMAIL_NOT_VERIFIED" ? 'EMAIL_NOT_VERIFIED' : 'INVALID_CREDENTIALS',
+        metadata: { reason: err?.code || 'unknown' },
+      });
+
       if (err?.code === "EMAIL_NOT_VERIFIED") {
         setSuccess(t.auth.emailNotVerified);
         startResendCooldown();
@@ -134,6 +147,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await register(email, password, firstName, lastName);
+      // Track successful registration form submission (server will track REGISTRATION_COMPLETED)
       trackEmailVerificationSent(email);
       startResendCooldown();
       switchMode("verify-email");

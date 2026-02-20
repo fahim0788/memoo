@@ -21,6 +21,18 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
+    // Track failed login attempt (user not found)
+    await prisma.event.create({
+      data: {
+        userId: null,
+        sessionId: `server_login_failed_${email}`,
+        type: 'LOGIN_FAILED',
+        category: 'AUTH',
+        action: 'INVALID_EMAIL',
+        status: 'failed',
+        metadata: { reason: 'user_not_found', email },
+      },
+    }).catch(() => {});
     return json({ error: "invalid credentials" }, req, 401);
   }
 
@@ -30,10 +42,34 @@ export async function POST(req: NextRequest) {
   }
 
   if (!(await bcrypt.compare(password, user.password))) {
+    // Track failed login (wrong password)
+    await prisma.event.create({
+      data: {
+        userId: user.id,
+        sessionId: `server_${user.id}`,
+        type: 'LOGIN_FAILED',
+        category: 'AUTH',
+        action: 'INVALID_PASSWORD',
+        status: 'failed',
+        metadata: { reason: 'wrong_password', email: user.email },
+      },
+    }).catch(() => {});
     return json({ error: "invalid credentials" }, req, 401);
   }
 
   if (!user.isActive) {
+    // Track failed login (account disabled)
+    await prisma.event.create({
+      data: {
+        userId: user.id,
+        sessionId: `server_${user.id}`,
+        type: 'LOGIN_FAILED',
+        category: 'AUTH',
+        action: 'ACCOUNT_DISABLED',
+        status: 'failed',
+        metadata: { reason: 'account_disabled', email: user.email },
+      },
+    }).catch(() => {});
     return json({ error: "account disabled" }, req, 403);
   }
 
@@ -45,10 +81,40 @@ export async function POST(req: NextRequest) {
       data: { verificationCode: code, verificationCodeExpiresAt: codeExpiresAt(15) },
     });
     await sendVerificationEmail(email, code);
+
+    // Track email verification required
+    await prisma.event.create({
+      data: {
+        userId: user.id,
+        sessionId: `server_${user.id}`,
+        type: 'EMAIL_VERIFICATION_REQUIRED',
+        category: 'AUTH',
+        action: 'VERIFICATION_CODE_RESENT',
+        status: 'pending',
+        metadata: { email: user.email },
+      },
+    }).catch(() => {});
+
     return json({ error: "email_not_verified" }, req, 403);
   }
 
   const token = signToken({ userId: user.id, email: user.email });
+
+  // Track successful login
+  await prisma.event.create({
+    data: {
+      userId: user.id,
+      sessionId: `server_${user.id}`,
+      type: 'LOGIN_SUCCESS',
+      category: 'AUTH',
+      action: 'USER_LOGIN',
+      status: 'success',
+      metadata: {
+        method: 'password',
+        email: user.email,
+      },
+    },
+  }).catch(() => {}); // Silently ignore tracking errors
 
   return json({
     ok: true,
