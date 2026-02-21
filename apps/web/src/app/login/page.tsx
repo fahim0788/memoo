@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleLogin } from "@react-oauth/google";
 import { FacebookLoginButton } from "../../components/FacebookLoginButton";
+import { LinkedInLoginButton } from "../../components/LinkedInLoginButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { forgotPassword, resendCode, resetPassword } from "../../lib/auth";
 import { t } from "../../lib/i18n";
@@ -28,7 +29,7 @@ const linkStyle = {
 export default function LoginPage() {
   useLanguage();
   const router = useRouter();
-  const { user, loading: authLoading, login, googleLogin, facebookLogin, register, verifyEmail } = useAuth();
+  const { user, loading: authLoading, login, googleLogin, facebookLogin, linkedinLogin, register, verifyEmail } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -68,6 +69,7 @@ export default function LoginPage() {
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
   const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
+  const linkedinClientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || "";
 
   async function handleGoogleSuccess(credential: string) {
     setError("");
@@ -87,6 +89,19 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await facebookLogin(accessToken);
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.errors.unknown);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLinkedInSuccess(code: string, redirectUri: string) {
+    setError("");
+    setLoading(true);
+    try {
+      await linkedinLogin(code, redirectUri);
       router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : t.errors.unknown);
@@ -130,8 +145,8 @@ export default function LoginPage() {
         setSuccess(t.auth.emailNotVerified);
         startResendCooldown();
         switchMode("verify-email");
-      } else if (err?.code === "USE_GOOGLE_SIGNIN") {
-        setError(t.auth.useGoogleSignIn);
+      } else if (err?.code === "USE_OAUTH_SIGNIN") {
+        setError(t.auth.useOauthSignIn);
       } else {
         setError(err instanceof Error ? err.message : t.errors.unknown);
       }
@@ -271,7 +286,7 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {(googleClientId || facebookAppId) && (
+              {(googleClientId || facebookAppId || linkedinClientId) && (
                 <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem" }}>
                   {googleClientId && (
                     <div style={{ position: "relative", width: 40, height: 40 }}>
@@ -303,6 +318,13 @@ export default function LoginPage() {
                       appId={facebookAppId}
                       onSuccess={handleFacebookSuccess}
                       onError={() => setError(t.auth.facebookError)}
+                    />
+                  )}
+                  {linkedinClientId && (
+                    <LinkedInLoginButton
+                      clientId={linkedinClientId}
+                      onSuccess={handleLinkedInSuccess}
+                      onError={() => setError("Échec de la connexion LinkedIn")}
                     />
                   )}
                 </div>
@@ -349,7 +371,7 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {(googleClientId || facebookAppId) && (
+              {(googleClientId || facebookAppId || linkedinClientId) && (
                 <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem" }}>
                   {googleClientId && (
                     <div style={{ position: "relative", width: 40, height: 40 }}>
@@ -381,6 +403,13 @@ export default function LoginPage() {
                       appId={facebookAppId}
                       onSuccess={handleFacebookSuccess}
                       onError={() => setError(t.auth.facebookError)}
+                    />
+                  )}
+                  {linkedinClientId && (
+                    <LinkedInLoginButton
+                      clientId={linkedinClientId}
+                      onSuccess={handleLinkedInSuccess}
+                      onError={() => setError("Échec de la connexion LinkedIn")}
                     />
                   )}
                 </div>
@@ -522,6 +551,11 @@ export default function LoginPage() {
         {/* Footer */}
         <p className="small" style={{ textAlign: "center", marginTop: "1rem" }}>
           {t.auth.footerText}
+        </p>
+        <p className="small" style={{ textAlign: "center", marginTop: "0.5rem", color: "var(--color-text-muted)" }}>
+          <a href="/privacy" style={{ color: "var(--color-text-muted)" }}>
+            Politique de confidentialité
+          </a>
         </p>
       </div>
     </div>

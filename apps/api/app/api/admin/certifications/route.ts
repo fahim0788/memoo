@@ -37,13 +37,14 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
+    const sort = (url.searchParams.get('sort') as 'asc' | 'desc') || 'desc';
     const pageSize = 10;
     const skip = (page - 1) * pageSize;
 
     const requests = await prisma.certificationRequest.findMany({
       skip,
       take: pageSize,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: sort },
     });
 
     const total = await prisma.certificationRequest.count();

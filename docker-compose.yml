@@ -27,6 +27,7 @@ services:
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-MemoList}
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
         NEXT_PUBLIC_FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+        NEXT_PUBLIC_LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
     ports:
       - "3000:3000"
     depends_on:
@@ -61,6 +62,9 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - FACEBOOK_APP_ID=${FACEBOOK_APP_ID:-}
       - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET:-}
+      - LINKEDIN_CLIENT_ID=${LINKEDIN_CLIENT_ID:-}
+      - LINKEDIN_CLIENT_SECRET=${LINKEDIN_CLIENT_SECRET:-}
+      - PRISMA_QUERY_ENGINE_LIBRARY=/app/packages/db/node_modules/.prisma/client/libquery_engine-linux-musl-openssl-3.0.x.so.node
     volumes:
       - tts-storage:/app/storage/tts
       - ./apps/worker/storage/drapeaux:/app/apps/worker/storage/drapeaux:ro

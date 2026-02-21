@@ -72,7 +72,12 @@
       "Bash(echo:*)",
       "Bash(python3 -c \" import sys,json data=json.load\\(sys.stdin\\) print\\(f''Total: {data[\"\"numTotalTests\"\"]}, Passed: {data[\"\"numPassedTests\"\"]}, Failed: {data[\"\"numFailedTests\"\"]}''\\) for suite in data.get\\(''testResults'',[]\\): for t in suite.get\\(''assertionResults'',[]\\): if t[''status'']==''failed'': print\\(f'' FAIL: {t[\"\"ancestorTitles\"\"][-1]} > {t[\"\"title\"\"]}''\\) print\\(f'' {t[\"\"failureMessages\"\"][0][:200]}''\\) \")",
       "Bash(python3:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(kill:*)",
+      "Bash(powershell.exe -Command \"Get-Process -Id 5064 2>/dev/null | Stop-Process -Force 2>/dev/null ; sleep 2\")",
+      "Bash(powershell.exe -NoProfile -Command \"Stop-Process -Id 5064 -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; ''Done''\")",
+      "Bash(ls:*)",
+      "Bash(printf:*)"
     ]
   }
 }

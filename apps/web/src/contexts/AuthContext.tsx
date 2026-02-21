@@ -12,6 +12,7 @@ import {
   login as authLogin,
   googleLogin as authGoogleLogin,
   facebookLogin as authFacebookLogin,
+  linkedinLogin as authLinkedinLogin,
   register as authRegister,
   logout as authLogout,
   updateProfile as authUpdateProfile,
@@ -30,6 +31,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
   facebookLogin: (accessToken: string) => Promise<void>;
+  linkedinLogin: (code: string, redirectUri: string) => Promise<void>;
   register: (
     email: string,
     password: string,
@@ -76,6 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }
 
+  async function linkedinLogin(code: string, redirectUri: string) {
+    const result = await authLinkedinLogin(code, redirectUri);
+    setUser(result.user);
+  }
+
   async function register(
     email: string,
     password: string,
@@ -108,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, googleLogin, facebookLogin, register, verifyEmail, updateProfile, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, googleLogin, facebookLogin, linkedinLogin, register, verifyEmail, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

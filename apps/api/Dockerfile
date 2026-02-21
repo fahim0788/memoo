@@ -61,9 +61,11 @@ ENV NODE_ENV=production
 ENV PORT=3001
 
 # Copy built files and dependencies
-COPY --from=build /app/packages/db ./packages/db
+# outputFileTracingRoot in next.config.js traces monorepo deps into standalone
 COPY --from=build /app/apps/api/.next/standalone ./
-COPY --from=build /app/apps/api/node_modules ./node_modules
+COPY --from=build /app/packages/db ./packages/db
+# Prisma engine binary: hoisted to root node_modules by npm workspaces
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 3001
 

@@ -50,8 +50,8 @@ export async function login(
     if (data.error === "email_not_verified") {
       throw Object.assign(new Error("email_not_verified"), { code: "EMAIL_NOT_VERIFIED" });
     }
-    if (data.error === "use_google_signin") {
-      throw Object.assign(new Error("use_google_signin"), { code: "USE_GOOGLE_SIGNIN" });
+    if (data.error === "use_oauth_signin") {
+      throw Object.assign(new Error("use_oauth_signin"), { code: "USE_OAUTH_SIGNIN" });
     }
     const messages: Record<string, string> = {
       "invalid credentials": "Email ou mot de passe incorrect",
@@ -85,6 +85,33 @@ export async function googleLogin(credential: string): Promise<AuthResponse> {
       "Google Sign-In not configured": "Google Sign-In non configuré",
     };
     throw new Error(messages[data.error] || data.error || "Impossible de se connecter avec Google");
+  }
+
+  const data = await r.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function linkedinLogin(code: string, redirectUri: string): Promise<AuthResponse> {
+  const r = await fetch(`${API_BASE}/auth/linkedin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, redirectUri }),
+  });
+
+  if (!r.ok) {
+    if (r.status === 0 || !navigator.onLine) {
+      throw new Error("Vous êtes hors ligne. Vérifiez votre connexion internet.");
+    }
+    const data = await r.json().catch(() => ({}));
+    const messages: Record<string, string> = {
+      "invalid LinkedIn code": "Échec de la vérification LinkedIn",
+      "LinkedIn email not available": "Votre email LinkedIn n'est pas disponible",
+      "LinkedIn email not verified": "Votre email LinkedIn n'est pas vérifié",
+      "account disabled": "Ce compte a été désactivé",
+      "LinkedIn Login not configured": "LinkedIn Login non configuré",
+    };
+    throw new Error(messages[data.error] || data.error || "Impossible de se connecter avec LinkedIn");
   }
 
   const data = await r.json();

@@ -25,6 +25,6 @@ export const config = {
      * - API routes (/api/...)
      * - Static files (_next, favicon, images, manifest, sw, etc.)
      */
-    "/((?!api|_next|favicon|logo-|manifest|sw\\.js|storage|icons).*)",
+    "/((?!api|_next|favicon|logo-|manifest|sw\\.js|storage|icons|auth|privacy).*)",
   ],
 };

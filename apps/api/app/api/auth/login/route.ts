@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
     return json({ error: "invalid credentials" }, req, 401);
   }
 
-  // Google-only accounts have no password
+  // OAuth-only accounts have no password — but can still recover via forgot-password
   if (!user.password) {
-    return json({ error: "use_google_signin" }, req, 400);
+    return json({ error: "use_oauth_signin", hint: "forgot_password_available" }, req, 400);
   }
 
   if (!(await bcrypt.compare(password, user.password))) {

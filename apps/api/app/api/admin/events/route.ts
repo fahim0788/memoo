@@ -7,13 +7,14 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
+    const sort = (url.searchParams.get('sort') as 'asc' | 'desc') || 'desc';
     const pageSize = 10;
     const skip = (page - 1) * pageSize;
 
     const events = await prisma.event.findMany({
       skip,
       take: pageSize,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: sort },
       include: {
         user: {
           select: { id: true, email: true, firstName: true, lastName: true },

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { RotateCw } from 'lucide-react';
 
 type Tab = 'generator' | 'requests' | 'events';
 
@@ -43,8 +44,14 @@ export default function AdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [requestPage, setRequestPage] = useState(1);
   const [eventPage, setEventPage] = useState(1);
+  const [requestTotalPages, setRequestTotalPages] = useState(1);
+  const [eventTotalPages, setEventTotalPages] = useState(1);
   const [requestSort, setRequestSort] = useState<'asc' | 'desc'>('desc');
   const [eventSort, setEventSort] = useState<'asc' | 'desc'>('desc');
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [allLoadedRequests, setAllLoadedRequests] = useState<CertificationRequest[]>([]);
+  const [allLoadedEvents, setAllLoadedEvents] = useState<Event[]>([]);
   const router = useRouter();
 
   // Fetch requests
@@ -62,26 +69,50 @@ export default function AdminPage() {
   }, [activeTab, eventPage]);
 
   const fetchRequests = async () => {
+    setIsLoadingRequests(true);
     try {
       const res = await fetch(`/api/admin/certifications?page=${requestPage}`);
       if (res.ok) {
         const data = await res.json();
+        const newRequests = data.requests || [];
+        const updated = [...allLoadedRequests];
+        newRequests.forEach((req: CertificationRequest) => {
+          if (!updated.find(r => r.id === req.id)) {
+            updated.push(req);
+          }
+        });
+        setAllLoadedRequests(updated);
         setRequests(data.requests || []);
+        setRequestTotalPages(data.totalPages || 1);
       }
     } catch (err) {
       console.error('Failed to fetch requests:', err);
+    } finally {
+      setIsLoadingRequests(false);
     }
   };
 
   const fetchEvents = async () => {
+    setIsLoadingEvents(true);
     try {
       const res = await fetch(`/api/admin/events?page=${eventPage}`);
       if (res.ok) {
         const data = await res.json();
+        const newEvents = data.events || [];
+        const updated = [...allLoadedEvents];
+        newEvents.forEach((evt: Event) => {
+          if (!updated.find(e => e.id === evt.id)) {
+            updated.push(evt);
+          }
+        });
+        setAllLoadedEvents(updated);
         setEvents(data.events || []);
+        setEventTotalPages(data.totalPages || 1);
       }
     } catch (err) {
       console.error('Failed to fetch events:', err);
+    } finally {
+      setIsLoadingEvents(false);
     }
   };
 
@@ -118,6 +149,44 @@ export default function AdminPage() {
     }
   };
 
+  const handleRefreshRequests = async () => {
+    setIsLoadingRequests(true);
+    setRequestPage(1);
+    setAllLoadedRequests([]);
+    try {
+      const res = await fetch(`/api/admin/certifications?page=1`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllLoadedRequests(data.requests || []);
+        setRequests(data.requests || []);
+        setRequestTotalPages(data.totalPages || 1);
+      }
+    } catch (err) {
+      console.error('Failed to fetch requests:', err);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
+  const handleRefreshEvents = async () => {
+    setIsLoadingEvents(true);
+    setEventPage(1);
+    setAllLoadedEvents([]);
+    try {
+      const res = await fetch(`/api/admin/events?page=1`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllLoadedEvents(data.events || []);
+        setEvents(data.events || []);
+        setEventTotalPages(data.totalPages || 1);
+      }
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
+
   const handleDeleteRequest = async (requestId: string) => {
     if (!confirm('Delete this request?')) return;
 
@@ -138,21 +207,28 @@ export default function AdminPage() {
     return new Date(dateStr).toLocaleString();
   };
 
-  const sortedRequests = [...requests].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return requestSort === 'desc' ? dateB - dateA : dateA - dateB;
-  });
+  const requestTotalPagesLocal = Math.max(requestTotalPages, Math.ceil(allLoadedRequests.length / 10));
+  const eventTotalPagesLocal = Math.max(eventTotalPages, Math.ceil(allLoadedEvents.length / 10));
 
-  const sortedEvents = [...events].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return eventSort === 'desc' ? dateB - dateA : dateA - dateB;
-  });
+  const sortedRequests = [...allLoadedRequests]
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return requestSort === 'desc' ? dateB - dateA : dateA - dateB;
+    })
+    .slice((requestPage - 1) * 10, requestPage * 10);
+
+  const sortedEvents = [...allLoadedEvents]
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return eventSort === 'desc' ? dateB - dateA : dateA - dateB;
+    })
+    .slice((eventPage - 1) * 10, eventPage * 10);
 
   return (
     <div className="relative min-h-screen" style={{ backgroundColor: '#0a0e1a', color: '#e2e8f0' }}>
-      <style>{`
+      <style suppressHydrationWarning>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -193,8 +269,8 @@ export default function AdminPage() {
         .card {
           background: rgba(17,24,39,0.6);
           border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 16px;
-          padding: 28px 24px;
+          border-radius: 12px;
+          padding: 20px 18px;
           backdrop-filter: blur(8px);
           transition: all 0.25s ease;
         }
@@ -221,19 +297,19 @@ export default function AdminPage() {
         }
 
         .tab-button {
-          padding: 12px 24px;
-          border-bottom: 3px solid transparent;
-          font-weight: 600;
+          padding: 10px 18px;
+          border-bottom: 2px solid transparent;
+          font-weight: 500;
           transition: all 0.25s ease;
           cursor: pointer;
           white-space: nowrap;
-          font-size: 15px;
+          font-size: 13px;
         }
 
         .tab-button.active {
           color: #60a5fa;
           border-bottom-color: #60a5fa;
-          background: rgba(96,165,250,0.05);
+          background: transparent;
         }
 
         .tab-button:hover {
@@ -242,9 +318,9 @@ export default function AdminPage() {
         }
 
         .status-badge {
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 11px;
+          padding: 3px 8px;
+          border-radius: 6px;
+          font-size: 10px;
           font-weight: 600;
           font-family: 'JetBrains Mono', monospace;
           display: inline-block;
@@ -268,12 +344,12 @@ export default function AdminPage() {
         .input-field {
           background: rgba(17,24,39,0.8);
           border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 10px;
-          padding: 12px 16px;
+          border-radius: 8px;
+          padding: 9px 12px;
           color: #e2e8f0;
           font-family: 'Plus Jakarta Sans', sans-serif;
           transition: all 0.2s ease;
-          font-size: 14px;
+          font-size: 13px;
         }
 
         .input-field:hover {
@@ -292,12 +368,12 @@ export default function AdminPage() {
           background: linear-gradient(135deg, #60a5fa, #818cf8);
           color: white;
           font-weight: 600;
-          padding: 12px 24px;
-          border-radius: 10px;
+          padding: 9px 18px;
+          border-radius: 8px;
           border: none;
           cursor: pointer;
           transition: all 0.25s ease;
-          font-size: 14px;
+          font-size: 13px;
         }
 
         .btn-primary:hover {
@@ -312,15 +388,15 @@ export default function AdminPage() {
         }
 
         .btn-secondary {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #e2e8f0;
-          font-weight: 600;
-          padding: 10px 20px;
-          border-radius: 8px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: #94a3b8;
+          font-weight: 500;
+          padding: 7px 14px;
+          border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s ease;
-          font-size: 14px;
+          font-size: 12px;
         }
 
         .btn-secondary:hover {
@@ -337,7 +413,7 @@ export default function AdminPage() {
           color: #f87171;
           cursor: pointer;
           transition: all 0.2s ease;
-          font-size: 14px;
+          font-size: 12px;
         }
 
         .btn-danger:hover {
@@ -361,19 +437,20 @@ export default function AdminPage() {
         }
 
         th {
-          padding: 16px;
+          padding: 10px 14px;
           text-align: left;
           font-weight: 600;
-          color: #94a3b8;
-          font-size: 12px;
+          color: #64748b;
+          font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
           white-space: nowrap;
         }
 
         td {
-          padding: 16px;
+          padding: 10px 14px;
           border-bottom: 1px solid rgba(255,255,255,0.03);
+          font-size: 13px;
         }
 
         tbody tr {
@@ -387,6 +464,80 @@ export default function AdminPage() {
         .mono {
           font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
+        }
+
+        .th-sortable {
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .th-sortable:hover {
+          color: #94a3b8;
+        }
+
+        .page-btn {
+          min-width: 28px;
+          height: 28px;
+          padding: 0 6px;
+          border-radius: 5px;
+          border: 1px solid transparent;
+          background: transparent;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .page-btn:hover:not(:disabled) {
+          background: rgba(255,255,255,0.05);
+          color: #cbd5e1;
+        }
+
+        .page-btn.active {
+          background: rgba(96,165,250,0.12);
+          border-color: rgba(96,165,250,0.3);
+          color: #60a5fa;
+          font-weight: 700;
+        }
+
+        .page-btn:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        .page-btn.nav {
+          color: #475569;
+          font-size: 11px;
+          letter-spacing: 0.5px;
+        }
+
+        .page-btn.nav:hover:not(:disabled) {
+          color: #94a3b8;
+          background: rgba(255,255,255,0.04);
+        }
+
+        .spinner {
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255,255,255,0.2);
+          border-top-color: #60a5fa;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 200px;
+          color: #64748b;
         }
 
         /* RESPONSIVE */
@@ -463,12 +614,8 @@ export default function AdminPage() {
           }
 
           .pagination-container {
-            flex-direction: column;
-            gap: 12px;
-          }
-
-          .pagination-container button {
-            width: 100%;
+            gap: 4px;
+            overflow-x: auto;
           }
 
           .content-padding {
@@ -489,16 +636,15 @@ export default function AdminPage() {
         {/* Header */}
         <div style={{ backgroundColor: 'rgba(17,24,39,0.4)', borderBottom: '1px solid rgba(255,255,255,0.06)' }} className="backdrop-blur-sm">
           <div style={{ maxWidth: '1400px' }} className="mx-auto header-padding px-8">
-            <div className="header-flex flex justify-between items-start gap-8">
+            <div className="header-flex flex justify-between items-end gap-8">
               <div>
-                <div className="header-badge mb-4">◆ Admin Dashboard</div>
-                <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, background: 'linear-gradient(135deg, #e2e8f0, #818cf8, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }} className="mb-2">
+                <h1 style={{ fontSize: 'clamp(18px, 3vw, 24px)', fontWeight: 700, background: 'linear-gradient(135deg, #e2e8f0, #818cf8, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }} className="mb-1">
                   Memoo Admin
                 </h1>
-                <p style={{ color: '#94a3b8', fontSize: 'clamp(13px, 2vw, 15px)' }}>Create decks, review requests & analyze user activity</p>
+                <p style={{ color: '#64748b', fontSize: '13px' }}>Create decks, review requests & analyze user activity</p>
               </div>
-              <Link href="/" style={{ color: '#60a5fa' }} className="transition-colors text-sm">
-                ← App
+              <Link href="/" style={{ color: '#60a5fa', fontSize: '13px' }} className="transition-colors pb-1">
+               Aller à l'app →
               </Link>
             </div>
           </div>
@@ -531,7 +677,7 @@ export default function AdminPage() {
           {activeTab === 'generator' && (
             <div className="space-y-6">
               <div className="card">
-                <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>Create a new deck</h2>
+                <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: '#cbd5e1' }}>Create a new deck</h2>
 
                 <div className="space-y-4">
                   <div>
@@ -579,7 +725,7 @@ export default function AdminPage() {
                           ? 'rgba(52,211,153,0.2)'
                           : 'rgba(96,165,250,0.2)'
                       }`
-                    }} className="p-4 rounded-10px text-sm font-semibold">
+                    }} className="p-4 rounded-lg text-sm font-semibold">
                       {generatingStatus}
                     </div>
                   )}
@@ -602,27 +748,25 @@ export default function AdminPage() {
           {/* Requests Tab */}
           {activeTab === 'requests' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 style={{ fontSize: '24px', fontWeight: 700 }}>Recent decks</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#cbd5e1' }}>Recent decks</h2>
                 <button
-                  onClick={() => setRequestSort(requestSort === 'desc' ? 'asc' : 'desc')}
-                  style={{
-                    background: 'rgba(99,102,241,0.1)',
-                    border: '1px solid rgba(99,102,241,0.25)',
-                    color: '#818cf8',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
+                  onClick={handleRefreshRequests}
+                  disabled={isLoadingRequests}
+                  className="btn-secondary"
+                  style={{ padding: '6px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Refresh requests"
                 >
-                  {requestSort === 'desc' ? '↓ Newest' : '↑ Oldest'}
+                  <RotateCw size={16} />
                 </button>
               </div>
 
-              {requests.length > 0 ? (
+              {isLoadingRequests ? (
+                <div className="loading-overlay">
+                  <div className="spinner" style={{ marginRight: '8px' }}></div>
+                  <span>Loading requests...</span>
+                </div>
+              ) : requests.length > 0 ? (
                 <div className="table-container">
                   <table>
                     <thead>
@@ -630,7 +774,9 @@ export default function AdminPage() {
                         <th>Cert</th>
                         <th>Status</th>
                         <th>Deck</th>
-                        <th>Date</th>
+                        <th className="th-sortable" onClick={() => setRequestSort(requestSort === 'desc' ? 'asc' : 'desc')}>
+                        {requestSort === 'desc' ? '↓' : '↑'} Date {requestSort === 'desc' ? '↓' : '↑'}
+                        </th>
                         <th></th>
                       </tr>
                     </thead>
@@ -677,22 +823,12 @@ export default function AdminPage() {
               )}
 
               {/* Pagination */}
-              <div className="pagination-container flex justify-between items-center gap-4">
-                <button
-                  onClick={() => setRequestPage((p) => Math.max(1, p - 1))}
-                  disabled={requestPage === 1}
-                  className="btn-secondary"
-                >
-                  ← Back
-                </button>
-                <span style={{ color: '#94a3b8', fontWeight: 600 }}>Page {requestPage}</span>
-                <button
-                  onClick={() => setRequestPage((p) => p + 1)}
-                  disabled={requests.length < 10}
-                  className="btn-secondary"
-                >
-                  Next →
-                </button>
+              <div className="pagination-container flex items-center gap-1">
+                <button onClick={() => setRequestPage((p) => Math.max(1, p - 1))} disabled={requestPage === 1 || isLoadingRequests} className="page-btn nav">← Back</button>
+                {Array.from({ length: requestTotalPagesLocal }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => setRequestPage(p)} disabled={isLoadingRequests} className={`page-btn ${p === requestPage ? 'active' : ''}`}>{p}</button>
+                ))}
+                <button onClick={() => setRequestPage((p) => p + 1)} disabled={requestPage === requestTotalPagesLocal || isLoadingRequests} className="page-btn nav">Next →</button>
               </div>
             </div>
           )}
@@ -700,55 +836,53 @@ export default function AdminPage() {
           {/* Events Tab */}
           {activeTab === 'events' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 style={{ fontSize: '24px', fontWeight: 700 }}>User activity</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#cbd5e1' }}>User activity</h2>
                 <button
-                  onClick={() => setEventSort(eventSort === 'desc' ? 'asc' : 'desc')}
-                  style={{
-                    background: 'rgba(99,102,241,0.1)',
-                    border: '1px solid rgba(99,102,241,0.25)',
-                    color: '#818cf8',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
+                  onClick={handleRefreshEvents}
+                  disabled={isLoadingEvents}
+                  className="btn-secondary"
+                  style={{ padding: '6px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Refresh events"
                 >
-                  {eventSort === 'desc' ? '↓ Newest' : '↑ Oldest'}
+                  <RotateCw size={16} />
                 </button>
               </div>
 
-              {events.length > 0 ? (
+              {isLoadingEvents ? (
+                <div className="loading-overlay">
+                  <div className="spinner" style={{ marginRight: '8px' }}></div>
+                  <span>Loading events...</span>
+                </div>
+              ) : events.length > 0 ? (
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Event</th>
-                        <th>Category</th>
-                        <th>Status</th>
                         <th>User</th>
-                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Event</th>
+                        <th className="th-sortable" onClick={() => setEventSort(eventSort === 'desc' ? 'asc' : 'desc')}>Date {eventSort === 'desc' ? '↓' : '↑'}</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sortedEvents.map((event) => (
                         <tr key={event.id}>
-                          <td className="mono font-semibold" style={{ color: '#60a5fa' }}>{event.type}</td>
+                          <td style={{ color: '#94a3b8', fontSize: '13px' }}>
+                            {event.userId ? event.userId.substring(0, 8) : 'Anonymous'}
+                          </td>
                           <td style={{ color: '#94a3b8' }}>{event.category}</td>
+                          <td className="mono font-semibold" style={{ color: '#60a5fa' }}>{event.type}</td>
+                          <td style={{ color: '#64748b', fontSize: '13px' }}>
+                            {formatDate(event.createdAt)}
+                          </td>
                           <td>
                             <span className={`status-badge status-${
                               event.status === 'success' ? 'success' : event.status === 'failed' ? 'failed' : 'pending'
                             }`}>
                               {event.status.toUpperCase()}
                             </span>
-                          </td>
-                          <td style={{ color: '#94a3b8', fontSize: '13px' }}>
-                            {event.userId ? event.userId.substring(0, 8) : 'Anonymous'}
-                          </td>
-                          <td style={{ color: '#64748b', fontSize: '13px' }}>
-                            {formatDate(event.createdAt)}
                           </td>
                         </tr>
                       ))}
@@ -762,22 +896,12 @@ export default function AdminPage() {
               )}
 
               {/* Pagination */}
-              <div className="pagination-container flex justify-between items-center gap-4">
-                <button
-                  onClick={() => setEventPage((p) => Math.max(1, p - 1))}
-                  disabled={eventPage === 1}
-                  className="btn-secondary"
-                >
-                  ← Back
-                </button>
-                <span style={{ color: '#94a3b8', fontWeight: 600 }}>Page {eventPage}</span>
-                <button
-                  onClick={() => setEventPage((p) => p + 1)}
-                  disabled={events.length < 10}
-                  className="btn-secondary"
-                >
-                  Next →
-                </button>
+              <div className="pagination-container flex items-center gap-1">
+                <button onClick={() => setEventPage((p) => Math.max(1, p - 1))} disabled={eventPage === 1 || isLoadingEvents} className="page-btn nav">← Back</button>
+                {Array.from({ length: eventTotalPagesLocal }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => setEventPage(p)} disabled={isLoadingEvents} className={`page-btn ${p === eventPage ? 'active' : ''}`}>{p}</button>
+                ))}
+                <button onClick={() => setEventPage((p) => p + 1)} disabled={eventPage === eventTotalPagesLocal || isLoadingEvents} className="page-btn nav">Next →</button>
               </div>
             </div>
           )}

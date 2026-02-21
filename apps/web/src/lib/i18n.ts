@@ -86,7 +86,7 @@ export interface Translations {
     // OAuth Sign-In
     continueWithGoogle: string;
     or: string;
-    useGoogleSignIn: string;
+    useOauthSignIn: string;
     connectedViaGoogle: string;
     googleError: string;
     facebookError: string;
@@ -469,7 +469,7 @@ const fr: Translations = {
     // Google Sign-In
     continueWithGoogle: "Continuer avec Google",
     or: "ou",
-    useGoogleSignIn: "Ce compte utilise Google. Connectez-vous avec Google.",
+    useOauthSignIn: "Ce compte utilise une connexion sociale (Google, Facebook…). Utilisez \"Mot de passe oublié ?\" pour créer un mot de passe.",
     connectedViaGoogle: "Connecte via Google",
     googleError: "Erreur lors de la connexion avec Google",
     facebookError: "Erreur lors de la connexion avec Facebook",
@@ -841,7 +841,7 @@ const en: Translations = {
     // Google Sign-In
     continueWithGoogle: "Continue with Google",
     or: "or",
-    useGoogleSignIn: "This account uses Google. Please sign in with Google.",
+    useOauthSignIn: "This account uses social login (Google, Facebook…). Use \"Forgot password?\" to set a password.",
     connectedViaGoogle: "Connected via Google",
     googleError: "Error signing in with Google",
     facebookError: "Error signing in with Facebook",

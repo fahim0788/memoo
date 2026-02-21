@@ -30,6 +30,7 @@ export class CertificationValidator {
         valid: false,
         errors,
         warnings,
+        flagged: false,
       };
     }
 
@@ -48,6 +49,7 @@ export class CertificationValidator {
         valid: false,
         errors,
         warnings,
+        flagged: false,
       };
     }
 
